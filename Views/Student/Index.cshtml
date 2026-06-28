@@ -1,0 +1,105 @@
+﻿@model IEnumerable<Center_Management.Models.Student>
+
+@{
+    ViewData["Title"] = "Students";
+}
+
+<h2>Students</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-success">
+        Add Student
+    </a>
+</p>
+
+<table class="table table-bordered table-striped">
+
+    <thead>
+
+        <tr>
+
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Parent Phone</th>
+            <th>Groups</th>
+            <th></th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        @foreach (var student in Model)
+        {
+            <tr>
+
+                <td>@student.FullName</td>
+
+                <td>@student.PhoneNumber</td>
+
+                <td>@student.ParentPhoneNumber</td>
+
+                <td>
+
+                    @if (student.StudentGroups.Any())
+                    {
+                        <ul class="mb-0">
+
+                            @foreach (var item in student.StudentGroups.Where(x => x.IsActive))
+                            {
+                                <li>
+                                    @item.Group.Name
+                                    -
+                                    @(item.Group?.AcademicYear?.Subject?.Name ?? "No Subject")
+                                    (
+                                    @(item.Group?.AcademicYear?.Name ?? "No Academic Year")
+                                    )
+                                </li>
+                            }
+
+                        </ul>
+                    }
+                    else
+                    {
+                        <span class="text-danger">
+                            No Groups
+                        </span>
+                    }
+
+                </td>
+
+                <td>
+
+                    <a asp-action="Details"
+                       asp-route-id="@student.Id"
+                       class="btn btn-info btn-sm">
+
+                        Details
+
+                    </a>
+
+                    <a asp-action="Edit"
+                       asp-route-id="@student.Id"
+                       class="btn btn-warning btn-sm">
+
+                        Edit
+
+                    </a>
+
+                    <a asp-action="Delete"
+                       asp-route-id="@student.Id"
+                       class="btn btn-danger btn-sm">
+
+                        Delete
+
+                    </a>
+
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+
+</table>

@@ -1,0 +1,25 @@
+﻿@model Center_Management.Models.AcademicYear
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>AcademicYear</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <partial name="PartialViews/_CreateEditPartialView.cshtml" model="Model" />
+        </form>
+    </div>
+</div>
+
+<div>
+    <partial name="_BackToListPartialView" />
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,94 @@
+﻿@model Center_Management.Models.Group
+
+@{
+    ViewData["Title"] = "Delete Group";
+}
+
+<h2>Delete Group</h2>
+
+<div class="alert alert-danger">
+    <h5>Are you sure you want to delete this group?</h5>
+    <p class="mb-0">
+        This action cannot be undone.
+    </p>
+</div>
+
+<div class="card">
+
+    <div class="card-body">
+
+        <div class="mb-3">
+            <strong>Group Name :</strong>
+            @Model.Name
+        </div>
+
+        <div class="mb-3">
+            <strong>Academic Year :</strong>
+            @Model.AcademicYear?.Name
+        </div>
+
+        <hr />
+
+        <h5>Schedules</h5>
+
+        @if (Model.Schedules.Any())
+        {
+            <table class="table table-bordered">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Day</th>
+
+                        <th>Start Time</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var schedule in Model.Schedules)
+                    {
+                        <tr>
+
+                            <td>@schedule.Day</td>
+
+                            <td>@schedule.StartTime</td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+        }
+        else
+        {
+            <p>No schedules found.</p>
+        }
+
+    </div>
+
+</div>
+
+<br />
+
+<form asp-action="Delete">
+
+    <input type="hidden" asp-for="Id" />
+
+    <button type="submit"
+            class="btn btn-danger">
+        Delete
+    </button>
+
+    <a asp-controller="AcadimicYear"
+       asp-action="Details"
+       asp-route-id="@Model.AcademicYearId"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+
+</form>

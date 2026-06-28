@@ -1,0 +1,23 @@
+﻿@model Center_Management.Models.Subject
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>تفاصيل الماده </h1>
+
+<div>
+    <h4>@Model.Name</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "form-control">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+    </dl>
+</div>
+<div>
+    <partial name="_BackToListPartialView" />
+</div>

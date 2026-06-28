@@ -1,0 +1,127 @@
+﻿@model AcademicYearDetailsVM
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>@Model.Name</h2>
+
+<hr />
+
+<p>
+    <strong>Subject :</strong>
+    @Model.SubjectName
+</p>
+
+<p>
+    <strong>Monthly Price :</strong>
+    @Model.MonthlyPrice
+</p>
+
+<hr />
+
+<h4>Groups</h4>
+
+<a asp-controller="Group"
+   asp-action="Create"
+   asp-route-academicYearId="@Model.Id"
+   class="btn btn-success mb-3">
+
+    Add Group
+
+</a>
+
+@if (Model.Groups.Any())
+{
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>Group</th>
+
+                <th>Schedules</th>
+
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var group in Model.Groups)
+            {
+                <tr>
+
+                    <td>
+
+                        @group.Name
+
+                    </td>
+
+                    <td>
+
+                        @if (group.Schedules.Any())
+                        {
+                            <ul class="mb-0">
+
+                                @foreach (var schedule in group.Schedules)
+                                {
+                                    <li>
+
+                                        @schedule.Day
+                                        -
+                                        @schedule.StartTime
+
+                                    </li>
+                                }
+
+                            </ul>
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                No Schedules
+                            </span>
+                        }
+
+                    </td>
+
+                    <td>
+
+                        <a asp-controller="Group"
+                           asp-action="Details"
+                           asp-route-id="@group.Id"
+                           class="btn btn-info btn-sm">
+                            Details
+                        </a>
+
+                        <a asp-controller="Group"
+                           asp-action="Edit"
+                           asp-route-id="@group.Id"
+                           class="btn btn-warning btn-sm">
+                            Edit
+                        </a>
+
+                        <a asp-controller="Group"
+                           asp-action="Delete"
+                           asp-route-id="@group.Id"
+                           class="btn btn-danger btn-sm">
+                            Delete
+                        </a>
+
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+else
+{
+    <p>No Groups Yet.</p>
+}

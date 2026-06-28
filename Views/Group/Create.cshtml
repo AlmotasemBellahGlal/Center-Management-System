@@ -1,0 +1,138 @@
+﻿@model CreateGroupVM
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<form asp-action="Create">
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name"></label>
+
+        <input asp-for="Name" class="form-control" />
+
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <input asp-for="AcademicYearId" type="hidden" />
+
+        <label>Schedules</label>
+        <div id="scheduleContainer">
+
+            @for (int i = 0; i < Model.Schedules.Count; i++)
+            {
+                <div class="schedule-row row mb-2">
+
+                    <div class="col-md-6">
+                        <select asp-for="Schedules[i].Day"
+                                asp-items="Html.GetEnumSelectList<DaysOfWeek>()"
+                                class="form-select">
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <input asp-for="Schedules[i].StartTime"
+                               type="time"
+                               class="form-control" />
+                    </div>
+
+                </div>
+            }
+
+        </div>
+        <button type="button"
+                id="addSchedule"
+                class="btn btn-success">
+            Add Schedule
+        </button>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Save
+    </button>
+
+</form>
+<div>
+    <partial name="_BackToListPartialView" />
+</div>
+
+@section Scripts
+{
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        let index = @Model.Schedules.Count;
+
+        document
+        .getElementById("addSchedule")
+        .addEventListener("click", function () {
+
+            const html = `
+                <div class="schedule-row row mb-2">
+
+                    <div class="col-md-5">
+
+                        <select name="Schedules[${index}].Day"
+                                class="form-select">
+
+                            <option value="0">السبت</option>
+                            <option value="1">الأحد</option>
+                            <option value="2">الإثنين</option>
+                            <option value="3">الثلاثاء</option>
+                            <option value="4">الأربعاء</option>
+                            <option value="5">الخميس</option>
+                            <option value="6">الجمعة</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-5">
+
+                        <input type="time"
+                               name="Schedules[${index}].StartTime"
+                               class="form-control"/>
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <button type="button"
+                                class="btn btn-danger remove-btn">
+
+                            Remove
+
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+            document
+                .getElementById("scheduleContainer")
+                .insertAdjacentHTML("beforeend", html);
+
+            index++;
+        });
+
+        document.addEventListener("click", function (e) {
+
+            if (e.target.classList.contains("remove-btn")) {
+
+                e.target
+                    .closest(".schedule-row")
+                    .remove();
+            }
+
+        });
+
+    </script>
+}
+

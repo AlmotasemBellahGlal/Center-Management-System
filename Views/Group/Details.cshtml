@@ -1,0 +1,100 @@
+﻿@model Center_Management.Models.Group
+
+@{
+    ViewData["Title"] = "Group Details";
+}
+
+<h2>Group Details</h2>
+
+<hr />
+
+<div class="card">
+
+    <div class="card-body">
+
+        <h4>@Model.Name</h4>
+
+        <p>
+
+            <strong>Academic Year :</strong>
+
+            @Model.AcademicYear?.Name
+
+        </p>
+
+    </div>
+
+</div>
+
+<br />
+
+<h4>Schedules</h4>
+
+@if (Model.Schedules.Any())
+{
+    <table class="table table-bordered table-striped">
+
+        <thead>
+
+            <tr>
+
+                <th>Day</th>
+
+                <th>Start Time</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var schedule in Model.Schedules)
+            {
+                <tr>
+
+                    <td>@schedule.Day</td>
+
+                    <td>@schedule.StartTime</td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+else
+{
+    <div class="alert alert-warning">
+
+        No schedules found.
+
+    </div>
+}
+
+<a asp-controller="Group"
+   asp-action="Edit"
+   asp-route-id="@Model.Id"
+   class="btn btn-warning">
+
+    Edit
+
+</a>
+
+<a asp-controller="Group"
+   asp-action="Delete"
+   asp-route-id="@Model.Id"
+   class="btn btn-danger">
+
+    Delete
+
+</a>
+
+<a asp-controller="AcadimicYear"
+   asp-action="Details"
+   asp-route-id="@Model.AcademicYearId"
+   class="btn btn-secondary">
+
+    Back
+
+</a>

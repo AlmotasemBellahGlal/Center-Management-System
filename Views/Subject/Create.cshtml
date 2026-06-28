@@ -1,0 +1,25 @@
+﻿@model Center_Management.Models.Subject
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Subject</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <partial name="PartialView/_CreateEditPartiaView" model="Model" />
+        </form>
+    </div>
+</div>
+<br />
+<div>
+    <partial name="_BackToListPartialView" />
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

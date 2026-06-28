@@ -1,0 +1,119 @@
+﻿@model Center_Management.Models.Student
+
+@{
+    ViewData["Title"] = "Student Details";
+}
+
+<h2>Student Details</h2>
+
+<hr />
+
+<dl class="row">
+
+    <dt class="col-sm-3">
+        Full Name
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.FullName
+    </dd>
+
+    <dt class="col-sm-3">
+        Phone
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.PhoneNumber
+    </dd>
+
+    <dt class="col-sm-3">
+        Parent Phone
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.ParentPhoneNumber
+    </dd>
+
+</dl>
+
+<hr />
+
+<h4>Registered Groups</h4>
+
+@if (Model.StudentGroups.Any(s => s.IsActive))
+{
+    @foreach (var item in Model.StudentGroups.Where(s => s.IsActive))
+    {
+        <div class="card mb-3">
+
+            <div class="card-header">
+
+                <strong>@item.Group.Name</strong>
+
+            </div>
+
+            <div class="card-body">
+
+                <p>
+
+                    <strong>Subject :</strong>
+
+                    @item.Group.AcademicYear.Subject.Name
+
+                </p>
+
+                <p>
+
+                    <strong>Academic Year :</strong>
+
+                    @item.Group.AcademicYear.Name
+
+                </p>
+
+                <strong>Schedules</strong>
+
+                <ul>
+
+                    @foreach (var schedule in item.Group.Schedules)
+                    {
+                        <li>
+
+                            @schedule.Day
+
+                            -
+
+                            @schedule.StartTime.ToString(@"hh\:mm")
+
+                        </li>
+                    }
+
+                </ul>
+
+            </div>
+
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-warning">
+
+        Student has no active groups.
+
+    </div>
+}
+
+<a asp-action="Edit"
+   asp-route-id="@Model.Id"
+   class="btn btn-warning">
+
+    Edit
+
+</a>
+
+<a asp-action="Index"
+   class="btn btn-secondary">
+
+    Back
+
+</a>
