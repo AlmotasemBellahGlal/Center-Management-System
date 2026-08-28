@@ -1,19 +1,25 @@
 ﻿@model AcademicYear
-<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div asp-validation-summary="ModelOnly" class="vf-errors"></div>
+
 <div class="form-group">
-    <label asp-for="Name" class="control-label"></label>
-    <input asp-for="Name" class="form-control" />
-    <span asp-validation-for="Name" class="text-danger"></span>
+    <label asp-for="Name" class="form-label">
+        اسم السنة الدراسية <span class="form-required">*</span>
+    </label>
+    <input asp-for="Name" class="form-input" placeholder="مثال: الصف الثالث الإعدادي 2025" />
+    <span asp-validation-for="Name" class="form-error"></span>
 </div>
+
 <div class="form-group">
-    <label asp-for="MonthlyPrice" class="control-label"></label>
-    <input asp-for="MonthlyPrice" class="form-control" />
-    <span asp-validation-for="MonthlyPrice" class="text-danger"></span>
+    <label asp-for="MonthlyPrice" class="form-label">
+        السعر الشهري <span class="form-required">*</span>
+    </label>
+    <input asp-for="MonthlyPrice" class="form-input" type="number" step="0.01" min="50" max="500" placeholder="مثال: 350" />
+    <span asp-validation-for="MonthlyPrice" class="form-error"></span>
+    <span class="form-help">السعر الشهري للطالب بالجنيه المصري</span>
 </div>
-<div class="form-group">
-    <label asp-for="SubjectId" class="control-label">Subject</label>
-    <select asp-for="SubjectId" class="form-control" asp-items="ViewBag.SubjectList"></select>
-</div>
-<div class="form-group">
-    <input type="submit" value="Create" class="btn btn-primary" />
-</div>
+
+<style>
+.vf-errors { background:var(--danger-50); border:1px solid var(--danger-100); border-radius:.6rem; padding:.75rem 1rem; margin-bottom:1.25rem; font-size:.8125rem; color:var(--danger); }
+.vf-errors ul { margin:0; padding-inline-start:1.25rem; }
+</style>

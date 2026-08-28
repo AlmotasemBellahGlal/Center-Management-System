@@ -1,0 +1,101 @@
+@model CreateTeacherVM
+@{
+    ViewData["Title"] = "إضافة معلم جديد";
+}
+
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">إضافة معلم جديد</h1>
+        <p class="vf-sub">أنشئ حساباً جديداً لمعلم في النظام</p>
+    </div>
+    <a asp-action="Users" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div>
+
+<form asp-action="CreateTeacher" method="post">
+    <div asp-validation-summary="All" class="vf-errors"></div>
+
+    <div class="vf-two-col">
+        @* Personal info *@
+        <div class="vf-section">
+            <div class="vf-section__head">
+                <div class="vf-section__icon" style="background:var(--success-50);color:var(--success)"><i class="fas fa-id-card"></i></div>
+                <h2 class="vf-section__title">المعلومات الشخصية</h2>
+            </div>
+            <div class="vf-section__body">
+                <div class="vf-field">
+                    <label asp-for="FullName" class="vf-label">الاسم الكامل <span class="vf-req">*</span></label>
+                    <input asp-for="FullName" class="vf-input" placeholder="أدخل الاسم الكامل" autofocus />
+                    <span asp-validation-for="FullName" class="vf-err"></span>
+                </div>
+                <div class="vf-field" style="margin-top:1rem">
+                    <label asp-for="PhoneNumber" class="vf-label">رقم الهاتف</label>
+                    <input asp-for="PhoneNumber" class="vf-input" placeholder="01XXXXXXXXX" dir="ltr" />
+                    <span asp-validation-for="PhoneNumber" class="vf-err"></span>
+                </div>
+            </div>
+        </div>
+
+        @* Account info *@
+        <div class="vf-section">
+            <div class="vf-section__head">
+                <div class="vf-section__icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-key"></i></div>
+                <h2 class="vf-section__title">بيانات تسجيل الدخول</h2>
+            </div>
+            <div class="vf-section__body">
+                <div class="vf-field">
+                    <label asp-for="Email" class="vf-label">البريد الإلكتروني <span class="vf-req">*</span></label>
+                    <input asp-for="Email" type="email" class="vf-input" placeholder="example@domain.com" dir="ltr" />
+                    <span asp-validation-for="Email" class="vf-err"></span>
+                    <span class="vf-hint">سيُستخدم كاسم مستخدم لتسجيل الدخول</span>
+                </div>
+                <div class="vf-field" style="margin-top:1rem">
+                    <label asp-for="Password" class="vf-label">كلمة المرور <span class="vf-req">*</span></label>
+                    <input asp-for="Password" type="password" class="vf-input" placeholder="••••••••" dir="ltr" />
+                    <span asp-validation-for="Password" class="vf-err"></span>
+                </div>
+                <div class="vf-field" style="margin-top:1rem">
+                    <label asp-for="ConfirmPassword" class="vf-label">تأكيد كلمة المرور <span class="vf-req">*</span></label>
+                    <input asp-for="ConfirmPassword" type="password" class="vf-input" placeholder="••••••••" dir="ltr" />
+                    <span asp-validation-for="ConfirmPassword" class="vf-err"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="vf-footer">
+        <a asp-action="Users" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
+        <button type="submit" class="vf-submit"><i class="fas fa-save"></i> إضافة المعلم</button>
+    </div>
+</form>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<style>
+.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
+.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-back-btn:hover { background:var(--gray-150); }
+.vf-errors { background:var(--danger-50);border:1px solid var(--danger-100);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.8125rem;color:var(--danger); }
+.vf-errors ul { margin:0;padding-inline-start:1.25rem; }
+.vf-two-col { display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem; }
+@@media (max-width:700px) { .vf-two-col { grid-template-columns:1fr; } }
+.vf-section { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
+.vf-section__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vf-section__icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
+.vf-section__title { font-size:.875rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-section__body { padding:1.25rem; }
+.vf-field { }
+.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
+.vf-req { color:var(--danger); }
+.vf-input { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
+.vf-input:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-100); }
+.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
+.vf-hint { display:block;font-size:.75rem;color:var(--text-muted);margin-top:.3rem; }
+.vf-footer { display:flex;justify-content:flex-end;gap:.5rem;flex-wrap:wrap;padding:1.25rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.85rem; }
+.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-cancel:hover { background:var(--gray-150); }
+.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
+.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,125,94,.3); }
+</style>
+}

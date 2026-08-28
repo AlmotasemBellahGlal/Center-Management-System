@@ -1,0 +1,64 @@
+@model DeleteUserVM
+@{
+    ViewData["Title"] = "حذف مستخدم";
+}
+
+<div class="vd-wrap">
+    <div class="vd-icon vd-icon--danger"><i class="fas fa-user-times"></i></div>
+    <h1 class="vd-title">تأكيد حذف المستخدم</h1>
+    <p class="vd-text">سيتم حذف هذا الحساب نهائياً من النظام ولا يمكن التراجع عن هذا الإجراء.</p>
+
+    <div class="vd-info-box">
+        <div class="vd-info-row">
+            <span class="vd-info-label">الاسم</span>
+            <span class="vd-info-value">@Model.FullName</span>
+        </div>
+        <div class="vd-info-row">
+            <span class="vd-info-label">البريد الإلكتروني</span>
+            <span class="vd-info-value">@Model.Email</span>
+        </div>
+        <div class="vd-info-row">
+            <span class="vd-info-label">الدور</span>
+            <span class="vd-info-value">
+                @if (Model.Roles.Contains("Teacher"))
+                { <span class="vd-role vd-role--green"><i class="fas fa-chalkboard-teacher"></i> معلم</span> }
+                else if (Model.Roles.Contains("Student"))
+                { <span class="vd-role vd-role--blue"><i class="fas fa-user-graduate"></i> طالب</span> }
+                else
+                { <span class="vd-role vd-role--amber"><i class="fas fa-user-shield"></i> @Model.Roles</span> }
+            </span>
+        </div>
+    </div>
+
+    <div class="vd-actions">
+        <a asp-action="Users" class="vd-btn vd-btn--ghost"><i class="fas fa-times"></i> إلغاء</a>
+        <form asp-action="DeleteUserConfirmed" method="post" style="display:inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="vd-btn vd-btn--danger"><i class="fas fa-trash"></i> نعم، احذف الحساب</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.vd-wrap { max-width:480px;margin:2rem auto;text-align:center; }
+.vd-icon { font-size:3rem;margin-bottom:1rem; }
+.vd-icon--danger { color:var(--danger); }
+.vd-title { font-size:1.3rem;font-weight:700;color:var(--text-primary);margin:0 0 .75rem; }
+.vd-text { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem;line-height:1.6; }
+.vd-info-box { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.75rem;margin-bottom:1.5rem;overflow:hidden;text-align:start; }
+.vd-info-row { display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;border-bottom:1px solid var(--border-light);gap:1rem; }
+.vd-info-row:last-child { border-bottom:none; }
+.vd-info-label { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);flex-shrink:0; }
+.vd-info-value { font-size:.875rem;font-weight:600;color:var(--text-primary); }
+.vd-role { display:inline-flex;align-items:center;gap:.3rem;padding:.25em .7em;border-radius:2rem;font-size:.75rem;font-weight:700; }
+.vd-role--green { background:var(--success-50);color:var(--success); }
+.vd-role--blue  { background:var(--primary-50);color:var(--primary); }
+.vd-role--amber { background:var(--warning-50);color:var(--warning); }
+.vd-actions { display:flex;justify-content:center;gap:.75rem; }
+.vd-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;border-radius:.55rem;font-size:.875rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vd-btn--ghost  { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vd-btn--ghost:hover  { background:var(--gray-150); }
+.vd-btn--danger { background:var(--danger);color:#fff; } .vd-btn--danger:hover { background:var(--danger-hover);box-shadow:0 4px 12px rgba(160,53,53,.3); }
+</style>
+}

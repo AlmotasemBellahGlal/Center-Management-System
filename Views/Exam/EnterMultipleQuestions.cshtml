@@ -1,0 +1,153 @@
+@model AddMultipleQuestionsVM
+@{
+    var exam = ViewBag.Exam as Exam;
+    ViewData["Title"] = "إدخال الأسئلة";
+}
+
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">إدخال @Model.Questions.Count سؤال</h1>
+        <p class="vf-sub">@exam?.Title</p>
+    </div>
+</div>
+
+<form asp-action="SaveMultipleQuestions" method="post" enctype="multipart/form-data" id="mqForm">
+    <input type="hidden" asp-for="ExamId" />
+    <input type="hidden" asp-for="QuestionCount" />
+
+    @for (int i = 0; i < Model.Questions.Count; i++)
+    {
+        <div class="mq-card">
+            <div class="mq-card__head">
+                <span class="mq-card__num">السؤال @(i + 1)</span>
+                <span class="mq-card__order">ترتيب: @Model.Questions[i].Order</span>
+            </div>
+            <input type="hidden" asp-for="Questions[i].Order" />
+
+            <div class="vf-field">
+                <label class="vf-label">نص السؤال <span class="vf-req">*</span></label>
+                <textarea asp-for="Questions[i].Text" class="vf-textarea" rows="3" placeholder="اكتب نص السؤال..."></textarea>
+                <span asp-validation-for="Questions[i].Text" class="vf-err"></span>
+            </div>
+
+            <div class="vf-field" style="margin-top:.875rem">
+                <label class="vf-label">صورة <span class="vf-opt">(اختياري)</span></label>
+                <input type="file" asp-for="Questions[i].QuestionImage" class="vf-input-file" accept="image/jpeg,image/png,image/gif,image/webp" />
+            </div>
+
+            <div class="mq-opts-grid">
+                <div class="vf-opt-field">
+                    <div class="vf-opt-field__letter mq-letter--a">A</div>
+                    <div style="flex:1">
+                        <label class="vf-label vf-label--sm">الخيار A <span class="vf-req">*</span></label>
+                        <input asp-for="Questions[i].OptionA" class="vf-input" placeholder="الخيار الأول" />
+                        <span asp-validation-for="Questions[i].OptionA" class="vf-err"></span>
+                    </div>
+                </div>
+                <div class="vf-opt-field">
+                    <div class="vf-opt-field__letter mq-letter--b">B</div>
+                    <div style="flex:1">
+                        <label class="vf-label vf-label--sm">الخيار B <span class="vf-req">*</span></label>
+                        <input asp-for="Questions[i].OptionB" class="vf-input" placeholder="الخيار الثاني" />
+                        <span asp-validation-for="Questions[i].OptionB" class="vf-err"></span>
+                    </div>
+                </div>
+                <div class="vf-opt-field">
+                    <div class="vf-opt-field__letter mq-letter--c">C</div>
+                    <div style="flex:1">
+                        <label class="vf-label vf-label--sm">الخيار C <span class="vf-req">*</span></label>
+                        <input asp-for="Questions[i].OptionC" class="vf-input" placeholder="الخيار الثالث" />
+                        <span asp-validation-for="Questions[i].OptionC" class="vf-err"></span>
+                    </div>
+                </div>
+                <div class="vf-opt-field">
+                    <div class="vf-opt-field__letter mq-letter--d">D</div>
+                    <div style="flex:1">
+                        <label class="vf-label vf-label--sm">الخيار D <span class="vf-req">*</span></label>
+                        <input asp-for="Questions[i].OptionD" class="vf-input" placeholder="الخيار الرابع" />
+                        <span asp-validation-for="Questions[i].OptionD" class="vf-err"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vf-row" style="margin-top:.875rem">
+                <div class="vf-field">
+                    <label class="vf-label">الإجابة الصحيحة <span class="vf-req">*</span></label>
+                    <select asp-for="Questions[i].CorrectAnswer" class="vf-select">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                    <span asp-validation-for="Questions[i].CorrectAnswer" class="vf-err"></span>
+                </div>
+                <div class="vf-field">
+                    <label class="vf-label">الدرجة <span class="vf-req">*</span></label>
+                    <input asp-for="Questions[i].Points" type="number" class="vf-input" min="0.5" max="100" step="0.5" />
+                    <span asp-validation-for="Questions[i].Points" class="vf-err"></span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="mq-save-bar">
+        <div>
+            <p class="mq-save-bar__title">حفظ @Model.Questions.Count سؤال</p>
+            <p class="mq-save-bar__sub">تأكد من ملء جميع الحقول المطلوبة</p>
+        </div>
+        <div class="mq-save-bar__btns">
+            <a asp-action="Details" asp-route-id="@Model.ExamId" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
+            <button type="submit" class="vf-submit vf-submit--gold" id="saveBtn"><i class="fas fa-save"></i> حفظ الأسئلة</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<style>
+.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
+.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.mq-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem;margin-bottom:1rem;position:relative;overflow:hidden; }
+.mq-card::before { content:'';position:absolute;top:0;inset-inline-start:0;inset-inline-end:0;height:3px;background:var(--gold); }
+.mq-card__head { display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem; }
+.mq-card__num { font-size:.875rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.04em; }
+.mq-card__order { font-size:.75rem;color:var(--text-muted); }
+.vf-field { }
+.vf-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem; }
+.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
+.vf-label--sm { font-size:.75rem; }
+.vf-req { color:var(--danger); }
+.vf-opt { font-size:.72rem;font-weight:600;background:var(--gold-50);color:var(--gold);padding:.1em .5em;border-radius:2rem;vertical-align:middle; }
+.vf-input,.vf-select,.vf-textarea { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
+.vf-input:focus,.vf-select:focus,.vf-textarea:focus { outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-50); }
+.vf-select { appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23887f74' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:left .6rem center;background-size:13px;padding-inline-start:1.9rem; }
+.vf-textarea { resize:vertical; }
+.vf-input-file { padding:.4rem .75rem;font-size:.8125rem; }
+.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
+.mq-opts-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;margin-top:.875rem; }
+.vf-opt-field { display:flex;align-items:flex-start;gap:.6rem; }
+.vf-opt-field__letter { width:30px;height:30px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:700;flex-shrink:0;margin-top:1.35rem; }
+.mq-letter--a { background:#2d5f8a; }
+.mq-letter--b { background:#4a8fa3; }
+.mq-letter--c { background:#2e7d5e; }
+.mq-letter--d { background:#b07830; }
+.mq-save-bar { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:1.25rem 1.5rem;background:var(--primary);border-radius:.85rem;margin-top:1.25rem;color:#fff; }
+.mq-save-bar__title { font-size:1rem;font-weight:700;margin:0; }
+.mq-save-bar__sub { font-size:.8rem;opacity:.8;margin:.2rem 0 0; }
+.mq-save-bar__btns { display:flex;gap:.5rem; }
+.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-cancel:hover { background:rgba(255,255,255,.25); }
+.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
+.vf-submit:hover { background:var(--success-hover); }
+.vf-submit--gold { background:var(--gold); }
+.vf-submit--gold:hover { background:var(--gold-hover); }
+</style>
+<script>
+document.getElementById('mqForm').addEventListener('submit', function() {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+});
+</script>
+}

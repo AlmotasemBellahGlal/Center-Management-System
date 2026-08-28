@@ -1,0 +1,170 @@
+@model Center_Management.View_Models.CreatePaymentVM
+
+@* Page Header *@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); flex-wrap: wrap; gap: var(--spacing);">
+    <h1 style="font-size: var(--text-2xl); font-weight: var(--font-bold); margin: 0;">
+        <i class="fas fa-money-bill-wave" style="margin-inline-start: var(--spacing-xs);"></i>
+        تسجيل دفعة جديدة - @Model.GroupName
+    </h1>
+    <a href="@Url.Action("Index", "Group")" class="btn btn--secondary">
+        <i class="fas fa-arrow-right" style="margin-inline-start: var(--spacing-xs);"></i>
+        العودة للمجموعات
+    </a>
+</div>
+
+<div class="card">
+    <div class="card__header card__header--primary">
+        <h2 class="card__title">
+            <i class="fas fa-credit-card" style="margin-inline-start: var(--spacing-xs);"></i>
+            تسجيل دفعة جديدة - @Model.GroupName
+        </h2>
+    </div>
+
+    <div class="card__body">
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="card" style="border: 2px solid var(--danger-color); background: var(--danger-light); margin-bottom: var(--spacing);">
+                <div class="card__body" style="display: flex; align-items: center; gap: var(--spacing-sm); color: var(--danger-color);">
+                    <i class="fas fa-exclamation-triangle" style="font-size: var(--text-xl);"></i>
+                    <span style="font-weight: var(--font-medium);">@ViewBag.ErrorMessage</span>
+                </div>
+            </div>
+        }
+        else if (!Model.ActiveStudents.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <i class="fas fa-users fa-3x"></i>
+                </div>
+                <h3 class="empty-state__title">لا يوجد طلاب نشطون</h3>
+                <p class="empty-state__message">لا يوجد طلاب نشطون في هذه المجموعة</p>
+                <div class="empty-state__action">
+                    <a href="@Url.Action("Index", "Group")" class="btn btn--primary">
+                        <i class="fas fa-arrow-right" style="margin-inline-start: var(--spacing-xs);"></i>
+                        العودة للمجموعات
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="card" style="border: 2px solid var(--success-color); background: var(--success-light); margin-bottom: var(--spacing);">
+                    <div class="card__body" style="display: flex; align-items: center; gap: var(--spacing-sm); color: var(--success-color);">
+                        <i class="fas fa-check-circle" style="font-size: var(--text-xl);"></i>
+                        <span style="font-weight: var(--font-medium);">@TempData["SuccessMessage"]</span>
+                    </div>
+                </div>
+            }
+
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="All" class="form-error" style="margin-bottom: var(--spacing);"></div>
+
+                <input type="hidden" asp-for="GroupId" />
+                <input type="hidden" asp-for="GroupName" />
+                <input type="hidden" asp-for="MonthlyPrice" />
+
+                @* معلومات المجموعة *@
+                <div class="card" style="margin-bottom: var(--spacing); border: 1px solid var(--border-color);">
+                    <div class="card__header card__header--info">
+                        <h5 class="card__title">
+                            <i class="fas fa-info-circle" style="margin-inline-start: var(--spacing-xs);"></i>
+                            معلومات المجموعة
+                        </h5>
+                    </div>
+                    <div class="card__body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing);">
+                            <div style="padding: var(--spacing); background: var(--primary-light); border-radius: var(--radius); border-inline-start: 4px solid var(--primary-color);">
+                                <p style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-muted); margin-bottom: var(--spacing-xs);">المجموعة</p>
+                                <p style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--primary-color); margin: 0;">@Model.GroupName</p>
+                            </div>
+                            <div style="padding: var(--spacing); background: var(--success-light); border-radius: var(--radius); border-inline-start: 4px solid var(--success-color);">
+                                <p style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-muted); margin-bottom: var(--spacing-xs);">السعر الشهري</p>
+                                <p style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--success-color); margin: 0;">
+                                    @Model.MonthlyPrice.ToString("N2") جنيه
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Payment Details *@
+                <div class="card" style="margin-bottom: var(--spacing); border: 1px solid var(--border-color);">
+                    <div class="card__header card__header--warning">
+                        <h5 class="card__title">
+                            <i class="fas fa-credit-card" style="margin-inline-start: var(--spacing-xs);"></i>
+                            تفاصيل الدفعة
+                        </h5>
+                    </div>
+                    <div class="card__body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing);">
+                            @* اختيار الطالب *@
+                            <div class="form-group">
+                                <label asp-for="StudentId" class="form-label">
+                                    <i class="fas fa-user" style="margin-inline-start: var(--spacing-xs);"></i>
+                                    الطالب
+                                    <span class="form-required">*</span>
+                                </label>
+                                <select asp-for="StudentId" class="form-select" asp-items="@(new SelectList(Model.ActiveStudents, "Id", "FullName"))">
+                                    <option value="">-- اختر طالب --</option>
+                                </select>
+                                <span asp-validation-for="StudentId" class="form-error"></span>
+                            </div>
+
+                            @* الشهر *@
+                            <div class="form-group">
+                                <label asp-for="Month" class="form-label">
+                                    <i class="fas fa-calendar-alt" style="margin-inline-start: var(--spacing-xs);"></i>
+                                    الشهر
+                                    <span class="form-required">*</span>
+                                </label>
+                                <select asp-for="Month" class="form-select">
+                                    <option value="1" selected="@(DateTime.Now.Month == 1)">يناير</option>
+                                    <option value="2" selected="@(DateTime.Now.Month == 2)">فبراير</option>
+                                    <option value="3" selected="@(DateTime.Now.Month == 3)">مارس</option>
+                                    <option value="4" selected="@(DateTime.Now.Month == 4)">أبريل</option>
+                                    <option value="5" selected="@(DateTime.Now.Month == 5)">مايو</option>
+                                    <option value="6" selected="@(DateTime.Now.Month == 6)">يونيو</option>
+                                    <option value="7" selected="@(DateTime.Now.Month == 7)">يوليو</option>
+                                    <option value="8" selected="@(DateTime.Now.Month == 8)">أغسطس</option>
+                                    <option value="9" selected="@(DateTime.Now.Month == 9)">سبتمبر</option>
+                                    <option value="10" selected="@(DateTime.Now.Month == 10)">أكتوبر</option>
+                                    <option value="11" selected="@(DateTime.Now.Month == 11)">نوفمبر</option>
+                                    <option value="12" selected="@(DateTime.Now.Month == 12)">ديسمبر</option>
+                                </select>
+                                <span asp-validation-for="Month" class="form-error"></span>
+                            </div>
+
+                            @* السنة *@
+                            <div class="form-group">
+                                <label asp-for="Year" class="form-label">
+                                    <i class="fas fa-calendar" style="margin-inline-start: var(--spacing-xs);"></i>
+                                    السنة
+                                    <span class="form-required">*</span>
+                                </label>
+                                <input asp-for="Year" class="form-input" type="number" min="2020" max="2030" value="@DateTime.Now.Year" />
+                                <span asp-validation-for="Year" class="form-error"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card__footer" style="display: flex; gap: var(--spacing-sm); justify-content: flex-end;">
+                    <a href="@Url.Action("Index", "Payment", new { groupId = Model.GroupId })" class="btn btn--secondary">
+                        <i class="fas fa-times" style="margin-inline-start: var(--spacing-xs);"></i>
+                        إلغاء
+                    </a>
+                    <button type="submit" class="btn btn--success">
+                        <i class="fas fa-save" style="margin-inline-start: var(--spacing-xs);"></i>
+                        تسجيل الدفعة
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

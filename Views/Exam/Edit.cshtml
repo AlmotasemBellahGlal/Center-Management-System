@@ -1,0 +1,102 @@
+@model Center_Management.Models.Exam
+@{
+    ViewData["Title"] = "تعديل الاختبار";
+}
+
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">تعديل الاختبار</h1>
+        <p class="vf-sub">@Model.Group?.Name · @Model.Group?.AcademicYear?.Name</p>
+    </div>
+    <a href="@Url.Action("Details",new{id=Model.Id})" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="vf-card">
+    <div class="vf-card__head">
+        <div class="vf-card__head-icon" style="background:var(--warning-50);color:var(--warning)"><i class="fas fa-edit"></i></div>
+        <h2 class="vf-card__title">تحديث بيانات الاختبار</h2>
+    </div>
+    <form asp-action="Edit" method="post" class="vf-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="GroupId" />
+
+        <div class="vf-field">
+            <label asp-for="Title" class="vf-label">عنوان الاختبار <span class="vf-req">*</span></label>
+            <input asp-for="Title" class="vf-input" placeholder="عنوان الاختبار" />
+            <span asp-validation-for="Title" class="vf-err"></span>
+        </div>
+
+        <div class="vf-field" style="margin-top:1rem">
+            <label asp-for="Description" class="vf-label">الوصف <span class="vf-opt">(اختياري)</span></label>
+            <textarea asp-for="Description" class="vf-textarea" rows="3" placeholder="وصف الاختبار..."></textarea>
+            <span asp-validation-for="Description" class="vf-err"></span>
+        </div>
+
+        <div class="vf-row" style="margin-top:1rem">
+            <div class="vf-field">
+                <label asp-for="Type" class="vf-label">نوع الاختبار <span class="vf-req">*</span></label>
+                <select asp-for="Type" class="vf-select" asp-items="Html.GetEnumSelectList<Center_Management.Models.ExamType>()">
+                    <option value="">— اختر —</option>
+                </select>
+                <span asp-validation-for="Type" class="vf-err"></span>
+            </div>
+            <div class="vf-field">
+                <label asp-for="DurationMinutes" class="vf-label">المدة بالدقائق <span class="vf-opt">(اختياري)</span></label>
+                <input asp-for="DurationMinutes" type="number" class="vf-input" min="1" placeholder="اتركه فارغاً للوقت الكامل" />
+                <span asp-validation-for="DurationMinutes" class="vf-err"></span>
+            </div>
+        </div>
+
+        <div class="vf-row" style="margin-top:1rem">
+            <div class="vf-field">
+                <label asp-for="StartDate" class="vf-label">تاريخ البدء <span class="vf-req">*</span></label>
+                <input asp-for="StartDate" type="datetime-local" class="vf-input" />
+                <span asp-validation-for="StartDate" class="vf-err"></span>
+            </div>
+            <div class="vf-field">
+                <label asp-for="EndDate" class="vf-label">تاريخ الانتهاء <span class="vf-req">*</span></label>
+                <input asp-for="EndDate" type="datetime-local" class="vf-input" />
+                <span asp-validation-for="EndDate" class="vf-err"></span>
+            </div>
+        </div>
+
+        <div class="vf-form__footer">
+            <a href="@Url.Action("Details",new{id=Model.Id})" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
+            <button type="submit" class="vf-submit vf-submit--amber"><i class="fas fa-save"></i> حفظ التعديلات</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<style>
+.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
+.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-back-btn:hover { background:var(--gray-150); }
+.vf-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
+.vf-card__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vf-card__head-icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
+.vf-card__title { font-size:.9rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-form { padding:1.5rem; }
+.vf-field { }
+.vf-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem; }
+.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
+.vf-req { color:var(--danger); }
+.vf-opt { font-size:.72rem;font-weight:600;background:var(--warning-50);color:var(--warning);padding:.1em .5em;border-radius:2rem;vertical-align:middle; }
+.vf-input,.vf-select,.vf-textarea { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
+.vf-input:focus,.vf-select:focus,.vf-textarea:focus { outline:none;border-color:var(--warning);box-shadow:0 0 0 3px var(--warning-100); }
+.vf-select { appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23887f74' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:left .6rem center;background-size:13px;padding-inline-start:1.9rem; }
+.vf-textarea { resize:vertical; }
+.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
+.vf-form__footer { display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border-light); }
+.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-cancel:hover { background:var(--gray-150); }
+.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
+.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px); }
+.vf-submit--amber { background:var(--warning); }
+.vf-submit--amber:hover { background:var(--warning-hover);box-shadow:0 4px 12px rgba(176,120,48,.3); }
+</style>
+}

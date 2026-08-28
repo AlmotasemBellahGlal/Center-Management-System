@@ -1,0 +1,215 @@
+/* =========================================
+   Center Management — Premium Design Tokens
+   Calm · Elegant · Professional · Modern
+   ========================================= */
+:root {
+  /* ── Brand Palette ── */
+  --primary:        #2d5f8a;
+  --primary-hover:  #244e74;
+  --primary-dim:    #1d3f5d;
+  --primary-50:     #eef4fa;
+  --primary-100:    #d5e6f4;
+  --primary-200:    #a8cceb;
+
+  --accent:         #4a8fa3;
+  --accent-hover:   #3d7a8c;
+  --accent-50:      #eef6f9;
+  --accent-100:     #c8e5ed;
+
+  --gold:           #b08040;
+  --gold-hover:     #9a6e33;
+  --gold-50:        #faf4ea;
+  --gold-100:       #eedcb8;
+
+  --success:        #2e7d5e;
+  --success-hover:  #256650;
+  --success-50:     #ecf7f2;
+  --success-100:    #c2e4d5;
+
+  --warning:        #b07830;
+  --warning-hover:  #956428;
+  --warning-50:     #faf2e6;
+  --warning-100:    #eed8aa;
+
+  --danger:         #a03535;
+  --danger-hover:   #882c2c;
+  --danger-50:      #f8eded;
+  --danger-100:     #e8b8b8;
+
+  --info:           #2d6a8a;
+  --info-hover:     #245776;
+  --info-50:        #eef4f9;
+  --info-100:       #b8d6ea;
+
+  /* ── Neutral Scale (Warm-Toned) ── */
+  --white:      #ffffff;
+  --gray-25:    #fdfcfb;
+  --gray-50:    #f8f6f3;
+  --gray-100:   #f0ece6;
+  --gray-150:   #e8e3dc;
+  --gray-200:   #ddd8d0;
+  --gray-300:   #c8c2b8;
+  --gray-400:   #a89e93;
+  --gray-500:   #887f74;
+  --gray-600:   #685f55;
+  --gray-700:   #4a4238;
+  --gray-800:   #322c24;
+  --gray-900:   #1e1a14;
+
+  /* ── Background ── */
+  --bg-app:     #f2efe9;
+  --bg-page:    #f8f6f3;
+  --bg-card:    #ffffff;
+  --bg-subtle:  #f5f2ed;
+  --bg-overlay: rgba(30, 26, 20, 0.5);
+
+  /* ── Text ── */
+  --text-primary:   #1e1a14;
+  --text-secondary: #4a4238;
+  --text-muted:     #887f74;
+  --text-disabled:  #a89e93;
+  --text-inverse:   #ffffff;
+  --text-link:      var(--primary);
+  --text-link-hover:var(--primary-hover);
+
+  /* ── Borders ── */
+  --border:       #ddd8d0;
+  --border-light: #e8e3dc;
+  --border-dark:  #c8c2b8;
+  --border-focus: var(--primary);
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 1px 2px rgba(30,26,20,0.04);
+  --shadow-sm: 0 1px 4px rgba(30,26,20,0.06), 0 1px 2px rgba(30,26,20,0.04);
+  --shadow:    0 2px 8px rgba(30,26,20,0.07), 0 1px 3px rgba(30,26,20,0.04);
+  --shadow-md: 0 4px 12px rgba(30,26,20,0.08), 0 2px 4px rgba(30,26,20,0.04);
+  --shadow-lg: 0 8px 24px rgba(30,26,20,0.10), 0 3px 6px rgba(30,26,20,0.04);
+  --shadow-xl: 0 16px 48px rgba(30,26,20,0.12), 0 6px 12px rgba(30,26,20,0.04);
+
+  /* ── Radius ── */
+  --r-sm:   0.25rem;
+  --r:      0.5rem;
+  --r-md:   0.75rem;
+  --r-lg:   1rem;
+  --r-xl:   1.5rem;
+  --r-full: 9999px;
+
+  /* ── Spacing ── */
+  --sp-1:  0.25rem;
+  --sp-2:  0.5rem;
+  --sp-3:  0.75rem;
+  --sp-4:  1rem;
+  --sp-5:  1.25rem;
+  --sp-6:  1.5rem;
+  --sp-8:  2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+
+  /* ── Typography ── */
+  --font: 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --fs-xs:  0.75rem;
+  --fs-sm:  0.8125rem;
+  --fs-base:1rem;
+  --fs-md:  1.0625rem;
+  --fs-lg:  1.125rem;
+  --fs-xl:  1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.875rem;
+  --fw-normal:  400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+  --lh-tight:   1.25;
+  --lh-normal:  1.5;
+  --lh-relaxed: 1.625;
+
+  /* ── Transitions ── */
+  --tr:      all 0.18s ease;
+  --tr-fast: all 0.12s ease;
+  --tr-slow: all 0.28s ease;
+
+  /* ── Layout ── */
+  --sidebar-w:          260px;
+  --sidebar-collapsed-w: 72px;
+  --navbar-h:           64px;
+
+  /* ── Sidebar Tokens ── */
+  --sb-bg:          #1e2d3d;
+  --sb-bg-hover:    rgba(255,255,255,0.06);
+  --sb-bg-active:   rgba(255,255,255,0.10);
+  --sb-text:        rgba(255,255,255,0.70);
+  --sb-text-active: #ffffff;
+  --sb-border:      rgba(255,255,255,0.08);
+  --sb-accent:      #4a8fa3;
+
+  /* ── Z-index ── */
+  --z-dropdown: 900;
+  --z-sticky:   910;
+  --z-fixed:    920;
+  --z-modal-bg: 930;
+  --z-modal:    940;
+  --z-toast:    950;
+  --z-tooltip:  950;
+
+  /* ── Legacy Aliases (for existing views) ── */
+  --primary-color:       var(--primary);
+  --primary-hover:       var(--primary-hover);
+  --primary-light:       var(--primary-50);
+  --primary-dark:        var(--primary-dim);
+  --secondary-color:     var(--gold);
+  --secondary-hover:     var(--gold-hover);
+  --secondary-light:     var(--gold-50);
+  --success-color:       var(--success);
+  --success-hover:       var(--success-hover);
+  --success-light:       var(--success-50);
+  --warning-color:       var(--warning);
+  --warning-hover:       var(--warning-hover);
+  --warning-light:       var(--warning-50);
+  --danger-color:        var(--danger);
+  --danger-hover:        var(--danger-hover);
+  --danger-light:        var(--danger-50);
+  --info-color:          var(--info);
+  --info-hover:          var(--info-hover);
+  --info-light:          var(--info-50);
+  --text-on-primary:     #ffffff;
+  --bg-primary:          var(--bg-card);
+  --bg-secondary:        var(--bg-app);
+  --border-color:        var(--border);
+  --border-light:        var(--border-light);
+  --border-dark:         var(--border-dark);
+  --radius-sm:           var(--r-sm);
+  --radius:              var(--r);
+  --radius-md:           var(--r-md);
+  --radius-lg:           var(--r-lg);
+  --radius-xl:           var(--r-xl);
+  --radius-full:         var(--r-full);
+  --spacing-xs:          var(--sp-1);
+  --spacing-sm:          var(--sp-2);
+  --spacing:             var(--sp-4);
+  --spacing-md:          var(--sp-6);
+  --spacing-lg:          var(--sp-8);
+  --spacing-xl:          var(--sp-12);
+  --shadow-sm:           var(--shadow-sm);
+  --shadow-md:           var(--shadow-md);
+  --shadow-lg:           var(--shadow-lg);
+  --shadow-xl:           var(--shadow-xl);
+  --text-xs:             var(--fs-xs);
+  --text-sm:             var(--fs-sm);
+  --text-base:           var(--fs-base);
+  --text-lg:             var(--fs-lg);
+  --text-xl:             var(--fs-xl);
+  --text-2xl:            var(--fs-2xl);
+  --text-3xl:            var(--fs-3xl);
+  --text-4xl:            2.25rem;
+  --font-normal:         var(--fw-normal);
+  --font-medium:         var(--fw-medium);
+  --font-semibold:       var(--fw-semibold);
+  --font-bold:           var(--fw-bold);
+  --font-sans:           var(--font);
+  --transition:          var(--tr);
+  --transition-fast:     var(--tr-fast);
+  --transition-slow:     var(--tr-slow);
+  --navbar-height:       var(--navbar-h);
+  --sidebar-width:       var(--sidebar-w);
+  --sidebar-bg:          var(--sb-bg);
+}

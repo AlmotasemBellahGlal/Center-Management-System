@@ -1,0 +1,147 @@
+@model StudentPaymentHistoryVM
+
+@{
+    ViewData["Title"] = "تاريخ المدفوعات - " + Model.StudentFullName;
+}
+
+<div class="card">
+    <div class="card__header card__header--primary">
+        <div class="d-flex justify-between align-center">
+            <h2 class="card__title">
+                <i class="fas fa-history ms-2"></i>
+                تاريخ المدفوعات - @Model.StudentFullName
+            </h2>
+            <div>
+                <a href="@Url.Action("Details", "Student", new { id = Model.StudentId })"
+                   class="btn btn--primary">
+                    <i class="fas fa-user ms-1"></i>
+                    ملف الطالب
+                </a>
+                <a href="@Url.Action("Index", "Student")"
+                   class="btn btn--secondary">
+                    <i class="fas fa-arrow-right ms-1"></i>
+                    رجوع
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card__body">
+        @if (!Model.Payments.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <i class="fas fa-money-bill-wave fa-3x"></i>
+                </div>
+                <h3 class="empty-state__title">لا توجد مدفوعات</h3>
+                <p class="empty-state__message">لا توجد مدفوعات مسجلة لهذا الطالب بعد</p>
+            </div>
+        }
+        else
+        {
+            @* إحصائيات سريعة *@
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing); margin-bottom: var(--spacing-lg);">
+                <div class="card" style="background: var(--primary-color); border: none;">
+                    <div class="card__body" style="text-align: center; color: white;">
+                        <h3 style="font-size: var(--text-3xl); font-weight: var(--font-bold); margin-bottom: var(--spacing-xs);">@Model.Payments.Count</h3>
+                        <p style="font-size: var(--text-sm); margin: 0; opacity: 0.9;">إجمالي المدفوعات</p>
+                    </div>
+                </div>
+                <div class="card" style="background: var(--success-color); border: none;">
+                    <div class="card__body" style="text-align: center; color: white;">
+                        <h3 style="font-size: var(--text-3xl); font-weight: var(--font-bold); margin-bottom: var(--spacing-xs);">@Model.Payments.Sum(p => p.Amount).ToString("N2")</h3>
+                        <p style="font-size: var(--text-sm); margin: 0; opacity: 0.9;">إجمالي المبالغ (جنيه)</p>
+                    </div>
+                </div>
+                <div class="card" style="background: var(--warning-color); border: none;">
+                    <div class="card__body" style="text-align: center; color: white;">
+                        <h3 style="font-size: var(--text-3xl); font-weight: var(--font-bold); margin-bottom: var(--spacing-xs);">@Model.Payments.Count(p => p.IsPaid)</h3>
+                        <p style="font-size: var(--text-sm); margin: 0; opacity: 0.9;">المدفوعات المكتملة</p>
+                    </div>
+                </div>
+            </div>
+
+            @* جدول المدفوعات *@
+            <div class="table-container">
+                <table class="table">
+                    <thead class="table__head">
+                        <tr>
+                            <th class="table__th">
+                                <i class="fas fa-users ms-1"></i>
+                                المجموعة
+                            </th>
+                            <th class="table__th">
+                                <i class="fas fa-calendar-alt ms-1"></i>
+                                الشهر
+                            </th>
+                            <th class="table__th">
+                                <i class="fas fa-calendar ms-1"></i>
+                                السنة
+                            </th>
+                            <th class="table__th">
+                                <i class="fas fa-money-bill ms-1"></i>
+                                المبلغ
+                            </th>
+                            <th class="table__th">
+                                <i class="fas fa-check-circle ms-1"></i>
+                                حالة الدفع
+                            </th>
+                            <th class="table__th">
+                                <i class="fas fa-clock ms-1"></i>
+                                تاريخ الدفع
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="table__body">
+                        @foreach (var payment in Model.Payments)
+                        {
+                            <tr class="table__row">
+                                <td class="table__td">
+                                    <strong>@payment.GroupName</strong>
+                                </td>
+                                <td class="table__td">
+                                    @(new System.Globalization.CultureInfo("ar-SA").DateTimeFormat.GetMonthName(payment.Month))
+                                </td>
+                                <td class="table__td">
+                                    @payment.Year
+                                </td>
+                                <td class="table__td">
+                                    <span class="badge badge--primary" style="font-size: var(--text-sm); padding: var(--spacing-xs) var(--spacing-sm);">
+                                        @payment.Amount.ToString("N2") جنيه
+                                    </span>
+                                </td>
+                                <td class="table__td">
+                                    @if (payment.IsPaid)
+                                    {
+                                        <span class="badge badge--success">
+                                            <i class="fas fa-check ms-1"></i>
+                                            مدفوع
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge--danger">
+                                            <i class="fas fa-times ms-1"></i>
+                                            غير مدفوع
+                                        </span>
+                                    }
+                                </td>
+                                <td class="table__td">
+                                    @payment.PaymentDate.ToString("dd/MM/yyyy")
+                                    <br />
+                                    <small style="color: var(--text-muted); font-size: var(--text-xs);">@payment.PaymentDate.ToString("hh:mm tt")</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: var(--spacing); padding-top: var(--spacing); border-top: 1px solid var(--border-color);">
+                <small style="color: var(--text-muted); font-size: var(--text-sm);">
+                    <i class="fas fa-info-circle ms-1"></i>
+                    جميع المدفوعات مرتبة من الأحدث للأقدم
+                </small>
+            </div>
+        }
+    </div>
+</div>

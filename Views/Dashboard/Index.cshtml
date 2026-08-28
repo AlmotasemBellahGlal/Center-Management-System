@@ -1,0 +1,216 @@
+@model DashboardVM
+@using Microsoft.AspNetCore.Identity
+@using Center_Management.Models
+@inject UserManager<AppUser> UserManager
+
+@{
+    ViewData["Title"] = "لوحة التحكم";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var displayName = currentUser?.FullName ?? "مستخدم";
+    string roleLabel = User.IsInRole("Teacher") ? "معلم" : User.IsInRole("Student") ? "طالب" : "مسؤول";
+}
+
+@* ── Welcome Banner ── *@
+<div class="welcome-banner" style="margin-bottom:var(--sp-6)">
+    <div class="welcome-banner__text">
+        <p class="welcome-banner__greeting">@DateTime.Now.ToString("dddd، dd MMMM yyyy", new System.Globalization.CultureInfo("ar-EG"))</p>
+        <h1 class="welcome-banner__title">مرحباً، <span class="welcome-banner__name">@displayName</span></h1>
+        <p class="welcome-banner__date">@roleLabel · نظام إدارة المركز التعليمي</p>
+    </div>
+    <div class="welcome-banner__actions">
+        @if (User.IsInRole("Teacher") || User.IsInRole("Admin"))
+        {
+            <a href="@Url.Action("Index","Student")" class="welcome-banner__btn welcome-banner__btn--solid">
+                <i class="fas fa-users"></i> الطلاب
+            </a>
+            <a href="@Url.Action("Groups","Attendance")" class="welcome-banner__btn welcome-banner__btn--outline">
+                <i class="fas fa-clipboard-check"></i> الحضور
+            </a>
+        }
+        else
+        {
+            <a href="@Url.Action("StudentView","Material")" class="welcome-banner__btn welcome-banner__btn--solid">
+                <i class="fas fa-folder-open"></i> المواد
+            </a>
+            <a href="@Url.Action("MyExams","Exam")" class="welcome-banner__btn welcome-banner__btn--outline">
+                <i class="fas fa-file-alt"></i> اختباراتي
+            </a>
+        }
+    </div>
+</div>
+
+@if (User.IsInRole("Teacher") || User.IsInRole("Admin"))
+{
+    @* ── Stats ── *@
+    <div class="dashboard-stats" style="margin-bottom:var(--sp-6)">
+        <div class="stat-card stat-card--primary">
+            <div class="stat-card__content">
+                <p class="stat-card__label">الطلاب النشطون</p>
+                <h2 class="stat-card__value">@Model.ActiveStudentsCount</h2>
+                <div class="stat-card__trend"><i class="fas fa-users"></i> مسجلون في مجموعات نشطة</div>
+            </div>
+            <i class="fas fa-users stat-card__icon"></i>
+        </div>
+        <div class="stat-card stat-card--danger">
+            <div class="stat-card__content">
+                <p class="stat-card__label">غير المدفوعين</p>
+                <h2 class="stat-card__value">@Model.UnpaidStudentsCurrentMonth</h2>
+                <div class="stat-card__trend"><i class="fas fa-exclamation-triangle"></i> الشهر الحالي</div>
+            </div>
+            <i class="fas fa-exclamation-circle stat-card__icon"></i>
+        </div>
+        <div class="stat-card stat-card--success">
+            <div class="stat-card__content">
+                <p class="stat-card__label">نسبة النمو</p>
+                <h2 class="stat-card__value">@Model.GrowthRate</h2>
+                <div class="stat-card__trend"><i class="fas fa-chart-line"></i> مقارنة بالشهر الماضي</div>
+            </div>
+            <i class="fas fa-chart-line stat-card__icon"></i>
+        </div>
+        <div class="stat-card stat-card--warning">
+            <div class="stat-card__content">
+                <p class="stat-card__label">إيراد الشهر</p>
+                <h2 class="stat-card__value">@Model.MonthlyRevenue.ToString("N0") ج.م</h2>
+                <div class="stat-card__trend"><i class="fas fa-coins"></i> المدفوعات المؤكدة</div>
+            </div>
+            <i class="fas fa-coins stat-card__icon"></i>
+        </div>
+    </div>
+
+    @* ── Two-column layout ── *@
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:var(--sp-6);align-items:start">
+        @* Chart card *@
+        <div class="card">
+            <div class="card__header">
+                <div class="card-header-icon" style="background:var(--primary-50);color:var(--primary)">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3 class="card__title">التسجيلات الشهرية — آخر 12 شهر</h3>
+            </div>
+            <div class="card__body">
+                <canvas id="enrollmentsChart" style="max-height:320px"></canvas>
+            </div>
+        </div>
+
+        @* Quick actions *@
+        <div class="card">
+            <div class="card__header">
+                <div class="card-header-icon"><i class="fas fa-bolt"></i></div>
+                <h3 class="card__title">وصول سريع</h3>
+            </div>
+            <div class="dashboard-actions">
+                <div class="dashboard-actions__grid" style="grid-template-columns:1fr">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a href="@Url.Action("Users","Admin")" class="action-link action-link--primary">
+                            <div class="action-link__icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-users-cog"></i></div>
+                            <div class="action-link__text">
+                                <p class="action-link__title">إدارة المستخدمين</p>
+                                <p class="action-link__description">المعلمين والطلاب</p>
+                            </div>
+                            <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                        </a>
+                    }
+                    <a href="@Url.Action("Index","Student")" class="action-link">
+                        <div class="action-link__icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-users"></i></div>
+                        <div class="action-link__text">
+                            <p class="action-link__title">الطلاب</p>
+                            <p class="action-link__description">إدارة وتسجيل الطلاب</p>
+                        </div>
+                        <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                    </a>
+                    <a href="@Url.Action("Index","Group")" class="action-link">
+                        <div class="action-link__icon" style="background:var(--accent-50);color:var(--accent)"><i class="fas fa-layer-group"></i></div>
+                        <div class="action-link__text">
+                            <p class="action-link__title">المجموعات</p>
+                            <p class="action-link__description">إدارة مجموعات الدراسة</p>
+                        </div>
+                        <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                    </a>
+                    <a href="@Url.Action("Groups","Attendance")" class="action-link">
+                        <div class="action-link__icon" style="background:var(--success-50);color:var(--success)"><i class="fas fa-clipboard-check"></i></div>
+                        <div class="action-link__text">
+                            <p class="action-link__title">الحضور</p>
+                            <p class="action-link__description">تسجيل حضور الجلسات</p>
+                        </div>
+                        <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                    </a>
+                    <a href="@Url.Action("Groups","Payment")" class="action-link">
+                        <div class="action-link__icon" style="background:var(--warning-50);color:var(--warning)"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="action-link__text">
+                            <p class="action-link__title">المدفوعات</p>
+                            <p class="action-link__description">متابعة الرسوم</p>
+                        </div>
+                        <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                    </a>
+                    <a href="@Url.Action("GroupPicker","Exam")" class="action-link">
+                        <div class="action-link__icon" style="background:var(--gold-50);color:var(--gold)"><i class="fas fa-file-alt"></i></div>
+                        <div class="action-link__text">
+                            <p class="action-link__title">الاختبارات</p>
+                            <p class="action-link__description">إدارة الامتحانات</p>
+                        </div>
+                        <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                    </a>
+                    <a href="@Url.Action("Index","AcadimicYear")" class="action-link" style="border-bottom:none">
+                        <div class="action-link__icon" style="background:var(--danger-50);color:var(--danger)"><i class="fas fa-graduation-cap"></i></div>
+                        <div class="action-link__text">
+                            <p class="action-link__title">السنوات الدراسية</p>
+                            <p class="action-link__description">إدارة المناهج</p>
+                        </div>
+                        <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:0.7rem"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Responsive: stack on mobile *@
+    <style>
+        @@media (max-width: 900px) {
+            [style*="grid-template-columns:1fr 320px"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+
+    @section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script>
+            const monthlyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyEnrollments));
+            const labels = monthlyData.map(d => d.label);
+            const counts = monthlyData.map(d => d.count);
+            new Chart(document.getElementById('enrollmentsChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'عدد التسجيلات',
+                        data: counts,
+                        backgroundColor: 'rgba(45,95,138,0.65)',
+                        borderColor: 'rgba(45,95,138,0.9)',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(30,26,20,0.88)',
+                            titleFont: { family: 'Segoe UI', size: 13 },
+                            bodyFont:  { family: 'Segoe UI', size: 12 },
+                            padding: 10, displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font:{ size:11 } }, grid:{ color:'rgba(0,0,0,0.05)' } },
+                        x: { ticks: { font:{ size:11 } }, grid:{ display:false } }
+                    }
+                }
+            });
+        </script>
+    }
+}

@@ -1,0 +1,159 @@
+@model IEnumerable<Center_Management.Models.Exam>
+@{
+    ViewData["Title"] = "اختباراتي";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="vex-top">
+    <div>
+        <h1 class="vex-title"><i class="fas fa-book-open" style="color:var(--gold)"></i> اختباراتي</h1>
+        <p class="vex-sub">الاختبارات المتاحة لك الآن</p>
+    </div>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="vex-alert vex-alert--danger"><i class="fas fa-exclamation-circle"></i> @ViewBag.Error</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="vex-alert vex-alert--danger"><i class="fas fa-exclamation-circle"></i> @TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="vex-alert vex-alert--success"><i class="fas fa-check-circle"></i> @TempData["Success"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="vex-empty">
+        <div class="vex-empty__icon"><i class="fas fa-inbox"></i></div>
+        <h3>لا توجد اختبارات متاحة</h3>
+        <p>لا توجد اختبارات متاحة لك في الوقت الحالي</p>
+    </div>
+}
+else
+{
+    <div class="vex-grid">
+        @foreach (var exam in Model)
+        {
+            int qCount = exam.Questions?.Count ?? 0;
+            int totalPts = exam.Questions?.Sum(q => q.Points) ?? 0;
+            var attempt = exam.Attempts?.FirstOrDefault();
+            bool hasCompleted = attempt != null && attempt.IsSubmitted;
+            var now = DateTime.Now;
+            bool canTake = !hasCompleted && now >= exam.StartDate && now <= exam.EndDate;
+            var timeLeft = exam.EndDate - now;
+
+            string ribbonClass = hasCompleted ? "vex-ribbon--done" : canTake ? "vex-ribbon--live" : now < exam.StartDate ? "vex-ribbon--soon" : "vex-ribbon--ended";
+            string ribbonText  = hasCompleted ? "مكتمل" : canTake ? "متاح الآن" : now < exam.StartDate ? "قريباً" : "انتهى";
+            string ribbonIcon  = hasCompleted ? "fa-check-circle" : canTake ? "fa-clock" : now < exam.StartDate ? "fa-hourglass-start" : "fa-ban";
+
+            <div class="vex-stu-card @(hasCompleted ? "vex-stu-card--done" : "")">
+                <div class="vex-ribbon @ribbonClass"><i class="fas @ribbonIcon"></i> @ribbonText</div>
+
+                <div class="vex-stu-card__head">
+                    <div class="vex-stu-card__icon @(exam.Type == Center_Management.Models.ExamType.MCQ ? "vex-stu-card__icon--mcq" : "vex-stu-card__icon--written")">
+                        <i class="fas @(exam.Type == Center_Management.Models.ExamType.MCQ ? "fa-check-circle" : "fa-pen")"></i>
+                    </div>
+                    <span class="vex-stu-card__group">@exam.Group?.Name</span>
+                </div>
+
+                <h3 class="vex-stu-card__title">@exam.Title</h3>
+                @if (!string.IsNullOrEmpty(exam.Description))
+                { <p class="vex-stu-card__desc">@exam.Description</p> }
+
+                <div class="vex-stu-meta">
+                    <span><i class="fas fa-question-circle"></i> @qCount سؤال</span>
+                    <span><i class="fas fa-star"></i> @totalPts نقطة</span>
+                    <span><i class="fas fa-calendar-check"></i> ينتهي @exam.EndDate.ToString("dd/MM/yyyy")</span>
+                    @if (canTake && timeLeft.TotalHours < 24)
+                    {
+                        <span style="color:var(--danger);font-weight:700"><i class="fas fa-fire"></i> متبقي @((int)timeLeft.TotalHours) ساعة</span>
+                    }
+                </div>
+
+                @if (hasCompleted && attempt != null)
+                {
+                    @if (attempt.Score.HasValue)
+                    {
+                        double pct = totalPts > 0 ? attempt.Score.Value * 100.0 / totalPts : 0;
+                        bool pass = pct >= 50;
+                        <div class="vex-score @(pass ? "vex-score--pass" : "vex-score--fail")">
+                            <span class="vex-score__val">@attempt.Score / @totalPts</span>
+                            <span class="vex-score__pct">@pct.ToString("F0")%</span>
+                        </div>
+                    }
+                    else if (exam.Type == Center_Management.Models.ExamType.Written)
+                    {
+                        <div class="vex-pending"><i class="fas fa-hourglass-half"></i> في انتظار التصحيح</div>
+                    }
+                }
+
+                <div class="vex-stu-card__action">
+                    @if (hasCompleted)
+                    {
+                        <a href="@Url.Action("Result",new{id=exam.Id})" class="vex-stu-btn vex-stu-btn--view"><i class="fas fa-chart-bar"></i> عرض النتيجة</a>
+                    }
+                    else if (canTake)
+                    {
+                        <a href="@Url.Action("Take",new{id=exam.Id})" class="vex-stu-btn vex-stu-btn--start"><i class="fas fa-play-circle"></i> ابدأ الاختبار</a>
+                    }
+                    else if (now < exam.StartDate)
+                    {
+                        <button class="vex-stu-btn vex-stu-btn--locked" disabled><i class="fas fa-lock"></i> يبدأ @exam.StartDate.ToString("dd/MM/yyyy")</button>
+                    }
+                    else
+                    {
+                        <button class="vex-stu-btn vex-stu-btn--locked" disabled><i class="fas fa-times-circle"></i> انتهى الاختبار</button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+<style>
+.vex-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
+.vex-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
+.vex-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vex-alert { display:flex;align-items:center;gap:.6rem;padding:.875rem 1.25rem;border-radius:.75rem;margin-bottom:1rem;font-size:.875rem;font-weight:500; }
+.vex-alert--danger  { background:var(--danger-50);color:var(--danger);border:1px solid var(--danger-100); }
+.vex-alert--success { background:var(--success-50);color:var(--success);border:1px solid var(--success-100); }
+.vex-empty { text-align:center;padding:4rem 2rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem; }
+.vex-empty__icon { font-size:3rem;color:var(--text-disabled);margin-bottom:1rem; }
+.vex-empty h3 { font-size:1.1rem;font-weight:700;margin:0 0 .5rem; }
+.vex-empty p { font-size:.875rem;color:var(--text-muted);margin:0; }
+.vex-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem; }
+.vex-stu-card { position:relative;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem;overflow:hidden;transition:box-shadow .18s,transform .18s; }
+.vex-stu-card:hover { box-shadow:0 6px 20px rgba(30,26,20,.09);transform:translateY(-3px); }
+.vex-stu-card--done { border-color:var(--success-100);background:var(--success-50); }
+.vex-ribbon { position:absolute;top:0;inset-inline-end:0;padding:.3rem .75rem;font-size:.7rem;font-weight:700;border-radius:0 .85rem 0 .55rem;display:flex;align-items:center;gap:.3rem; }
+.vex-ribbon--done   { background:var(--success);color:#fff; }
+.vex-ribbon--live   { background:var(--primary);color:#fff; }
+.vex-ribbon--soon   { background:var(--warning);color:#fff; }
+.vex-ribbon--ended  { background:var(--gray-400);color:#fff; }
+.vex-stu-card__head { display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem; }
+.vex-stu-card__icon { width:44px;height:44px;border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0; }
+.vex-stu-card__icon--mcq     { background:var(--primary-50);color:var(--primary); }
+.vex-stu-card__icon--written { background:var(--warning-50);color:var(--warning); }
+.vex-stu-card__group { font-size:.8125rem;color:var(--text-muted);font-weight:600; }
+.vex-stu-card__title { font-size:1.0625rem;font-weight:700;color:var(--text-primary);margin:0 0 .35rem; }
+.vex-stu-card__desc  { font-size:.8125rem;color:var(--text-muted);margin:0 0 .75rem;line-height:1.55; }
+.vex-stu-meta { display:grid;grid-template-columns:repeat(2,1fr);gap:.3rem;padding:.65rem .75rem;background:var(--bg-subtle);border-radius:.5rem;margin-bottom:.875rem; }
+.vex-stu-meta span { font-size:.75rem;color:var(--text-secondary);display:flex;align-items:center;gap:.3rem; }
+.vex-stu-meta i { color:var(--gold); }
+.vex-score { display:flex;align-items:center;justify-content:center;gap:.75rem;padding:.65rem;border-radius:.55rem;margin-bottom:.875rem;border:1.5px solid; }
+.vex-score--pass { background:var(--success-50);border-color:var(--success-100);color:var(--success); }
+.vex-score--fail { background:var(--danger-50);border-color:var(--danger-100);color:var(--danger); }
+.vex-score__val { font-size:1.25rem;font-weight:800; }
+.vex-score__pct { font-size:.875rem;font-weight:700; }
+.vex-pending { display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem;background:var(--warning-50);color:var(--warning);border:1px solid var(--warning-100);border-radius:.55rem;margin-bottom:.875rem;font-size:.8125rem;font-weight:600; }
+.vex-stu-card__action { }
+.vex-stu-btn { display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.55rem;border-radius:.55rem;font-size:.8125rem;font-weight:700;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vex-stu-btn--start  { background:var(--success);color:#fff; } .vex-stu-btn--start:hover { background:var(--success-hover); }
+.vex-stu-btn--view   { background:var(--primary);color:#fff; } .vex-stu-btn--view:hover { background:var(--primary-hover); }
+.vex-stu-btn--locked { background:var(--gray-100);color:var(--text-muted);cursor:not-allowed; }
+</style>
+}

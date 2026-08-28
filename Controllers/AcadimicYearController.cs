@@ -2,27 +2,30 @@
 using Center_Management.Interfaces;
 using Center_Management.Models;
 using Center_Management.View_Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace Center_Management.Controllers
 {
+    [Authorize(Roles = "Teacher,Admin")]
     public class AcadimicYearController : Controller
     {
-
         private readonly IAcadimicYearsRepository acadimicYearsRepository;
-        private readonly ISubjectRepository subjectRepository;
 
-        public AcadimicYearController(IAcadimicYearsRepository acadimicYearsRepository,ISubjectRepository subjectRepository)
+        public AcadimicYearController(IAcadimicYearsRepository acadimicYearsRepository)
         {
             this.acadimicYearsRepository = acadimicYearsRepository;
-            this.subjectRepository = subjectRepository;
         }
-        public async Task< IActionResult> Index()
+
+        public async Task<IActionResult> Index()
         {
-            return View(await acadimicYearsRepository.GetAllAsync(a => a.Subject));
+            var academicYears = await acadimicYearsRepository.GetAllAsync(
+                a => a.Groups
+            );
+            return View(academicYears);
         }
+
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -36,21 +39,21 @@ namespace Center_Management.Controllers
                 Id = academicYear.Id,
                 Name = academicYear.Name,
                 MonthlyPrice = academicYear.MonthlyPrice,
-                SubjectName = academicYear.Subject?.Name ?? "",
+                SubjectName = "", // No longer needed
                 Groups = academicYear.Groups?.ToList() ?? new()
             };
 
             return View(vm);
         }
-        public async Task<IActionResult> Create()
+
+        public IActionResult Create()
         {
-            ViewBag.SubjectList=new SelectList(await subjectRepository.GetAllAsync(), "Id", "Name");
             return View();
         }
+
         [HttpPost]
         public async Task<IActionResult> Create(AcademicYear academicYear)
         {
-            ViewBag.SubjectList = new SelectList(await subjectRepository.GetAllAsync(), "Id", "Name");
             if (ModelState.IsValid)
             {
                 acadimicYearsRepository.Add(academicYear);
@@ -59,21 +62,21 @@ namespace Center_Management.Controllers
             }
             return View(academicYear);
         }
+
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            ViewBag.SubjectList = new SelectList(await subjectRepository.GetAllAsync(), "Id", "Name");
-            var academicYear =await acadimicYearsRepository.GetByIdAsync(id);
+            var academicYear = await acadimicYearsRepository.GetByIdAsync(id);
             if (academicYear == null)
             {
                 return NotFound();
             }
             return View(academicYear);
         }
+
         [HttpPost]
         public async Task<IActionResult> Edit(int id, AcademicYear academicYear)
         {
-            ViewBag.SubjectList = new SelectList(await subjectRepository.GetAllAsync(), "Id", "Name");
             if (id != academicYear.Id)
             {
                 return NotFound();
@@ -86,11 +89,13 @@ namespace Center_Management.Controllers
             }
             return View(academicYear);
         }
+
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
-            return View(await acadimicYearsRepository.GetByIdAsync(id,s=>s.Subject));
+            return View(await acadimicYearsRepository.GetByIdAsync(id));
         }
+
         [HttpPost]
         public async Task<IActionResult> Delete(int id, AcademicYear academicYear)
         {
@@ -98,11 +103,10 @@ namespace Center_Management.Controllers
             {
                 return NotFound();
             }
-            
-                acadimicYearsRepository.Delete(academicYear);
-                await acadimicYearsRepository.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            
+
+            acadimicYearsRepository.Delete(academicYear);
+            await acadimicYearsRepository.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
     }
 }

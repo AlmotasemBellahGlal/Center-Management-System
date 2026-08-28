@@ -1,119 +1,266 @@
 ﻿@model Center_Management.Models.Student
-
 @{
-    ViewData["Title"] = "Student Details";
+    ViewData["Title"] = "ملف الطالب";
 }
 
-<h2>Student Details</h2>
+@* ── Page Top ── *@
+<div class="v-page-top">
+    <div class="v-page-top__left">
+        <div class="v-page-title-row">
+            <div class="v-student-hero-avatar">@Model.FullName[0]</div>
+            <div>
+                <h1 class="v-page-title">@Model.FullName</h1>
+                <p class="v-page-sub">ملف الطالب التفصيلي</p>
+            </div>
+        </div>
+    </div>
+    <div class="v-action-group">
+        <a href="@Url.Action("Index","StudentReport",new{id=Model.Id})" class="btn-act btn-act--green">
+            <i class="fas fa-chart-line"></i> التقرير الشامل
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-act btn-act--amber">
+            <i class="fas fa-edit"></i> تعديل
+        </a>
+        <button type="button" class="btn-act btn-act--red"
+                onclick="openDeleteModal('@Model.Id','@Html.Raw(Html.Encode(Model.FullName))')">
+            <i class="fas fa-trash"></i> حذف
+        </button>
+        <a asp-action="Index" class="btn-act btn-act--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+    </div>
+</div>
 
-<hr />
+@* ── Info + Groups ── *@
+<div class="v-detail-grid">
+    @* Info card *@
+    <div class="v-card v-card--padded">
+        <div class="v-card__head"><i class="fas fa-id-card"></i> المعلومات الأساسية</div>
+        <div class="v-info-list">
+            <div class="v-info-item">
+                <span class="v-info-label">الاسم الكامل</span>
+                <span class="v-info-value v-info-value--primary">@Model.FullName</span>
+            </div>
+            <div class="v-info-item">
+                <span class="v-info-label">رقم الهاتف</span>
+                <span class="v-info-value"><code class="v-phone">@Model.PhoneNumber</code></span>
+            </div>
+            <div class="v-info-item">
+                <span class="v-info-label">هاتف ولي الأمر</span>
+                <span class="v-info-value">
+                    @if(string.IsNullOrWhiteSpace(Model.ParentPhoneNumber))
+                    { <span style="color:var(--text-muted)">—</span> }
+                    else
+                    { <code class="v-phone v-phone--parent">@Model.ParentPhoneNumber</code> }
+                </span>
+            </div>
+        </div>
+    </div>
 
-<dl class="row">
+    @* Groups card *@
+    <div class="v-card v-card--padded">
+        <div class="v-card__head">
+            <i class="fas fa-layer-group"></i>
+            المجموعات
+            @if (Model.StudentGroups != null && Model.StudentGroups.Any())
+            {
+                <span class="v-pill v-pill--blue ms-auto">@Model.StudentGroups.Count()</span>
+            }
+        </div>
+        @if (Model.StudentGroups != null && Model.StudentGroups.Any())
+        {
+            @foreach (var sg in Model.StudentGroups)
+            {
+                <div class="v-group-tag @(sg.IsActive ? "v-group-tag--active" : "v-group-tag--inactive")">
+                    <div class="v-group-tag__left">
+                        <div class="v-group-tag__dot"><i class="fas fa-layer-group"></i></div>
+                        <div>
+                            <div class="v-group-tag__name">@sg.Group.Name</div>
+                            <div class="v-group-tag__meta">
+                                @sg.Group.AcademicYear.Name · سجّل @sg.EnrollmentDate.ToString("dd/MM/yyyy")
+                            </div>
+                        </div>
+                    </div>
+                    <span class="v-badge @(sg.IsActive ? "v-badge--green" : "v-badge--muted")">
+                        @(sg.IsActive ? "نشط" : "غير نشط")
+                    </span>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="v-no-data">لم يُسجَّل في أي مجموعة</p>
+        }
+    </div>
+</div>
 
-    <dt class="col-sm-3">
-        Full Name
-    </dt>
-
-    <dd class="col-sm-9">
-        @Model.FullName
-    </dd>
-
-    <dt class="col-sm-3">
-        Phone
-    </dt>
-
-    <dd class="col-sm-9">
-        @Model.PhoneNumber
-    </dd>
-
-    <dt class="col-sm-3">
-        Parent Phone
-    </dt>
-
-    <dd class="col-sm-9">
-        @Model.ParentPhoneNumber
-    </dd>
-
-</dl>
-
-<hr />
-
-<h4>Registered Groups</h4>
-
-@if (Model.StudentGroups.Any(s => s.IsActive))
-{
-    @foreach (var item in Model.StudentGroups.Where(s => s.IsActive))
+@* ── Recent Attendance ── *@
+<div class="v-card" style="margin-top:1.25rem">
+    <div class="v-card__head-bar v-card__head-bar--green">
+        <i class="fas fa-clipboard-check"></i>
+        آخر سجلات الحضور
+        @if (Model.Attendences != null && Model.Attendences.Any())
+        {
+            <span class="v-pill" style="background:rgba(255,255,255,.25);color:#fff;margin-inline-start:auto">@Model.Attendences.Count()</span>
+        }
+    </div>
+    @if (Model.Attendences != null && Model.Attendences.Any())
     {
-        <div class="card mb-3">
-
-            <div class="card-header">
-
-                <strong>@item.Group.Name</strong>
-
-            </div>
-
-            <div class="card-body">
-
-                <p>
-
-                    <strong>Subject :</strong>
-
-                    @item.Group.AcademicYear.Subject.Name
-
-                </p>
-
-                <p>
-
-                    <strong>Academic Year :</strong>
-
-                    @item.Group.AcademicYear.Name
-
-                </p>
-
-                <strong>Schedules</strong>
-
-                <ul>
-
-                    @foreach (var schedule in item.Group.Schedules)
+        <div class="v-table-wrap">
+            <table class="v-table">
+                <thead><tr><th>التاريخ</th><th>المجموعة</th><th>الحالة</th></tr></thead>
+                <tbody>
+                    @foreach (var att in Model.Attendences.OrderByDescending(a=>a.Date).Take(10))
                     {
-                        <li>
-
-                            @schedule.Day
-
-                            -
-
-                            @schedule.StartTime.ToString(@"hh\:mm")
-
-                        </li>
+                        <tr>
+                            <td>@att.Date.ToString("dd/MM/yyyy")</td>
+                            <td>@(att.Group?.Name ?? "—")</td>
+                            <td>
+                                @if (att.IsPresent)
+                                { <span class="v-badge v-badge--green"><i class="fas fa-check"></i> حاضر</span> }
+                                else
+                                { <span class="v-badge v-badge--red"><i class="fas fa-times"></i> غائب</span> }
+                            </td>
+                        </tr>
                     }
-
-                </ul>
-
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Attendences.Count() > 10)
+        {
+            <div style="padding:.75rem 1rem;font-size:.8rem;color:var(--text-muted);border-top:1px solid var(--border-light)">
+                <i class="fas fa-info-circle"></i>
+                عرض آخر 10 سجلات — اضغط "التقرير الشامل" لكل السجلات
             </div>
+        }
+    }
+    else
+    {
+        <div style="padding:2rem;text-align:center;color:var(--text-muted)"><i class="fas fa-clipboard-list"></i> لا يوجد سجل حضور</div>
+    }
+</div>
 
+@* ── Recent Payments ── *@
+<div class="v-card" style="margin-top:1.25rem">
+    <div class="v-card__head-bar v-card__head-bar--amber">
+        <i class="fas fa-money-bill-wave"></i>
+        آخر المدفوعات
+        @if (Model.Payments != null && Model.Payments.Any())
+        {
+            <span class="v-pill" style="background:rgba(255,255,255,.25);color:#fff;margin-inline-start:auto">@Model.Payments.Count()</span>
+        }
+    </div>
+    @if (Model.Payments != null && Model.Payments.Any())
+    {
+        <div class="v-table-wrap">
+            <table class="v-table">
+                <thead><tr><th>التاريخ</th><th>المجموعة</th><th>الشهر / السنة</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+                <tbody>
+                    @foreach (var p in Model.Payments.OrderByDescending(p=>p.PaymentDate).Take(10))
+                    {
+                        <tr>
+                            <td>@p.PaymentDate.ToString("dd/MM/yyyy")</td>
+                            <td>@(p.Group?.Name ?? "—")</td>
+                            <td>@(new System.Globalization.CultureInfo("ar-SA").DateTimeFormat.GetMonthName(p.Month)) @p.Year</td>
+                            <td><strong>@p.Amount.ToString("N0") ج.م</strong></td>
+                            <td>
+                                @if (p.IsPaid)
+                                { <span class="v-badge v-badge--green"><i class="fas fa-check"></i> مدفوع</span> }
+                                else
+                                { <span class="v-badge v-badge--red"><i class="fas fa-times"></i> غير مدفوع</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
-}
-else
-{
-    <div class="alert alert-warning">
+    else
+    {
+        <div style="padding:2rem;text-align:center;color:var(--text-muted)"><i class="fas fa-receipt"></i> لا يوجد سجل مدفوعات</div>
+    }
+</div>
 
-        Student has no active groups.
-
+@* ── Delete Modal ── *@
+<div class="modal" id="deleteStudentModal" role="dialog" aria-modal="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h2 class="modal__title">تأكيد الحذف</h2>
+            <button class="modal__close" onclick="closeModal('deleteStudentModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal__body">
+            <p>هل أنت متأكد من حذف الطالب <strong id="deleteStudentName"></strong>؟ لا يمكن التراجع عن هذا الإجراء.</p>
+        </div>
+        <div class="modal__footer">
+            <button class="btn-ghost" onclick="closeModal('deleteStudentModal')">إلغاء</button>
+            <a id="deleteConfirmLink" href="#" class="btn-danger"><i class="fas fa-trash"></i> حذف</a>
+        </div>
     </div>
+</div>
+
+@section Scripts {
+<style>
+.v-page-top { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+.v-page-title-row { display:flex; align-items:center; gap:1rem; }
+.v-student-hero-avatar { width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; flex-shrink:0; }
+.v-page-title { font-size:1.5rem; font-weight:700; color:var(--text-primary); margin:0; }
+.v-page-sub { font-size:.8rem; color:var(--text-muted); margin:.2rem 0 0; }
+.v-action-group { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+.btn-act { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.14s; }
+.btn-act--green { background:var(--success); color:#fff; } .btn-act--green:hover { background:var(--success-hover); }
+.btn-act--amber { background:var(--warning); color:#fff; } .btn-act--amber:hover { background:var(--warning-hover); }
+.btn-act--red   { background:var(--danger); color:#fff; }  .btn-act--red:hover   { background:var(--danger-hover); }
+.btn-act--ghost { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); } .btn-act--ghost:hover { background:var(--gray-150); }
+.v-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+@@media (max-width:700px) { .v-detail-grid { grid-template-columns:1fr; } }
+.v-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; overflow:hidden; }
+.v-card--padded { }
+.v-card__head { display:flex; align-items:center; gap:.6rem; padding:.875rem 1.25rem; font-size:.875rem; font-weight:700; color:var(--text-primary); border-bottom:1px solid var(--border-light); background:var(--bg-subtle); }
+.v-card__head i { color:var(--primary); font-size:.9rem; }
+.v-card__head-bar { display:flex; align-items:center; gap:.6rem; padding:.875rem 1.25rem; font-size:.875rem; font-weight:700; color:#fff; }
+.v-card__head-bar--green { background:var(--success); }
+.v-card__head-bar--amber { background:var(--warning); }
+.v-info-list { }
+.v-info-item { display:flex; align-items:center; justify-content:space-between; padding:.75rem 1.25rem; border-bottom:1px solid var(--border-light); }
+.v-info-item:last-child { border-bottom:none; }
+.v-info-label { font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+.v-info-value { font-size:.875rem; font-weight:500; color:var(--text-primary); }
+.v-info-value--primary { color:var(--primary); font-weight:700; font-size:1rem; }
+.v-phone { font-size:.8rem; background:var(--bg-subtle); padding:2px 8px; border-radius:.3rem; border:1px solid var(--border-light); }
+.v-phone--parent { background:var(--warning-50); border-color:var(--warning-100); }
+.v-no-data { padding:1.5rem 1.25rem; color:var(--text-muted); font-size:.875rem; margin:0; text-align:center; }
+.v-group-tag { display:flex; align-items:center; justify-content:space-between; padding:.875rem 1.25rem; border-bottom:1px solid var(--border-light); transition:background .12s; }
+.v-group-tag:last-child { border-bottom:none; }
+.v-group-tag:hover { background:var(--bg-subtle); }
+.v-group-tag--active  { }
+.v-group-tag--inactive{ opacity:.7; }
+.v-group-tag__left { display:flex; align-items:center; gap:.6rem; }
+.v-group-tag__dot { width:34px; height:34px; border-radius:.5rem; background:var(--primary-50); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:.8rem; flex-shrink:0; }
+.v-group-tag__name { font-size:.875rem; font-weight:700; color:var(--text-primary); }
+.v-group-tag__meta { font-size:.75rem; color:var(--text-muted); }
+.v-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.2em .65em; border-radius:2rem; font-size:.7rem; font-weight:700; }
+.v-badge--green { background:var(--success-50); color:var(--success); }
+.v-badge--red   { background:var(--danger-50);  color:var(--danger); }
+.v-badge--muted { background:var(--gray-100);   color:var(--text-muted); }
+.v-pill { display:inline-flex; align-items:center; padding:.15em .6em; border-radius:2rem; font-size:.7rem; font-weight:700; }
+.v-pill--blue { background:var(--primary-100); color:var(--primary); }
+.v-table-wrap { overflow-x:auto; }
+.v-table { width:100%; border-collapse:collapse; font-size:.8125rem; }
+.v-table thead th { padding:.6rem 1rem; text-align:start; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); background:var(--bg-subtle); border-bottom:1px solid var(--border-light); white-space:nowrap; }
+.v-table tbody tr { border-bottom:1px solid var(--border-light); transition:background .1s; }
+.v-table tbody tr:last-child { border-bottom:none; }
+.v-table tbody tr:hover { background:var(--primary-50); }
+.v-table td { padding:.6rem 1rem; color:var(--text-primary); vertical-align:middle; }
+.btn-ghost { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; transition:.14s; }
+.btn-ghost:hover { background:var(--gray-150); }
+.btn-danger { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--danger); color:#fff; border:none; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; text-decoration:none; transition:.14s; }
+.btn-danger:hover { background:var(--danger-hover); }
+.ms-auto { margin-inline-start:auto; }
+</style>
+<script>
+function openDeleteModal(sid, name) {
+    document.getElementById('deleteStudentName').textContent = name;
+    document.getElementById('deleteConfirmLink').href = '/Student/Delete/' + sid;
+    openModal('deleteStudentModal');
 }
-
-<a asp-action="Edit"
-   asp-route-id="@Model.Id"
-   class="btn btn-warning">
-
-    Edit
-
-</a>
-
-<a asp-action="Index"
-   class="btn btn-secondary">
-
-    Back
-
-</a>
+</script>
+}

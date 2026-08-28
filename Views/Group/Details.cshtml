@@ -1,100 +1,111 @@
 ﻿@model Center_Management.Models.Group
-
 @{
-    ViewData["Title"] = "Group Details";
+    ViewData["Title"] = "تفاصيل المجموعة";
 }
 
-<h2>Group Details</h2>
-
-<hr />
-
-<div class="card">
-
-    <div class="card-body">
-
-        <h4>@Model.Name</h4>
-
-        <p>
-
-            <strong>Academic Year :</strong>
-
-            @Model.AcademicYear?.Name
-
-        </p>
-
+<div class="vp-top">
+    <div>
+        <h1 class="vp-title"><i class="fas fa-layer-group" style="color:var(--primary)"></i> @Model.Name</h1>
+        <p class="vp-sub">@(Model.AcademicYear?.Name ?? "—") · تفاصيل المجموعة</p>
     </div>
-
+    <div class="vp-actions">
+        <a href="@Url.Action("Index","Session",new{groupId=Model.Id})" class="vp-btn vp-btn--primary"><i class="fas fa-clipboard-list"></i> جلسة</a>
+        <a href="@Url.Action("Create","Attendance",new{groupId=Model.Id})" class="vp-btn vp-btn--green"><i class="fas fa-clipboard-check"></i> تسجيل حضور</a>
+        <a href="@Url.Action("Report","Attendance",new{groupId=Model.Id})" class="vp-btn vp-btn--slate"><i class="fas fa-chart-line"></i> تقرير</a>
+        <a href="@Url.Action("Index","Payment",new{groupId=Model.Id})" class="vp-btn vp-btn--gold"><i class="fas fa-money-bill-wave"></i> المدفوعات</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="vp-btn vp-btn--amber"><i class="fas fa-edit"></i></a>
+        <button type="button" class="vp-btn vp-btn--danger-outline"
+                onclick="openDeleteModal('@Model.Id','@Html.Raw(Html.Encode(Model.Name))')">
+            <i class="fas fa-trash"></i>
+        </button>
+        <a asp-controller="AcadimicYear" asp-action="Details" asp-route-id="@Model.AcademicYearId" class="vp-btn vp-btn--ghost"><i class="fas fa-arrow-right"></i></a>
+    </div>
 </div>
 
-<br />
-
-<h4>Schedules</h4>
-
-@if (Model.Schedules.Any())
-{
-    <table class="table table-bordered table-striped">
-
-        <thead>
-
-            <tr>
-
-                <th>Day</th>
-
-                <th>Start Time</th>
-
-            </tr>
-
-        </thead>
-
-        <tbody>
-
-            @foreach (var schedule in Model.Schedules)
-            {
-                <tr>
-
-                    <td>@schedule.Day</td>
-
-                    <td>@schedule.StartTime</td>
-
-                </tr>
-            }
-
-        </tbody>
-
-    </table>
-}
-else
-{
-    <div class="alert alert-warning">
-
-        No schedules found.
-
+@* ── Info strip ── *@
+<div class="vp-info-strip">
+    <div class="vp-info-strip__item">
+        <span class="vp-info-strip__label">اسم المجموعة</span>
+        <span class="vp-info-strip__value">@Model.Name</span>
     </div>
+    <div class="vp-info-strip__sep"></div>
+    <div class="vp-info-strip__item">
+        <span class="vp-info-strip__label">السنة الدراسية</span>
+        <span class="vp-info-strip__value">@(Model.AcademicYear?.Name ?? "—")</span>
+    </div>
+</div>
+
+@* ── Schedule ── *@
+<div class="vp-card">
+    <div class="vp-card__head"><i class="fas fa-calendar-week"></i> الجدول الدراسي</div>
+    @if (Model.Schedules != null && Model.Schedules.Any())
+    {
+        <div class="vp-sched-grid">
+            @foreach (var s in Model.Schedules)
+            {
+                <div class="vp-sched-item">
+                    <div class="vp-sched-item__day">@s.Day</div>
+                    <div class="vp-sched-item__time"><i class="fas fa-clock"></i> @s.StartTime.ToString(@"hh\:mm")</div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="padding:2rem;text-align:center;color:var(--text-muted)"><i class="fas fa-calendar-times"></i> لم يُحدَّد جدول بعد</div>
+    }
+</div>
+
+<div class="modal" id="deleteGroupModal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h2 class="modal__title">تأكيد الحذف</h2>
+            <button class="modal__close" onclick="closeModal('deleteGroupModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal__body">
+            <p>هل أنت متأكد من حذف المجموعة <strong id="deleteGroupName"></strong>؟</p>
+        </div>
+        <div class="modal__footer">
+            <button class="vp-btn vp-btn--ghost" onclick="closeModal('deleteGroupModal')">إلغاء</button>
+            <a id="deleteGroupConfirmLink" href="#" class="vp-btn vp-btn--danger"><i class="fas fa-trash"></i> حذف</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.vp-top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.vp-title { font-size:1.4rem; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:.6rem; }
+.vp-sub { font-size:.8rem; color:var(--text-muted); margin:.25rem 0 0; }
+.vp-actions { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; }
+.vp-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.14s; }
+.vp-btn--primary { background:var(--primary); color:#fff; } .vp-btn--primary:hover { background:var(--primary-hover); }
+.vp-btn--green   { background:var(--success); color:#fff; } .vp-btn--green:hover   { background:var(--success-hover); }
+.vp-btn--slate   { background:var(--info-50); color:var(--info); } .vp-btn--slate:hover { background:var(--info); color:#fff; }
+.vp-btn--gold    { background:var(--gold); color:#fff; } .vp-btn--gold:hover { background:var(--gold-hover); }
+.vp-btn--amber   { background:var(--warning); color:#fff; } .vp-btn--amber:hover { background:var(--warning-hover); }
+.vp-btn--danger  { background:var(--danger); color:#fff; } .vp-btn--danger:hover { background:var(--danger-hover); }
+.vp-btn--danger-outline { background:var(--danger-50); color:var(--danger); border:1px solid var(--danger-100); } .vp-btn--danger-outline:hover { background:var(--danger); color:#fff; }
+.vp-btn--ghost   { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); } .vp-btn--ghost:hover { background:var(--gray-150); }
+.vp-info-strip { display:flex; align-items:center; background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; padding:1rem 1.5rem; margin-bottom:1.25rem; flex-wrap:wrap; gap:0; }
+.vp-info-strip__item { display:flex; flex-direction:column; gap:.2rem; padding:.25rem .75rem; }
+.vp-info-strip__sep { width:1px; height:32px; background:var(--border-light); flex-shrink:0; }
+.vp-info-strip__label { font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+.vp-info-strip__value { font-size:.9375rem; font-weight:700; color:var(--text-primary); }
+.vp-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; overflow:hidden; }
+.vp-card__head { display:flex; align-items:center; gap:.6rem; padding:.875rem 1.25rem; font-size:.875rem; font-weight:700; color:var(--text-primary); border-bottom:1px solid var(--border-light); background:var(--bg-subtle); }
+.vp-card__head i { color:var(--primary); }
+.vp-sched-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; padding:1.25rem; }
+.vp-sched-item { background:var(--bg-subtle); border:1px solid var(--border-light); border-radius:.65rem; padding:1rem; text-align:center; }
+.vp-sched-item__day { font-size:.9375rem; font-weight:700; color:var(--primary); margin-bottom:.35rem; }
+.vp-sched-item__time { font-size:.8125rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; gap:.3rem; }
+</style>
+<script>
+function openDeleteModal(id, name) {
+    document.getElementById('deleteGroupName').textContent = name;
+    document.getElementById('deleteGroupConfirmLink').href = '/Group/Delete/' + id;
+    openModal('deleteGroupModal');
 }
-
-<a asp-controller="Group"
-   asp-action="Edit"
-   asp-route-id="@Model.Id"
-   class="btn btn-warning">
-
-    Edit
-
-</a>
-
-<a asp-controller="Group"
-   asp-action="Delete"
-   asp-route-id="@Model.Id"
-   class="btn btn-danger">
-
-    Delete
-
-</a>
-
-<a asp-controller="AcadimicYear"
-   asp-action="Details"
-   asp-route-id="@Model.AcademicYearId"
-   class="btn btn-secondary">
-
-    Back
-
-</a>
+</script>
+}

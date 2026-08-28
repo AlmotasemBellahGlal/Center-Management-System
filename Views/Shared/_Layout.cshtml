@@ -1,62 +1,242 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@using Center_Management.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<AppUser> UserManager
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Center_Management</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] — إدارة المركز</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Center_Management.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Center_Management</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Subject" asp-action="Index">Subjects</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="AcadimicYear" asp-action="Index">AcadimicYear</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Group" asp-action="Index">Groups</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Student" asp-action="Index">Students</a>
-                        </li>
-                    </ul>
-                </div>
+@{
+    var ctrl   = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["Action"]?.ToString();
+
+    var currentUser = await UserManager.GetUserAsync(User);
+    var displayName = currentUser?.FullName ?? User.Identity?.Name ?? "مستخدم";
+
+    string userRole = User.IsInRole("Student") ? "طالب"
+                    : User.IsInRole("Teacher")  ? "معلم"
+                    : User.IsInRole("Admin")    ? "مسؤول"
+                    : "ضيف";
+    string avatarIcon = User.IsInRole("Student") ? "fa-user-graduate"
+                       : User.IsInRole("Teacher") ? "fa-chalkboard-teacher"
+                       : "fa-user-shield";
+
+    // nav label helper
+    var sectionMap = new Dictionary<string, (string Label, string Url)> {
+        {"Dashboard",   ("لوحة التحكم",      Url.Action("Index",  "Dashboard"))},
+        {"Student",     ("الطلاب",          Url.Action("Index",  "Student"))},
+        {"StudentReport",("الطلاب",         Url.Action("Index",  "Student"))},
+        {"Group",       ("المجموعات",       Url.Action("Index",  "Group"))},
+        {"AcadimicYear",("السنوات الدراسية",Url.Action("Index",  "AcadimicYear"))},
+        {"Attendance",  ("الحضور",          Url.Action("Groups", "Attendance"))},
+        {"Payment",     ("المدفوعات",       Url.Action("Groups", "Payment"))},
+        {"Session",     ("الجلسات",         Url.Action("Groups", "Attendance"))},
+        {"Material",    ("المواد التعليمية",Url.Action("Index",  "Material"))},
+        {"Exam",        ("الاختبارات",      Url.Action("GroupPicker","Exam"))},
+        {"Admin",       ("المستخدمين",      Url.Action("Users",  "Admin"))},
+    };
+    var pageTitle = ViewData["Title"]?.ToString() ?? "";
+    var hasSection = ctrl != null && sectionMap.ContainsKey(ctrl);
+    var sectionInfo = hasSection ? sectionMap[ctrl] : (Label:"", Url:"");
+}
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="القائمة الرئيسية">
+    <div class="sb-header">
+        <a href="@Url.Action("Index","Dashboard")" class="sb-brand">
+            <div class="sb-brand-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div>
+                <span class="sb-logo-text">@(User.IsInRole("Student") ? "منصة الطالب" : "إدارة المركز")</span>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+        </a>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Center_Management - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    <nav class="sb-nav">
+        @if (User.IsInRole("Student"))
+        {
+            <span class="sb-section-label">القائمة</span>
+            <a href="@Url.Action("MyExams","Exam")"
+               class="sb-link @(ctrl=="Exam" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-file-alt"></i>
+                <span class="sb-text">اختباراتي</span>
+            </a>
+            <a href="@Url.Action("StudentView","Material")"
+               class="sb-link @(ctrl=="Material" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-folder-open"></i>
+                <span class="sb-text">المواد التعليمية</span>
+            </a>
+        }
+        else
+        {
+            <span class="sb-section-label">الرئيسية</span>
+            <a href="@Url.Action("Index","Dashboard")"
+               class="sb-link @(ctrl=="Dashboard" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-th-large"></i>
+                <span class="sb-text">لوحة التحكم</span>
+            </a>
+
+            <span class="sb-section-label">الأكاديمي</span>
+            <a href="@Url.Action("Index","Student")"
+               class="sb-link @(ctrl=="Student"||ctrl=="StudentReport" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-users"></i>
+                <span class="sb-text">الطلاب</span>
+            </a>
+            <a href="@Url.Action("Index","Group")"
+               class="sb-link @(ctrl=="Group" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-layer-group"></i>
+                <span class="sb-text">المجموعات</span>
+            </a>
+            <a href="@Url.Action("Index","AcadimicYear")"
+               class="sb-link @(ctrl=="AcadimicYear" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-graduation-cap"></i>
+                <span class="sb-text">السنوات الدراسية</span>
+            </a>
+
+            <span class="sb-section-label">العمليات</span>
+            <a href="@Url.Action("Groups","Attendance")"
+               class="sb-link @(ctrl=="Attendance"||ctrl=="Session" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-clipboard-check"></i>
+                <span class="sb-text">الحضور</span>
+            </a>
+            <a href="@Url.Action("Groups","Payment")"
+               class="sb-link @(ctrl=="Payment" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-money-bill-wave"></i>
+                <span class="sb-text">المدفوعات</span>
+            </a>
+            <a href="@Url.Action("Index","Material")"
+               class="sb-link @(ctrl=="Material" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-folder-open"></i>
+                <span class="sb-text">المواد التعليمية</span>
+            </a>
+            <a href="@Url.Action("GroupPicker","Exam")"
+               class="sb-link @(ctrl=="Exam" ? "sb-link--active" : "")">
+                <i class="sb-icon fas fa-file-alt"></i>
+                <span class="sb-text">الاختبارات</span>
+            </a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <span class="sb-section-label">الإدارة</span>
+                <a href="@Url.Action("Users","Admin")"
+                   class="sb-link @(ctrl=="Admin" ? "sb-link--active" : "")">
+                    <i class="sb-icon fas fa-users-cog"></i>
+                    <span class="sb-text">المستخدمون</span>
+                </a>
+            }
+        }
+    </nav>
+</aside>
+
+<!-- Backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+<!-- ═══ NAVBAR ═══ -->
+<header class="navbar" role="banner">
+    <button class="navbar__toggle" id="sidebarToggle" aria-label="تبديل القائمة" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Breadcrumb -->
+    <nav class="navbar__breadcrumb" aria-label="مسار التنقل">
+        @if (hasSection)
+        {
+            <a href="@Url.Action("Index","Dashboard")">الرئيسية</a>
+            <span class="sep"><i class="fas fa-chevron-left"></i></span>
+            @if (pageTitle != sectionInfo.Label)
+            {
+                <a href="@sectionInfo.Url">@sectionInfo.Label</a>
+                <span class="sep"><i class="fas fa-chevron-left"></i></span>
+                <span class="current">@pageTitle</span>
+            }
+            else
+            {
+                <span class="current">@sectionInfo.Label</span>
+            }
+        }
+    </nav>
+
+    <div class="navbar__end">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="user-pill">
+                <div class="user-pill__avatar">
+                    <i class="fas @avatarIcon" style="font-size:0.85rem"></i>
+                </div>
+                <div class="user-pill__info hide-mobile">
+                    <span class="user-pill__name">@displayName</span>
+                    <span class="user-pill__role">@userRole</span>
+                </div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="logout-btn" title="تسجيل الخروج">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>خروج</span>
+                </button>
+            </form>
+        }
+    </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main-content" id="mainContent">
+    <div class="main-content__inner">
+
+        @* TempData toast *@
+        @if (TempData["SuccessMessage"] != null || TempData["Success"] != null)
+        {
+            var msg = (TempData["SuccessMessage"] ?? TempData["Success"])?.ToString();
+            <div id="tempDataToast" style="position:fixed;top:calc(var(--navbar-h) + var(--sp-4));inset-inline-end:var(--sp-4);z-index:var(--z-toast);">
+                <div class="toast toast--success" style="pointer-events:auto">
+                    <div class="toast__icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="toast__content"><p class="toast__message">@msg</p></div>
+                    <button class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+        {
+            var msg = (TempData["ErrorMessage"] ?? TempData["Error"])?.ToString();
+            <div id="tempDataToast" style="position:fixed;top:calc(var(--navbar-h) + var(--sp-4));inset-inline-end:var(--sp-4);z-index:var(--z-toast);">
+                <div class="toast toast--error" style="pointer-events:auto">
+                    <div class="toast__icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <div class="toast__content"><p class="toast__message">@msg</p></div>
+                    <button class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <div id="tempDataToast" style="position:fixed;top:calc(var(--navbar-h) + var(--sp-4));inset-inline-end:var(--sp-4);z-index:var(--z-toast);">
+                <div class="toast toast--info" style="pointer-events:auto">
+                    <div class="toast__icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="toast__content"><p class="toast__message">@TempData["Info"]</p></div>
+                    <button class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+</main>
+
+<!-- Toast container for JS toasts -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

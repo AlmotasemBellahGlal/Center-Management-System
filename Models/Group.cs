@@ -10,5 +10,7 @@
         public AcademicYear? AcademicYear { get; set; }
         public ICollection<StudentGroup> StudentGroups { get; set; }
        = new List<StudentGroup>();
+        public ICollection<Attendence>? Attendences { get; set; }
+        public ICollection<Payment>? Payments { get; set; }
     }
 }

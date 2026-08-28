@@ -1,0 +1,146 @@
+@model List<MaterialsByAcademicYearVM>
+@{
+    ViewData["Title"] = "إدارة المواد التعليمية";
+}
+
+<div class="vm-top">
+    <div>
+        <h1 class="vm-title"><i class="fas fa-folder-open" style="color:var(--primary)"></i> المواد التعليمية</h1>
+        <p class="vm-sub">ملفات PDF والفيديوهات التعليمية مرتبة حسب السنة الدراسية</p>
+    </div>
+    <a href="@Url.Action("Create")" class="vm-new-btn"><i class="fas fa-plus"></i> إضافة مادة</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="vm-empty">
+        <div class="vm-empty__icon"><i class="fas fa-folder-open"></i></div>
+        <h3>لا توجد مواد تعليمية بعد</h3>
+        <p>ابدأ بإضافة أول مادة تعليمية للطلاب</p>
+        <a href="@Url.Action("Create")" class="vm-new-btn"><i class="fas fa-plus"></i> إضافة مادة جديدة</a>
+    </div>
+}
+else
+{
+    @foreach (var yearGroup in Model)
+    {
+        <div class="vm-year-section">
+            <div class="vm-year-label">
+                <div class="vm-year-label__dot"><i class="fas fa-graduation-cap"></i></div>
+                <h2 class="vm-year-label__name">@yearGroup.AcademicYearName</h2>
+            </div>
+
+            @foreach (var sub in yearGroup.SubjectGroups)
+            {
+                <div class="vm-card">
+                    <div class="vm-card__head">
+                        <i class="fas fa-book-open"></i>
+                        <span>@sub.SubjectName</span>
+                        <span class="vm-pill" style="margin-inline-start:auto">@sub.Materials.Count مادة</span>
+                    </div>
+                    @if (sub.Materials.Any())
+                    {
+                        <div class="vm-list">
+                            @foreach (var m in sub.Materials)
+                            {
+                                <div class="vm-item">
+                                    <div class="vm-item__icon @(m.Type == MaterialType.PDF ? "vm-item__icon--pdf" : "vm-item__icon--video")">
+                                        @if (m.Type == MaterialType.PDF)
+                                        { <i class="fas fa-file-pdf"></i> }
+                                        else
+                                        { <i class="fas fa-video"></i> }
+                                    </div>
+                                    <div class="vm-item__body">
+                                        <div class="vm-item__title">@m.Title</div>
+                                        <span class="vm-item__type @(m.Type == MaterialType.PDF ? "vm-item__type--pdf" : "vm-item__type--video")">
+                                            @(m.Type == MaterialType.PDF ? "PDF" : "فيديو")
+                                        </span>
+                                    </div>
+                                    <div class="vm-item__actions">
+                                        <a href="@m.FileUrl" target="_blank" class="vm-btn vm-btn--view"><i class="fas fa-external-link-alt"></i> فتح</a>
+                                        <button type="button" class="vm-btn vm-btn--del"
+                                                onclick="openDeleteModal(@m.Id,'@Html.Raw(Html.Encode(m.Title))')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p style="padding:1.25rem;color:var(--text-muted);font-size:.875rem;margin:0">لا توجد مواد بعد</p>
+                    }
+                </div>
+            }
+        </div>
+    }
+}
+
+<div class="modal" id="deleteMaterialModal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h2 class="modal__title">تأكيد الحذف</h2>
+            <button class="modal__close" onclick="closeModal('deleteMaterialModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal__body">
+            <p>هل أنت متأكد من حذف المادة <strong id="deleteMaterialTitle"></strong>؟</p>
+        </div>
+        <div class="modal__footer">
+            <button class="vm-btn vm-btn--ghost" onclick="closeModal('deleteMaterialModal')">إلغاء</button>
+            <form id="deleteMaterialForm" asp-action="DeleteConfirmed" method="post" style="display:inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="deleteMaterialId" name="id" />
+                <button type="submit" class="vm-btn vm-btn--danger"><i class="fas fa-trash"></i> حذف</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.vm-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
+.vm-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
+.vm-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vm-new-btn { display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1.1rem;background:var(--success);color:#fff;border:none;border-radius:.6rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none;transition:.14s; }
+.vm-new-btn:hover { background:var(--success-hover);box-shadow:0 4px 12px rgba(46,125,94,.3); }
+.vm-empty { text-align:center;padding:4rem 2rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem; }
+.vm-empty__icon { font-size:3rem;color:var(--text-disabled);margin-bottom:1rem; }
+.vm-empty h3 { font-size:1.1rem;font-weight:700;margin:0 0 .5rem; }
+.vm-empty p { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem; }
+.vm-year-section { margin-bottom:2rem; }
+.vm-year-label { display:flex;align-items:center;gap:.75rem;margin-bottom:1rem; }
+.vm-year-label__dot { width:36px;height:36px;background:var(--primary);color:#fff;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0; }
+.vm-year-label__name { font-size:1rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vm-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden;margin-bottom:.875rem; }
+.vm-card__head { display:flex;align-items:center;gap:.5rem;padding:.75rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle);font-size:.875rem;font-weight:700;color:var(--text-primary); }
+.vm-card__head i { color:var(--primary); }
+.vm-pill { display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700;background:var(--primary-100);color:var(--primary); }
+.vm-list { }
+.vm-item { display:flex;align-items:center;gap:1rem;padding:.875rem 1.25rem;border-bottom:1px solid var(--border-light);transition:background .1s; }
+.vm-item:last-child { border-bottom:none; }
+.vm-item:hover { background:var(--bg-subtle); }
+.vm-item__icon { width:38px;height:38px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
+.vm-item__icon--pdf   { background:var(--danger-50);color:var(--danger); }
+.vm-item__icon--video { background:var(--success-50);color:var(--success); }
+.vm-item__body { flex:1;min-width:0; }
+.vm-item__title { font-size:.875rem;font-weight:600;color:var(--text-primary);margin-bottom:.25rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.vm-item__type { display:inline-flex;align-items:center;padding:.15em .55em;border-radius:2rem;font-size:.7rem;font-weight:700; }
+.vm-item__type--pdf   { background:var(--danger-50);color:var(--danger); }
+.vm-item__type--video { background:var(--success-50);color:var(--success); }
+.vm-item__actions { display:flex;gap:.4rem;flex-shrink:0; }
+.vm-btn { display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border-radius:.4rem;font-size:.75rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.12s; }
+.vm-btn--view   { background:var(--primary-50);color:var(--primary); }   .vm-btn--view:hover   { background:var(--primary);color:#fff; }
+.vm-btn--del    { background:var(--danger-50);color:var(--danger); }     .vm-btn--del:hover    { background:var(--danger);color:#fff; }
+.vm-btn--ghost  { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vm-btn--ghost:hover { background:var(--gray-150); }
+.vm-btn--danger { background:var(--danger);color:#fff; } .vm-btn--danger:hover { background:var(--danger-hover); }
+</style>
+<script>
+function openDeleteModal(id, title) {
+    document.getElementById('deleteMaterialId').value = id;
+    document.getElementById('deleteMaterialTitle').textContent = title;
+    openModal('deleteMaterialModal');
+}
+</script>
+}

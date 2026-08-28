@@ -1,0 +1,91 @@
+@model List<MaterialGroupVM>
+@{
+    ViewData["Title"] = "المواد التعليمية";
+}
+
+<div class="vm-top">
+    <div>
+        <h1 class="vm-title"><i class="fas fa-book-reader" style="color:var(--primary)"></i> المواد التعليمية</h1>
+        <p class="vm-sub">@ViewBag.AcademicYearName</p>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="vm-empty">
+        <div class="vm-empty__icon"><i class="fas fa-book-open"></i></div>
+        <h3>لا توجد مواد تعليمية متاحة</h3>
+        <p>لا توجد مواد تعليمية لهذه المجموعة بعد</p>
+    </div>
+}
+else
+{
+    @foreach (var sub in Model)
+    {
+        <div class="vm-card" style="margin-bottom:1.25rem">
+            <div class="vm-card__head">
+                <i class="fas fa-book-open"></i>
+                <span>@sub.SubjectName</span>
+                <span class="vm-pill" style="margin-inline-start:auto">@sub.Materials.Count مادة</span>
+            </div>
+            @if (sub.Materials.Any())
+            {
+                <div class="vm-grid">
+                    @foreach (var m in sub.Materials)
+                    {
+                        <div class="vm-mat-card @(m.Type == MaterialType.PDF ? "vm-mat-card--pdf" : "vm-mat-card--video")">
+                            <div class="vm-mat-card__icon">
+                                @if (m.Type == MaterialType.PDF)
+                                { <i class="fas fa-file-pdf"></i> }
+                                else
+                                { <i class="fas fa-play-circle"></i> }
+                            </div>
+                            <div class="vm-mat-card__body">
+                                <div class="vm-mat-card__title">@m.Title</div>
+                                <span class="vm-mat-card__type">@(m.Type == MaterialType.PDF ? "ملف PDF" : "فيديو")</span>
+                            </div>
+                            <a href="@m.FileUrl" target="_blank" class="vm-mat-card__btn">
+                                @if (m.Type == MaterialType.PDF)
+                                { <i class="fas fa-download"></i> <span>تحميل</span> }
+                                else
+                                { <i class="fas fa-play"></i> <span>مشاهدة</span> }
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+}
+
+@section Scripts {
+<style>
+.vm-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
+.vm-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
+.vm-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vm-empty { text-align:center;padding:4rem 2rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem; }
+.vm-empty__icon { font-size:3rem;color:var(--text-disabled);margin-bottom:1rem; }
+.vm-empty h3 { font-size:1.1rem;font-weight:700;margin:0 0 .5rem; }
+.vm-empty p { font-size:.875rem;color:var(--text-muted);margin:0; }
+.vm-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
+.vm-card__head { display:flex;align-items:center;gap:.5rem;padding:.75rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle);font-size:.875rem;font-weight:700;color:var(--text-primary); }
+.vm-card__head i { color:var(--primary); }
+.vm-pill { display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700;background:var(--primary-100);color:var(--primary); }
+.vm-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;padding:1.25rem; }
+.vm-mat-card { display:flex;align-items:center;gap:.875rem;padding:1rem;border:1px solid var(--border-light);border-radius:.75rem;transition:box-shadow .18s,transform .18s; }
+.vm-mat-card:hover { box-shadow:0 4px 12px rgba(30,26,20,.08);transform:translateY(-2px); }
+.vm-mat-card--pdf   { border-inline-start:3px solid var(--danger); }
+.vm-mat-card--video { border-inline-start:3px solid var(--success); }
+.vm-mat-card__icon { width:40px;height:40px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0; }
+.vm-mat-card--pdf   .vm-mat-card__icon { background:var(--danger-50);color:var(--danger); }
+.vm-mat-card--video .vm-mat-card__icon { background:var(--success-50);color:var(--success); }
+.vm-mat-card__body { flex:1;min-width:0; }
+.vm-mat-card__title { font-size:.875rem;font-weight:700;color:var(--text-primary);margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.vm-mat-card__type { font-size:.72rem;font-weight:600; }
+.vm-mat-card--pdf   .vm-mat-card__type { color:var(--danger); }
+.vm-mat-card--video .vm-mat-card__type { color:var(--success); }
+.vm-mat-card__btn { display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;border-radius:.45rem;font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:none;transition:.12s;flex-shrink:0; }
+.vm-mat-card--pdf   .vm-mat-card__btn { background:var(--danger);color:#fff; } .vm-mat-card--pdf   .vm-mat-card__btn:hover { background:var(--danger-hover); }
+.vm-mat-card--video .vm-mat-card__btn { background:var(--success);color:#fff; } .vm-mat-card--video .vm-mat-card__btn:hover { background:var(--success-hover); }
+</style>
+}

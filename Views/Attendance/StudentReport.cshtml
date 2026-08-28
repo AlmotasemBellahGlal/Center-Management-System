@@ -1,0 +1,126 @@
+@model Center_Management.View_Models.StudentAttendanceReportVM
+@{
+    ViewData["Title"] = "تقرير حضور الطالب — " + Model.StudentFullName;
+}
+
+<div class="vr-top">
+    <div>
+        <h1 class="vr-title"><i class="fas fa-user-check" style="color:var(--success)"></i> تقرير حضور الطالب</h1>
+        <p class="vr-sub">@Model.StudentFullName · @Model.GroupName</p>
+    </div>
+    <div class="vr-actions">
+        <a href="@Url.Action("Report","Attendance",new{groupId=Model.GroupId})" class="vr-btn vr-btn--blue"><i class="fas fa-chart-line"></i> تقرير المجموعة</a>
+        <a href="@Url.Action("Create","Attendance",new{groupId=Model.GroupId})" class="vr-btn vr-btn--green"><i class="fas fa-plus"></i> تسجيل حضور</a>
+        <a href="@Url.Action("Index","Group")" class="vr-btn vr-btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+    </div>
+</div>
+
+@* Student info *@
+<div class="vr-info-strip">
+    <div class="vr-info-strip__item">
+        <span class="vr-info-strip__label">اسم الطالب</span>
+        <span class="vr-info-strip__value">@Model.StudentFullName</span>
+    </div>
+    <div class="vr-info-strip__sep"></div>
+    <div class="vr-info-strip__item">
+        <span class="vr-info-strip__label">المجموعة</span>
+        <span class="vr-info-strip__value">@Model.GroupName</span>
+    </div>
+</div>
+
+@* Stats *@
+<div class="vr-stats">
+    <div class="vr-stat vr-stat--blue"><div class="vr-stat__num">@Model.TotalSessions</div><div class="vr-stat__lbl">إجمالي الحصص</div><i class="fas fa-list vr-stat__ico"></i></div>
+    <div class="vr-stat vr-stat--green"><div class="vr-stat__num">@Model.PresentCount</div><div class="vr-stat__lbl">حاضر</div><i class="fas fa-check-circle vr-stat__ico"></i></div>
+    <div class="vr-stat vr-stat--red"><div class="vr-stat__num">@Model.AbsentCount</div><div class="vr-stat__lbl">غائب</div><i class="fas fa-times-circle vr-stat__ico"></i></div>
+    <div class="vr-stat vr-stat--amber"><div class="vr-stat__num">@Model.AttendanceRate%</div><div class="vr-stat__lbl">نسبة الحضور</div><i class="fas fa-percentage vr-stat__ico"></i></div>
+</div>
+
+@* Progress bar *@
+@if (Model.TotalSessions > 0)
+{
+    <div class="vr-card" style="margin-bottom:1.25rem">
+        <div class="vr-card__head"><i class="fas fa-chart-bar"></i> نسبة الحضور</div>
+        <div style="padding:1.25rem">
+            <div class="vr-progress-bar">
+                <div class="vr-progress-fill @(Model.AttendanceRate >= 75 ? "vr-progress-fill--green" : Model.AttendanceRate >= 50 ? "vr-progress-fill--amber" : "vr-progress-fill--red")"
+                     style="width:@Model.AttendanceRate%">
+                    <span>@Model.AttendanceRate%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* Records *@
+@if (Model.Records.Any())
+{
+    <div class="vr-card">
+        <div class="vr-card__head"><i class="fas fa-list"></i> السجل التفصيلي (@Model.Records.Count() سجل)</div>
+        <div style="overflow-x:auto">
+            <table class="vr-table">
+                <thead><tr><th>التاريخ</th><th>اليوم</th><th>الحالة</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.Records.OrderBy(r => r.Date))
+                    {
+                        <tr>
+                            <td>@r.Date.ToString("dd/MM/yyyy")</td>
+                            <td>@r.Date.ToString("dddd", new System.Globalization.CultureInfo("ar-SA"))</td>
+                            <td>
+                                @if (r.IsPresent)
+                                { <span class="vr-badge vr-badge--green"><i class="fas fa-check"></i> حاضر</span> }
+                                else
+                                { <span class="vr-badge vr-badge--red"><i class="fas fa-times"></i> غائب</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<style>
+.vr-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
+.vr-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
+.vr-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vr-actions { display:flex;gap:.5rem;flex-wrap:wrap; }
+.vr-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vr-btn--blue  { background:var(--primary);color:#fff; }   .vr-btn--blue:hover  { background:var(--primary-hover); }
+.vr-btn--green { background:var(--success);color:#fff; }   .vr-btn--green:hover { background:var(--success-hover); }
+.vr-btn--ghost { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vr-btn--ghost:hover { background:var(--gray-150); }
+.vr-info-strip { display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1rem 1.5rem;margin-bottom:1.25rem;flex-wrap:wrap; }
+.vr-info-strip__item { display:flex;flex-direction:column;gap:.2rem;padding:.25rem .75rem; }
+.vr-info-strip__sep { width:1px;height:32px;background:var(--border-light);flex-shrink:0; }
+.vr-info-strip__label { font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted); }
+.vr-info-strip__value { font-size:.9375rem;font-weight:700;color:var(--text-primary); }
+.vr-stats { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.25rem; }
+.vr-stat { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem 1rem 1rem;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .18s; }
+.vr-stat:hover { transform:translateY(-2px); }
+.vr-stat__num { font-size:2rem;font-weight:700;line-height:1;margin-bottom:.25rem; }
+.vr-stat__lbl { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.8; }
+.vr-stat__ico { position:absolute;inset-inline-end:.5rem;bottom:.25rem;font-size:2.5rem;opacity:.1; }
+.vr-stat--blue  { border-inline-start:4px solid var(--primary); } .vr-stat--blue  .vr-stat__num { color:var(--primary); }
+.vr-stat--green { border-inline-start:4px solid var(--success); } .vr-stat--green .vr-stat__num { color:var(--success); }
+.vr-stat--red   { border-inline-start:4px solid var(--danger);  } .vr-stat--red   .vr-stat__num { color:var(--danger);  }
+.vr-stat--amber { border-inline-start:4px solid var(--warning); } .vr-stat--amber .vr-stat__num { color:var(--warning); }
+.vr-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden;margin-bottom:1.25rem; }
+.vr-card__head { display:flex;align-items:center;gap:.6rem;padding:.875rem 1.25rem;font-size:.875rem;font-weight:700;color:var(--text-primary);border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vr-card__head i { color:var(--success); }
+.vr-progress-bar { height:28px;background:var(--gray-150);border-radius:2rem;overflow:hidden; }
+.vr-progress-fill { height:100%;border-radius:2rem;display:flex;align-items:center;justify-content:flex-end;padding-inline-end:.6rem;font-size:.75rem;font-weight:700;color:#fff;min-width:2rem;transition:width .4s ease; }
+.vr-progress-fill--green { background:var(--success); }
+.vr-progress-fill--amber { background:var(--warning); }
+.vr-progress-fill--red   { background:var(--danger); }
+.vr-table { width:100%;border-collapse:collapse;font-size:.8125rem; }
+.vr-table thead th { padding:.6rem 1rem;text-align:start;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--bg-subtle);border-bottom:1px solid var(--border-light); }
+.vr-table tbody tr { border-bottom:1px solid var(--border-light);transition:background .1s; }
+.vr-table tbody tr:last-child { border-bottom:none; }
+.vr-table tbody tr:hover { background:var(--success-50); }
+.vr-table td { padding:.65rem 1rem;color:var(--text-primary);vertical-align:middle; }
+.vr-badge { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .65em;border-radius:2rem;font-size:.75rem;font-weight:700; }
+.vr-badge--green { background:var(--success-50);color:var(--success); }
+.vr-badge--red   { background:var(--danger-50);color:var(--danger); }
+</style>
+}

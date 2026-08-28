@@ -1,0 +1,245 @@
+@model Center_Management.Models.Exam
+@{
+    ViewData["Title"] = "تفاصيل الاختبار — " + Model.Title;
+    int totalPoints = Model.Questions?.Sum(q => q.Points) ?? 0;
+    int qCount = Model.Questions?.Count ?? 0;
+    int aCount = Model.Attempts?.Count ?? 0;
+}
+
+<form id="tokenForm" style="display:none">@Html.AntiForgeryToken()</form>
+
+<div class="vex-top">
+    <div>
+        <h1 class="vex-title"><i class="fas fa-file-alt" style="color:var(--gold)"></i> @Model.Title</h1>
+        <p class="vex-sub">@Model.Group?.Name · @Model.Group?.AcademicYear?.Name</p>
+    </div>
+    <div class="vex-actions">
+        <a href="@Url.Action("Index",new{groupId=Model.GroupId})" class="vex-btn vex-btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+        <a href="@Url.Action("Edit",new{id=Model.Id})" class="vex-btn vex-btn--amber"><i class="fas fa-edit"></i> تعديل</a>
+        <a href="@Url.Action("AddMultipleQuestions",new{examId=Model.Id})" class="vex-btn vex-btn--blue"><i class="fas fa-layer-group"></i> إضافة أسئلة</a>
+        <a href="@Url.Action("AddQuestion",new{examId=Model.Id})" class="vex-btn vex-btn--gold"><i class="fas fa-plus"></i> سؤال واحد</a>
+    </div>
+</div>
+
+@* ── Info strip ── *@
+<div class="vex-info-strip">
+    <div class="vex-info-item">
+        <span class="vex-info-item__label">النوع</span>
+        <span class="vex-info-item__value">
+            @if (Model.Type == Center_Management.Models.ExamType.MCQ)
+            { <span class="vex-type vex-type--mcq"><i class="fas fa-check-circle"></i> اختيار متعدد</span> }
+            else
+            { <span class="vex-type vex-type--written"><i class="fas fa-pen"></i> مقالي</span> }
+        </span>
+    </div>
+    <div class="vex-info-sep"></div>
+    <div class="vex-info-item">
+        <span class="vex-info-item__label">من</span>
+        <span class="vex-info-item__value">@Model.StartDate.ToString("dd/MM/yyyy HH:mm")</span>
+    </div>
+    <div class="vex-info-sep"></div>
+    <div class="vex-info-item">
+        <span class="vex-info-item__label">إلى</span>
+        <span class="vex-info-item__value">@Model.EndDate.ToString("dd/MM/yyyy HH:mm")</span>
+    </div>
+    <div class="vex-info-sep"></div>
+    <div class="vex-info-item">
+        <span class="vex-info-item__label">الأسئلة</span>
+        <span class="vex-info-item__value vex-info-item__value--gold">@qCount</span>
+    </div>
+    <div class="vex-info-sep"></div>
+    <div class="vex-info-item">
+        <span class="vex-info-item__label">الدرجة الكلية</span>
+        <span class="vex-info-item__value vex-info-item__value--gold">@totalPoints</span>
+    </div>
+    @if (Model.DurationMinutes.HasValue)
+    {
+        <div class="vex-info-sep"></div>
+        <div class="vex-info-item">
+            <span class="vex-info-item__label">المدة</span>
+            <span class="vex-info-item__value">@Model.DurationMinutes دقيقة</span>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Description))
+{
+    <div class="vex-desc-box"><i class="fas fa-align-right"></i> @Model.Description</div>
+}
+
+@* ── Questions ── *@
+<div class="vex-card">
+    <div class="vex-card__head">
+        <i class="fas fa-question-circle"></i> الأسئلة
+        <span class="vex-pill" style="margin-inline-start:auto">@qCount</span>
+    </div>
+    @if (!Model.Questions.Any())
+    {
+        <div style="padding:3rem;text-align:center;color:var(--text-muted)">
+            <i class="fas fa-question-circle" style="font-size:2.5rem;display:block;margin-bottom:.875rem;opacity:.35"></i>
+            <p style="margin:0 0 1rem">لا توجد أسئلة بعد</p>
+            <a href="@Url.Action("AddQuestion",new{examId=Model.Id})" class="vex-btn vex-btn--gold"><i class="fas fa-plus"></i> إضافة السؤال الأول</a>
+        </div>
+    }
+    else
+    {
+        <div class="vex-questions-list">
+            @foreach (var q in Model.Questions.OrderBy(x => x.Order))
+            {
+                <div class="vex-q">
+                    <div class="vex-q__head">
+                        <span class="vex-q__num">سؤال @q.Order</span>
+                        <span class="vex-q__pts">@q.Points نقطة</span>
+                    </div>
+                    <p class="vex-q__text">@q.QuestionText</p>
+                    @if (!string.IsNullOrEmpty(q.ImagePath))
+                    {
+                        <div class="vex-q__img"><img src="@q.ImagePath" alt="صورة" /></div>
+                    }
+                    @if (Model.Type == Center_Management.Models.ExamType.MCQ)
+                    {
+                        <div class="vex-options">
+                            @foreach (var (letter, text) in new[]{("A",q.OptionA),("B",q.OptionB),("C",q.OptionC),("D",q.OptionD)})
+                            {
+                                <div class="vex-opt @(q.CorrectAnswer == letter ? "vex-opt--correct" : "")">
+                                    <span class="vex-opt__letter">@letter</span>
+                                    <span class="vex-opt__text">@text</span>
+                                    @if (q.CorrectAnswer == letter)
+                                    { <span class="vex-opt__mark"><i class="fas fa-check"></i></span> }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* ── Attempts ── *@
+@if (Model.Attempts.Any())
+{
+    <div class="vex-card" style="margin-top:1.25rem">
+        <div class="vex-card__head vex-card__head--green">
+            <i class="fas fa-users"></i> محاولات الطلاب
+            <span class="vex-pill" style="background:rgba(255,255,255,.25);color:#fff;margin-inline-start:auto">@aCount</span>
+            <button type="button" class="vex-reset-all-btn" onclick="confirmResetAll(@Model.Id)">
+                <i class="fas fa-redo"></i> إعادة الكل
+            </button>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="vex-table">
+                <thead>
+                    <tr><th>الطالب</th><th>بدأ</th><th>سلّم</th><th>الحالة</th><th>الدرجة</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var att in Model.Attempts.OrderByDescending(a => a.StartedAt))
+                    {
+                        <tr>
+                            <td><strong>@att.Student?.FullName</strong></td>
+                            <td>@att.StartedAt.ToString("dd/MM HH:mm")</td>
+                            <td>@(att.SubmittedAt?.ToString("dd/MM HH:mm") ?? "—")</td>
+                            <td>
+                                @if (att.IsSubmitted)
+                                { <span class="vex-badge vex-badge--green">تم التسليم</span> }
+                                else
+                                { <span class="vex-badge vex-badge--amber">جاري</span> }
+                            </td>
+                            <td>
+                                @if (att.Score.HasValue)
+                                { <strong>@att.Score / @totalPoints</strong> }
+                                else if (Model.Type == Center_Management.Models.ExamType.Written && att.IsSubmitted)
+                                { <span style="color:var(--text-muted)">يتطلب تصحيح</span> }
+                                else
+                                { <span style="color:var(--text-muted)">—</span> }
+                            </td>
+                            <td>
+                                <button type="button" class="vex-btn vex-btn--red vex-btn--xs"
+                                        onclick="confirmResetStudent(@Model.Id, @att.StudentId, '@att.Student?.FullName')">
+                                    <i class="fas fa-redo"></i> إعادة
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<style>
+.vex-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
+.vex-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
+.vex-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vex-actions { display:flex;gap:.4rem;flex-wrap:wrap; }
+.vex-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vex-btn--gold  { background:var(--gold);color:#fff; }    .vex-btn--gold:hover  { background:var(--gold-hover); }
+.vex-btn--blue  { background:var(--primary);color:#fff; } .vex-btn--blue:hover  { background:var(--primary-hover); }
+.vex-btn--amber { background:var(--warning);color:#fff; } .vex-btn--amber:hover { background:var(--warning-hover); }
+.vex-btn--red   { background:var(--danger-50);color:var(--danger); } .vex-btn--red:hover { background:var(--danger);color:#fff; }
+.vex-btn--ghost { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vex-btn--ghost:hover { background:var(--gray-150); }
+.vex-btn--xs { padding:.25rem .6rem;font-size:.72rem; }
+.vex-info-strip { display:flex;align-items:center;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:.875rem 1.25rem;margin-bottom:1.25rem;gap:0; }
+.vex-info-item { display:flex;flex-direction:column;gap:.2rem;padding:.25rem .875rem; }
+.vex-info-sep { width:1px;height:32px;background:var(--border-light);flex-shrink:0; }
+.vex-info-item__label { font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted); }
+.vex-info-item__value { font-size:.875rem;font-weight:700;color:var(--text-primary); }
+.vex-info-item__value--gold { color:var(--gold); }
+.vex-type { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .6em;border-radius:2rem;font-size:.75rem;font-weight:700; }
+.vex-type--mcq     { background:var(--primary-50);color:var(--primary); }
+.vex-type--written { background:var(--warning-50);color:var(--warning); }
+.vex-desc-box { display:flex;align-items:flex-start;gap:.6rem;padding:.875rem 1.25rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;margin-bottom:1.25rem;font-size:.875rem;color:var(--text-secondary); }
+.vex-desc-box i { color:var(--gold);flex-shrink:0;margin-top:2px; }
+.vex-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
+.vex-card__head { display:flex;align-items:center;gap:.6rem;padding:.875rem 1.25rem;font-size:.875rem;font-weight:700;color:var(--text-primary);border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vex-card__head i { color:var(--gold); }
+.vex-card__head--green { background:var(--success);color:#fff;border-bottom:none; }
+.vex-card__head--green i { color:#fff; }
+.vex-pill { display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700;background:var(--gold-50);color:var(--gold); }
+.vex-reset-all-btn { display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:.4rem;font-size:.75rem;font-weight:700;cursor:pointer;margin-inline-start:auto;transition:.12s; }
+.vex-reset-all-btn:hover { background:rgba(255,255,255,.25); }
+.vex-questions-list { padding:1.25rem;display:flex;flex-direction:column;gap:.875rem; }
+.vex-q { background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.75rem;padding:1rem; }
+.vex-q__head { display:flex;align-items:center;justify-content:space-between;margin-bottom:.625rem; }
+.vex-q__num { font-size:.8125rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.04em; }
+.vex-q__pts { background:var(--gold-50);color:var(--gold);padding:.15em .6em;border-radius:2rem;font-size:.72rem;font-weight:700; }
+.vex-q__text { font-size:.875rem;font-weight:500;color:var(--text-primary);margin:0 0 .625rem;line-height:1.6; }
+.vex-q__img { border-radius:.55rem;overflow:hidden;border:1px solid var(--border-light);text-align:center;margin-bottom:.625rem;background:var(--bg-card); }
+.vex-q__img img { max-width:100%;max-height:280px;object-fit:contain; }
+.vex-options { display:flex;flex-direction:column;gap:.3rem; }
+.vex-opt { display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.5rem; }
+.vex-opt--correct { background:var(--success-50);border-color:var(--success-100); }
+.vex-opt__letter { width:26px;height:26px;border-radius:50%;background:var(--gray-150);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0; }
+.vex-opt--correct .vex-opt__letter { background:var(--success);color:#fff; }
+.vex-opt__text { flex:1;font-size:.8125rem;color:var(--text-primary); }
+.vex-opt__mark { color:var(--success);font-size:.8rem;flex-shrink:0; }
+.vex-table { width:100%;border-collapse:collapse;font-size:.8125rem; }
+.vex-table thead th { padding:.6rem 1rem;text-align:start;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--bg-subtle);border-bottom:1px solid var(--border-light);white-space:nowrap; }
+.vex-table tbody tr { border-bottom:1px solid var(--border-light);transition:background .1s; }
+.vex-table tbody tr:last-child { border-bottom:none; }
+.vex-table tbody tr:hover { background:var(--gold-50); }
+.vex-table td { padding:.65rem 1rem;color:var(--text-primary);vertical-align:middle; }
+.vex-badge { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .65em;border-radius:2rem;font-size:.72rem;font-weight:700; }
+.vex-badge--green { background:var(--success-50);color:var(--success); }
+.vex-badge--amber { background:var(--warning-50);color:var(--warning); }
+</style>
+<script>
+function confirmResetStudent(examId, studentId, studentName) {
+    if (confirm(`إعادة تعيين الاختبار للطالب: ${studentName}؟\nسيتم حذف محاولته.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST'; form.action = '@Url.Action("ResetStudent")';
+        form.innerHTML = `<input type="hidden" name="examId" value="${examId}"><input type="hidden" name="studentId" value="${studentId}"><input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''}">`;
+        document.body.appendChild(form); form.submit();
+    }
+}
+function confirmResetAll(examId) {
+    if (confirm('تحذير: سيتم حذف جميع محاولات الطلاب لهذا الاختبار.\nهل أنت متأكد؟')) {
+        const form = document.createElement('form');
+        form.method = 'POST'; form.action = '@Url.Action("ResetAll")';
+        form.innerHTML = `<input type="hidden" name="examId" value="${examId}"><input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''}">`;
+        document.body.appendChild(form); form.submit();
+    }
+}
+</script>
+}

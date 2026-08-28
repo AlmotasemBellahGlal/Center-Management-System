@@ -1,0 +1,65 @@
+@model Matrial
+@{
+    ViewData["Title"] = "حذف مادة تعليمية";
+}
+
+<div class="vd-wrap">
+    <div class="vd-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <h1 class="vd-title">تأكيد حذف المادة التعليمية</h1>
+    <p class="vd-text">هذه العملية لا يمكن التراجع عنها. سيتم حذف المادة من النظام نهائياً.</p>
+
+    <div class="vd-info-box">
+        <div class="vd-info-row">
+            <span class="vd-info-label">العنوان</span>
+            <span class="vd-info-value">@Model.Title</span>
+        </div>
+        <div class="vd-info-row">
+            <span class="vd-info-label">النوع</span>
+            <span class="vd-info-value">
+                @if (Model.Type == MaterialType.PDF)
+                { <span class="vd-type vd-type--pdf"><i class="fas fa-file-pdf"></i> PDF</span> }
+                else
+                { <span class="vd-type vd-type--video"><i class="fas fa-video"></i> فيديو</span> }
+            </span>
+        </div>
+        <div class="vd-info-row">
+            <span class="vd-info-label">السنة الدراسية</span>
+            <span class="vd-info-value">@(Model.AcademicYear?.Name ?? "غير محدد")</span>
+        </div>
+        <div class="vd-info-row">
+            <span class="vd-info-label">الملف</span>
+            <a href="@Model.FileUrl" target="_blank" class="vd-link"><i class="fas fa-external-link-alt"></i> فتح الملف</a>
+        </div>
+    </div>
+
+    <div class="vd-actions">
+        <a href="@Url.Action("Index")" class="vd-btn vd-btn--ghost"><i class="fas fa-times"></i> إلغاء</a>
+        <form asp-action="DeleteConfirmed" method="post" style="display:inline">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="vd-btn vd-btn--danger"><i class="fas fa-trash"></i> نعم، احذف المادة</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.vd-wrap { max-width:480px;margin:2rem auto;text-align:center; }
+.vd-icon { font-size:3rem;color:var(--danger);margin-bottom:1rem; }
+.vd-title { font-size:1.3rem;font-weight:700;color:var(--text-primary);margin:0 0 .75rem; }
+.vd-text { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem;line-height:1.6; }
+.vd-info-box { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.75rem;margin-bottom:1.5rem;overflow:hidden;text-align:start; }
+.vd-info-row { display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;border-bottom:1px solid var(--border-light);gap:1rem; }
+.vd-info-row:last-child { border-bottom:none; }
+.vd-info-label { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);flex-shrink:0; }
+.vd-info-value { font-size:.875rem;font-weight:600;color:var(--text-primary); }
+.vd-type { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .6em;border-radius:2rem;font-size:.75rem;font-weight:700; }
+.vd-type--pdf   { background:var(--danger-50);color:var(--danger); }
+.vd-type--video { background:var(--success-50);color:var(--success); }
+.vd-link { display:inline-flex;align-items:center;gap:.3rem;color:var(--primary);font-size:.875rem;font-weight:600;text-decoration:none; }
+.vd-link:hover { text-decoration:underline; }
+.vd-actions { display:flex;justify-content:center;gap:.75rem; }
+.vd-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;border-radius:.55rem;font-size:.875rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vd-btn--ghost  { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vd-btn--ghost:hover  { background:var(--gray-150); }
+.vd-btn--danger { background:var(--danger);color:#fff; } .vd-btn--danger:hover { background:var(--danger-hover);box-shadow:0 4px 12px rgba(160,53,53,.3); }
+</style>
+}

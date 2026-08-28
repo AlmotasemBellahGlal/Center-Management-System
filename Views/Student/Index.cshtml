@@ -1,105 +1,314 @@
-﻿@model IEnumerable<Center_Management.Models.Student>
-
 @{
-    ViewData["Title"] = "Students";
+    ViewData["Title"] = "الطلاب";
+    var groupedStudents = ViewData["GroupedStudents"] as IEnumerable<dynamic>;
+    var studentsWithoutGroup = ViewData["StudentsWithoutActiveGroup"] as IEnumerable<Center_Management.Models.Student>;
+
+    int totalActive = 0, totalGroups = 0;
+    if (groupedStudents != null)
+        foreach (var y in groupedStudents)
+            foreach (var g in y.Groups) { totalGroups++; foreach (var s in g.Students) totalActive++; }
+
+    int totalInactive = studentsWithoutGroup?.Count() ?? 0;
+    int totalAll = totalActive + totalInactive;
+
+    // Pre-build year list for indexed iteration
+    var yearList = groupedStudents?.Cast<dynamic>().ToList() ?? new List<dynamic>();
 }
 
-<h2>Students</h2>
+<div class="v-page-top">
+    <div>
+        <h1 class="v-page-title">إدارة الطلاب</h1>
+        <p class="v-page-sub">الطلاب مرتبون حسب السنة الدراسية والمجموعة</p>
+    </div>
+    <a asp-action="Create" class="btn-prim"><i class="fas fa-user-plus"></i> إضافة طالب</a>
+</div>
 
-<p>
-    <a asp-action="Create" class="btn btn-success">
-        Add Student
-    </a>
-</p>
+<div class="v-stats-row">
+    <div class="v-stat v-stat--blue"><div class="v-stat__num">@totalAll</div><div class="v-stat__lbl">إجمالي الطلاب</div><i class="fas fa-users v-stat__ico"></i></div>
+    <div class="v-stat v-stat--green"><div class="v-stat__num">@totalActive</div><div class="v-stat__lbl">في مجموعات نشطة</div><i class="fas fa-user-check v-stat__ico"></i></div>
+    <div class="v-stat v-stat--amber"><div class="v-stat__num">@totalInactive</div><div class="v-stat__lbl">بدون مجموعة</div><i class="fas fa-user-clock v-stat__ico"></i></div>
+    <div class="v-stat v-stat--slate"><div class="v-stat__num">@totalGroups</div><div class="v-stat__lbl">مجموعات</div><i class="fas fa-layer-group v-stat__ico"></i></div>
+</div>
 
-<table class="table table-bordered table-striped">
+<div class="v-search-bar">
+    <i class="fas fa-search"></i>
+    <input id="studentSearch" type="text" placeholder="ابحث بالاسم أو رقم الهاتف..." oninput="filterStudents(this.value)" />
+    <button onclick="clearSearch()" title="مسح"><i class="fas fa-times"></i></button>
+</div>
+<div id="searchMeta" class="v-search-meta d-none"></div>
 
-    <thead>
+@if (yearList.Any())
+{
+    <div class="v-section-label v-section-label--blue">
+        <i class="fas fa-graduation-cap"></i> الطلاب في مجموعات نشطة
+        <span class="v-pill" style="margin-inline-start:auto">@totalActive</span>
+    </div>
+}
 
-        <tr>
+@for (int yi = 0; yi < yearList.Count; yi++)
+{
+    var yearGroup = yearList[yi];
+    string yid = "y" + yi;
+    int cnt = 0;
+    foreach (var g in yearGroup.Groups) foreach (var s in g.Students) cnt++;
+    var groupList = ((IEnumerable<dynamic>)yearGroup.Groups).ToList();
 
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Parent Phone</th>
-            <th>Groups</th>
-            <th></th>
+    <div class="v-accordion" id="@yid">
+        <div class="v-accordion__head" onclick="toggleAcc('@yid')">
+            <div class="v-accordion__head-left">
+                <div class="v-acc-dot v-acc-dot--blue"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                    <div class="v-acc-title">@yearGroup.AcademicYearName</div>
+                    <div class="v-acc-meta">@groupList.Count مجموعة · @cnt طالب</div>
+                </div>
+            </div>
+            <div class="v-accordion__head-right">
+                <span class="v-pill v-pill--blue">@cnt</span>
+                <i class="fas fa-chevron-down v-chevron" id="chev-@yid"></i>
+            </div>
+        </div>
+        <div class="v-accordion__body" id="body-@yid">
+            @for (int gi = 0; gi < groupList.Count; gi++)
+            {
+                var groupItem = groupList[gi];
+                string gid = "g" + yi + "_" + gi;
+                int gc = 0;
+                foreach (var s2 in groupItem.Students) gc++;
+                var studentList = ((IEnumerable<dynamic>)groupItem.Students).ToList();
 
-        </tr>
+                <div class="v-group-block">
+                    <div class="v-group-block__head" onclick="toggleAcc('@gid')">
+                        <div class="v-group-block__head-left">
+                            <div class="v-acc-dot v-acc-dot--gold"><i class="fas fa-users"></i></div>
+                            <span class="v-group-name">@groupItem.GroupName</span>
+                            <span class="v-pill v-pill--outline">@gc طالب</span>
+                        </div>
+                        <div class="v-group-block__head-right" onclick="event.stopPropagation()">
+                            <a href="/Session/Index?groupId=@groupItem.GroupId" class="btn-sm btn-sm--blue">
+                                <i class="fas fa-clipboard-check"></i>
+                                <span class="hide-mobile">جلسة</span>
+                            </a>
+                            <i class="fas fa-chevron-down v-chevron" id="chev-@gid"></i>
+                        </div>
+                    </div>
+                    <div class="v-accordion__body" id="body-@gid">
+                        <div class="v-table-wrap">
+                            <table class="v-table">
+                                <thead>
+                                    <tr><th>#</th><th>الاسم</th><th>رقم الطالب</th><th>ولي الأمر</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    @for (int si = 0; si < studentList.Count; si++)
+                                    {
+                                        var student = studentList[si];
+                                        <tr class="v-student-row"
+                                            data-name="@student.FullName.ToLower()"
+                                            data-phone="@student.PhoneNumber">
+                                            <td><span class="v-rownum">@(si+1)</span></td>
+                                            <td>
+                                                <div class="v-name-cell">
+                                                    <div class="v-avatar">@student.FullName[0]</div>
+                                                    <span>@student.FullName</span>
+                                                </div>
+                                            </td>
+                                            <td><code class="v-phone">@student.PhoneNumber</code></td>
+                                            <td><code class="v-phone v-phone--parent">@student.ParentPhoneNumber</code></td>
+                                            <td class="v-actions">
+                                                <a asp-action="Details" asp-route-id="@student.Id" class="btn-sm btn-sm--slate"><i class="fas fa-eye"></i></a>
+                                                <a asp-action="Edit" asp-route-id="@student.Id" class="btn-sm btn-sm--amber"><i class="fas fa-edit"></i></a>
+                                                <button type="button" class="btn-sm btn-sm--red"
+                                                        onclick="openDeleteModal('@student.Id','@Html.Raw(Html.Encode(student.FullName))')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
 
-    </thead>
-
-    <tbody>
-
-        @foreach (var student in Model)
-        {
-            <tr>
-
-                <td>@student.FullName</td>
-
-                <td>@student.PhoneNumber</td>
-
-                <td>@student.ParentPhoneNumber</td>
-
-                <td>
-
-                    @if (student.StudentGroups.Any())
+@if (studentsWithoutGroup != null && studentsWithoutGroup.Any())
+{
+    var inactiveList = studentsWithoutGroup.OrderBy(s => s.FullName).ToList();
+    <div class="v-section-label v-section-label--amber" style="margin-top:2rem">
+        <i class="fas fa-user-clock"></i> بدون مجموعة نشطة
+        <span class="v-pill v-pill--amber" style="margin-inline-start:auto">@totalInactive</span>
+    </div>
+    <div class="v-card">
+        <div class="v-table-wrap">
+            <table class="v-table">
+                <thead>
+                    <tr><th>#</th><th>الاسم</th><th>رقم الطالب</th><th>ولي الأمر</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @for (int ii = 0; ii < inactiveList.Count; ii++)
                     {
-                        <ul class="mb-0">
-
-                            @foreach (var item in student.StudentGroups.Where(x => x.IsActive))
-                            {
-                                <li>
-                                    @item.Group.Name
-                                    -
-                                    @(item.Group?.AcademicYear?.Subject?.Name ?? "No Subject")
-                                    (
-                                    @(item.Group?.AcademicYear?.Name ?? "No Academic Year")
-                                    )
-                                </li>
-                            }
-
-                        </ul>
+                        var student = inactiveList[ii];
+                        <tr class="v-student-row"
+                            data-name="@student.FullName.ToLower()"
+                            data-phone="@student.PhoneNumber">
+                            <td><span class="v-rownum">@(ii+1)</span></td>
+                            <td>
+                                <div class="v-name-cell">
+                                    <div class="v-avatar v-avatar--muted">@student.FullName[0]</div>
+                                    <span>@student.FullName</span>
+                                </div>
+                            </td>
+                            <td><code class="v-phone">@student.PhoneNumber</code></td>
+                            <td><code class="v-phone v-phone--parent">@student.ParentPhoneNumber</code></td>
+                            <td class="v-actions">
+                                <a asp-action="Details" asp-route-id="@student.Id" class="btn-sm btn-sm--slate"><i class="fas fa-eye"></i></a>
+                                <a asp-action="Edit" asp-route-id="@student.Id" class="btn-sm btn-sm--amber"><i class="fas fa-edit"></i></a>
+                                <button type="button" class="btn-sm btn-sm--red"
+                                        onclick="openDeleteModal('@student.Id','@Html.Raw(Html.Encode(student.FullName))')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
                     }
-                    else
-                    {
-                        <span class="text-danger">
-                            No Groups
-                        </span>
-                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
 
-                </td>
+@if (!yearList.Any() && (studentsWithoutGroup == null || !studentsWithoutGroup.Any()))
+{
+    <div class="v-empty">
+        <div class="v-empty__icon"><i class="fas fa-user-graduate"></i></div>
+        <h3>لا يوجد طلاب بعد</h3>
+        <p>ابدأ بإضافة أول طالب للنظام</p>
+        <a asp-action="Create" class="btn-prim"><i class="fas fa-user-plus"></i> إضافة أول طالب</a>
+    </div>
+}
 
-                <td>
+<div id="noSearchResult" class="v-empty v-empty--search d-none">
+    <i class="fas fa-search"></i>
+    <p>لا توجد نتائج مطابقة للبحث</p>
+</div>
 
-                    <a asp-action="Details"
-                       asp-route-id="@student.Id"
-                       class="btn btn-info btn-sm">
+<div class="modal" id="deleteStudentModal">
+    <div class="modal__backdrop" onclick="closeModal('deleteStudentModal')"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h2 class="modal__title"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> تأكيد الحذف</h2>
+            <button class="modal__close" onclick="closeModal('deleteStudentModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal__body" style="text-align:center;padding:2rem">
+            <div style="font-size:2.5rem;color:var(--danger);margin-bottom:1rem"><i class="fas fa-user-minus"></i></div>
+            <p style="color:var(--text-secondary);margin-bottom:.5rem">هل أنت متأكد من حذف الطالب</p>
+            <p style="font-size:1.1rem;font-weight:700;margin:0"><span id="deleteStudentName"></span></p>
+            <p style="font-size:.8rem;color:var(--danger);margin-top:.75rem"><i class="fas fa-exclamation-circle"></i> لا يمكن التراجع عن هذا الإجراء</p>
+        </div>
+        <div class="modal__footer">
+            <button class="btn-ghost" onclick="closeModal('deleteStudentModal')">إلغاء</button>
+            <a id="deleteConfirmLink" href="#" class="btn-danger"><i class="fas fa-trash"></i> حذف</a>
+        </div>
+    </div>
+</div>
 
-                        Details
-
-                    </a>
-
-                    <a asp-action="Edit"
-                       asp-route-id="@student.Id"
-                       class="btn btn-warning btn-sm">
-
-                        Edit
-
-                    </a>
-
-                    <a asp-action="Delete"
-                       asp-route-id="@student.Id"
-                       class="btn btn-danger btn-sm">
-
-                        Delete
-
-                    </a>
-
-                </td>
-
-            </tr>
-        }
-
-    </tbody>
-
-</table>
+@section Scripts {
+<style>
+.v-page-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+.v-page-title{font-size:1.5rem;font-weight:700;color:var(--text-primary);margin:0}
+.v-page-sub{font-size:.8125rem;color:var(--text-muted);margin:.25rem 0 0}
+.v-stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.v-stat{background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem 1rem 1rem;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s}
+.v-stat:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(30,26,20,.08)}
+.v-stat__num{font-size:2rem;font-weight:700;line-height:1;margin-bottom:.25rem}
+.v-stat__lbl{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.8}
+.v-stat__ico{position:absolute;inset-inline-end:.5rem;bottom:.25rem;font-size:2.8rem;opacity:.1}
+.v-stat--blue{border-inline-start:4px solid var(--primary)}.v-stat--blue .v-stat__num{color:var(--primary)}
+.v-stat--green{border-inline-start:4px solid var(--success)}.v-stat--green .v-stat__num{color:var(--success)}
+.v-stat--amber{border-inline-start:4px solid var(--warning)}.v-stat--amber .v-stat__num{color:var(--warning)}
+.v-stat--slate{border-inline-start:4px solid var(--gold)}.v-stat--slate .v-stat__num{color:var(--gold)}
+.v-search-bar{display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:var(--bg-card);border:1.5px solid var(--border-light);border-radius:2rem;margin-bottom:1.5rem;transition:border-color .14s,box-shadow .14s}
+.v-search-bar:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-100)}
+.v-search-bar i{color:var(--text-muted);font-size:.9rem;flex-shrink:0}
+.v-search-bar input{flex:1;border:none;outline:none;font-size:.875rem;background:transparent;color:var(--text-primary)}
+.v-search-bar button{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem}
+.v-search-bar button:hover{color:var(--danger)}
+.v-search-meta{font-size:.8rem;color:var(--text-muted);margin-bottom:1rem}
+.v-section-label{display:flex;align-items:center;gap:.6rem;padding:.5rem 1rem;background:var(--bg-card);border-radius:.4rem;font-size:.875rem;font-weight:600;color:var(--text-secondary);margin-bottom:1rem}
+.v-section-label--blue{border-inline-start:3px solid var(--primary)}.v-section-label--blue i{color:var(--primary)}
+.v-section-label--amber{border-inline-start:3px solid var(--warning)}.v-section-label--amber i{color:var(--warning)}
+.v-pill{display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700;background:var(--primary-100);color:var(--primary)}
+.v-pill--blue{background:var(--primary-100);color:var(--primary)}
+.v-pill--amber{background:var(--warning-100);color:var(--warning)}
+.v-pill--outline{background:transparent;border:1px solid var(--border-dark);color:var(--text-muted)}
+.v-accordion{background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;margin-bottom:.75rem;overflow:hidden}
+.v-accordion__head{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;cursor:pointer;user-select:none;background:var(--bg-subtle);border-bottom:1px solid var(--border-light);transition:background .14s}
+.v-accordion__head:hover{background:var(--primary-50)}
+.v-accordion__head-left{display:flex;align-items:center;gap:.75rem}
+.v-accordion__head-right{display:flex;align-items:center;gap:.5rem}
+.v-accordion__body{padding:1rem;display:block}
+.v-accordion__body.collapsed{display:none}
+.v-acc-dot{width:38px;height:38px;border-radius:.6rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.v-acc-dot--blue{background:var(--primary-50);color:var(--primary)}
+.v-acc-dot--gold{background:var(--gold-50);color:var(--gold)}
+.v-acc-title{font-size:1rem;font-weight:700;color:var(--text-primary)}
+.v-acc-meta{font-size:.75rem;color:var(--text-muted)}
+.v-chevron{color:var(--text-muted);transition:transform .22s;font-size:.85rem}
+.v-chevron.rotated{transform:rotate(-180deg)}
+.v-group-block{border:1px solid var(--border-light);border-radius:.6rem;margin-bottom:.5rem;overflow:hidden}
+.v-group-block__head{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;cursor:pointer;user-select:none;background:var(--bg-page);border-bottom:1px solid var(--border-light);transition:background .12s}
+.v-group-block__head:hover{background:var(--primary-50)}
+.v-group-block__head-left{display:flex;align-items:center;gap:.6rem}
+.v-group-block__head-right{display:flex;align-items:center;gap:.4rem}
+.v-group-name{font-size:.875rem;font-weight:600;color:var(--text-primary)}
+.v-card{background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden}
+.v-table-wrap{overflow-x:auto}
+.v-table{width:100%;border-collapse:collapse;font-size:.8125rem}
+.v-table thead th{padding:.6rem 1rem;text-align:start;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--bg-subtle);border-bottom:1px solid var(--border-light);white-space:nowrap}
+.v-table tbody tr{border-bottom:1px solid var(--border-light);transition:background .1s}
+.v-table tbody tr:last-child{border-bottom:none}
+.v-table tbody tr:hover{background:var(--primary-50)}
+.v-table td{padding:.6rem 1rem;color:var(--text-primary);vertical-align:middle}
+.v-name-cell{display:flex;align-items:center;gap:.6rem}
+.v-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;text-transform:uppercase}
+.v-avatar--muted{background:var(--gray-400)}
+.v-rownum{width:22px;height:22px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
+.v-phone{font-size:.8rem;background:var(--bg-subtle);padding:2px 8px;border-radius:.3rem;border:1px solid var(--border-light)}
+.v-phone--parent{background:var(--warning-50);border-color:var(--warning-100)}
+.v-actions{display:flex;justify-content:flex-end;gap:.3rem;align-items:center;white-space:nowrap}
+.btn-prim{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.1rem;background:var(--primary);color:#fff;border:none;border-radius:.6rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none;transition:.14s}
+.btn-prim:hover{background:var(--primary-hover);transform:translateY(-1px)}
+.btn-ghost{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer}
+.btn-ghost:hover{background:var(--gray-150)}
+.btn-danger{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--danger);color:#fff;border:none;border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none}
+.btn-danger:hover{background:var(--danger-hover)}
+.btn-sm{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:.4rem;cursor:pointer;font-size:.8rem;transition:.12s;text-decoration:none}
+.btn-sm--blue{background:var(--primary-50);color:var(--primary)}.btn-sm--blue:hover{background:var(--primary);color:#fff}
+.btn-sm--slate{background:var(--info-50);color:var(--info)}.btn-sm--slate:hover{background:var(--info);color:#fff}
+.btn-sm--amber{background:var(--warning-50);color:var(--warning)}.btn-sm--amber:hover{background:var(--warning);color:#fff}
+.btn-sm--red{background:var(--danger-50);color:var(--danger)}.btn-sm--red:hover{background:var(--danger);color:#fff}
+.v-empty{text-align:center;padding:4rem 2rem}
+.v-empty .v-empty__icon{font-size:3rem;color:var(--text-disabled);margin-bottom:1rem}
+.v-empty h3{font-size:1.15rem;font-weight:700;margin:0 0 .5rem}
+.v-empty p{font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem}
+.v-empty--search{padding:2rem}
+.v-empty--search i{font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.35;color:var(--text-muted)}
+.v-empty--search p{color:var(--text-muted);font-size:.875rem;margin:0}
+@@media(max-width:576px){.v-stats-row{grid-template-columns:repeat(2,1fr)}.v-page-top{flex-direction:column}}
+</style>
+<script>
+function toggleAcc(id){const b=document.getElementById('body-'+id),c=document.getElementById('chev-'+id);if(!b)return;b.classList.toggle('collapsed');if(c)c.classList.toggle('rotated')}
+function openDeleteModal(sid,name){document.getElementById('deleteStudentName').textContent=name;document.getElementById('deleteConfirmLink').href='/Student/Delete/'+sid;openModal('deleteStudentModal')}
+function filterStudents(q){
+    q=q.trim().toLowerCase();
+    const rows=document.querySelectorAll('.v-student-row'),noRes=document.getElementById('noSearchResult'),meta=document.getElementById('searchMeta');
+    let found=0;
+    if(q){document.querySelectorAll('.v-accordion__body').forEach(b=>b.classList.remove('collapsed'));document.querySelectorAll('.v-chevron').forEach(c=>c.classList.remove('rotated'))}
+    rows.forEach(row=>{const match=!q||(row.dataset.name||'').includes(q)||(row.dataset.phone||'').includes(q);row.style.display=match?'':'none';if(match)found++});
+    noRes.classList.toggle('d-none',found>0||!q);meta.classList.toggle('d-none',!q);
+    if(q)meta.textContent='تم العثور على '+found+' طالب'
+}
+function clearSearch(){const i=document.getElementById('studentSearch');i.value='';filterStudents('');i.focus()}
+</script>
+}

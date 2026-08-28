@@ -1,0 +1,140 @@
+@model IEnumerable<Center_Management.Models.Group>
+@{
+    ViewData["Title"] = "المدفوعات — اختر مجموعة";
+    var byYear = Model
+        .GroupBy(g => new { g.AcademicYearId, YearName = g.AcademicYear?.Name ?? "—" })
+        .OrderBy(y => y.Key.YearName).ToList();
+    string monthName = new[]{"يناير","فبراير","مارس","إبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"}[DateTime.Now.Month - 1];
+}
+
+<div class="vgp-banner vgp-banner--green">
+    <div class="vgp-banner__icon"><i class="fas fa-money-bill-wave"></i></div>
+    <div>
+        <h1 class="vgp-banner__title">إدارة المدفوعات</h1>
+        <p class="vgp-banner__sub">اختر المجموعة لإدارة دفعات الطلاب — @monthName @DateTime.Now.Year</p>
+    </div>
+</div>
+
+<div class="vgp-search">
+    <i class="fas fa-search"></i>
+    <input type="text" id="groupSearch" placeholder="ابحث عن مجموعة..." oninput="filterGroups(this.value)" />
+</div>
+
+@if (!Model.Any())
+{
+    <div class="vgp-empty">
+        <div class="vgp-empty__icon"><i class="fas fa-layer-group"></i></div>
+        <h3>لا توجد مجموعات</h3>
+        <p>أنشئ سنة دراسية ومجموعات أولاً</p>
+        <a asp-controller="AcadimicYear" asp-action="Index" class="vgp-btn vgp-btn--green"><i class="fas fa-plus"></i> إدارة السنوات</a>
+    </div>
+}
+else
+{
+    <div id="yearsContainer">
+        @foreach (var yearGroup in byYear)
+        {
+            <div class="vgp-year-block" data-year="@yearGroup.Key.YearName.ToLower()">
+                <div class="vgp-year-label vgp-year-label--green">
+                    <div class="vgp-year-label__dot vgp-year-label__dot--green"><i class="fas fa-graduation-cap"></i></div>
+                    <span class="vgp-year-label__name">@yearGroup.Key.YearName</span>
+                    <span class="vgp-pill vgp-pill--green" style="margin-inline-start:auto">@yearGroup.Count() مجموعة</span>
+                </div>
+                <div class="vgp-grid">
+                    @foreach (var group in yearGroup.OrderBy(g => g.Name))
+                    {
+                        int studentCount = group.StudentGroups?.Count(sg => sg.IsActive) ?? 0;
+                        decimal price = group.AcademicYear?.MonthlyPrice ?? 0;
+                        <a href="@Url.Action("Index","Payment",new{groupId=group.Id})"
+                           class="vgp-card vgp-card--green" data-name="@group.Name.ToLower()">
+                            <div class="vgp-card__icon vgp-card__icon--green"><i class="fas fa-credit-card"></i></div>
+                            <div class="vgp-card__body">
+                                <div class="vgp-card__name">@group.Name</div>
+                                <div class="vgp-card__meta">
+                                    @if (price > 0)
+                                    { <span style="color:var(--success);font-weight:600"><i class="fas fa-tag"></i> @price.ToString("N0") ج.م / شهر</span> }
+                                    @if (group.Schedules != null && group.Schedules.Any())
+                                    {
+                                        @foreach (var s in group.Schedules)
+                                        { <span><i class="fas fa-clock"></i> @s.Day @s.StartTime.ToString(@"hh\:mm")</span> }
+                                    }
+                                </div>
+                                <div class="vgp-card__footer">
+                                    <span><i class="fas fa-users"></i> @studentCount طالب</span>
+                                    <span class="vgp-card__cta vgp-card__cta--green">إدارة الدفعات <i class="fas fa-arrow-left"></i></span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+    <div id="noResult" class="vgp-no-result d-none">
+        <i class="fas fa-search"></i><p>لا توجد نتائج مطابقة</p>
+    </div>
+}
+
+@section Scripts {
+<style>
+.vgp-banner { display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-radius:.85rem;color:#fff;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(30,26,20,.08); }
+.vgp-banner--green { background:var(--success); }
+.vgp-banner__icon { width:52px;height:52px;background:rgba(255,255,255,.18);border-radius:.65rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0; }
+.vgp-banner__title { font-size:1.3rem;font-weight:700;margin:0; }
+.vgp-banner__sub { font-size:.8125rem;opacity:.85;margin:.2rem 0 0; }
+.vgp-search { display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:var(--bg-card);border:1.5px solid var(--border-light);border-radius:2rem;margin-bottom:1.5rem;transition:.14s; }
+.vgp-search:focus-within { border-color:var(--success);box-shadow:0 0 0 3px var(--success-100); }
+.vgp-search i { color:var(--text-muted);font-size:.85rem; }
+.vgp-search input { flex:1;border:none;outline:none;font-size:.875rem;background:transparent;color:var(--text-primary); }
+.vgp-year-block { margin-bottom:1.75rem; }
+.vgp-year-label { display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.55rem;margin-bottom:.875rem; }
+.vgp-year-label--green { border-inline-start:3px solid var(--success); }
+.vgp-year-label__dot { width:32px;height:32px;border-radius:.4rem;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;background:var(--primary-50);color:var(--primary); }
+.vgp-year-label__dot--green { background:var(--success-50);color:var(--success); }
+.vgp-year-label__name { font-size:.9375rem;font-weight:700;color:var(--text-primary); }
+.vgp-pill { display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700; }
+.vgp-pill--green { background:var(--success-50);color:var(--success); }
+.vgp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.875rem; }
+.vgp-card { display:flex;align-items:flex-start;gap:.875rem;padding:1rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;text-decoration:none;color:inherit;transition:box-shadow .16s,transform .16s,border-color .16s;position:relative;overflow:hidden; }
+.vgp-card::before { content:'';position:absolute;top:0;inset-inline-start:0;inset-inline-end:0;height:3px; }
+.vgp-card--green::before { background:var(--success); }
+.vgp-card:hover { box-shadow:0 4px 14px rgba(30,26,20,.09);transform:translateY(-3px); }
+.vgp-card--green:hover { border-color:var(--success-100); }
+.vgp-card__icon { width:44px;height:44px;border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;transition:.14s;background:var(--primary-50);color:var(--primary); }
+.vgp-card__icon--green { background:var(--success-50);color:var(--success); }
+.vgp-card:hover .vgp-card__icon--green { background:var(--success);color:#fff; }
+.vgp-card__body { flex:1;min-width:0; }
+.vgp-card__name { font-size:.9375rem;font-weight:700;color:var(--text-primary);margin-bottom:.3rem; }
+.vgp-card__meta { display:flex;flex-direction:column;gap:2px;margin-bottom:.75rem; }
+.vgp-card__meta span { font-size:.75rem;color:var(--text-muted);display:flex;align-items:center;gap:.3rem; }
+.vgp-card__footer { display:flex;align-items:center;justify-content:space-between;padding-top:.5rem;border-top:1px solid var(--border-light);font-size:.75rem; }
+.vgp-card__footer > span:first-child { color:var(--text-muted); }
+.vgp-card__cta { font-weight:700;display:flex;align-items:center;gap:.3rem; }
+.vgp-card__cta--green { color:var(--success); }
+.vgp-empty { text-align:center;padding:4rem 2rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem; }
+.vgp-empty__icon { font-size:3rem;color:var(--text-disabled);margin-bottom:1rem; }
+.vgp-empty h3 { font-size:1.1rem;font-weight:700;margin:0 0 .5rem; }
+.vgp-empty p { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem; }
+.vgp-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vgp-btn--green { background:var(--success);color:#fff; } .vgp-btn--green:hover { background:var(--success-hover); }
+.vgp-no-result { text-align:center;padding:2.5rem;color:var(--text-muted); }
+.vgp-no-result i { font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.35; }
+.vgp-no-result p { margin:0;font-size:.875rem; }
+</style>
+<script>
+function filterGroups(q) {
+    q = q.toLowerCase().trim();
+    let vis = 0;
+    document.querySelectorAll('.vgp-year-block').forEach(block => {
+        let blockHas = false;
+        block.querySelectorAll('.vgp-card').forEach(card => {
+            const match = !q || (card.dataset.name||'').includes(q) || (block.dataset.year||'').includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) { blockHas = true; vis++; }
+        });
+        block.style.display = blockHas ? '' : 'none';
+    });
+    document.getElementById('noResult').classList.toggle('d-none', vis > 0 || !q);
+}
+</script>
+}

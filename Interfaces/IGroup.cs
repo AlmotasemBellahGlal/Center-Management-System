@@ -12,5 +12,6 @@ namespace Center_Management.Interfaces
         Task UpdateGroupAsync(CreateGroupVM vm);
         Task<List<Group>> GetGroupsByIdsAsync(List<int> groupIds);
         Task<IEnumerable<Group>> GetGroupsWithAcademicYearAndSubjectAsync();
+        Task<Group?> GetGroupWithAcademicYearAsync(int groupId);
     }
 }

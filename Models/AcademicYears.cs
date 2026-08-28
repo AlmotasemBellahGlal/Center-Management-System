@@ -10,8 +10,6 @@ namespace Center_Management.Models
         [Range(50, 500)]
         [Required]
         public decimal MonthlyPrice { get; set; }
-        public int SubjectId { get; set; }
-        public Subject? Subject { get; set; }
         public ICollection<Group>? Groups { get; set; }
         public ICollection<Matrial>? Matrials { get; set; }
 

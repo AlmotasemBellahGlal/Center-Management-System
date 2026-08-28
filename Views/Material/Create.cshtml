@@ -1,0 +1,212 @@
+@model CreateMaterialVM
+@{
+    ViewData["Title"] = "إضافة مادة تعليمية";
+}
+
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">إضافة مادة تعليمية</h1>
+        <p class="vf-sub">أضف ملف PDF أو فيديو تعليمي للطلاب</p>
+    </div>
+    <a href="@Url.Action("Index")" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" id="materialForm">
+    <div asp-validation-summary="All" class="vf-errors"></div>
+
+    @* Basic info *@
+    <div class="vf-section">
+        <div class="vf-section__head">
+            <div class="vf-section__icon" style="background:var(--success-50);color:var(--success)"><i class="fas fa-info-circle"></i></div>
+            <h2 class="vf-section__title">معلومات المادة</h2>
+        </div>
+        <div class="vf-section__body">
+            <div class="vf-row">
+                <div class="vf-field">
+                    <label asp-for="Title" class="vf-label">عنوان المادة <span class="vf-req">*</span></label>
+                    <input asp-for="Title" class="vf-input" placeholder="أدخل عنوان المادة التعليمية" />
+                    <span asp-validation-for="Title" class="vf-err"></span>
+                </div>
+                <div class="vf-field">
+                    <label asp-for="Type" class="vf-label">نوع المادة <span class="vf-req">*</span></label>
+                    <select asp-for="Type" class="vf-select" id="materialType">
+                        <option value="">— اختر النوع —</option>
+                        <option value="@((int)MaterialType.PDF)">ملف PDF</option>
+                        <option value="@((int)MaterialType.Video)">فيديو</option>
+                    </select>
+                    <span asp-validation-for="Type" class="vf-err"></span>
+                </div>
+                <div class="vf-field">
+                    <label asp-for="AcademicYearId" class="vf-label">السنة الدراسية <span class="vf-req">*</span></label>
+                    <select asp-for="AcademicYearId" class="vf-select"
+                            asp-items="@(new SelectList(Model.AcademicYears,"Id","Name"))">
+                        <option value="">— اختر السنة —</option>
+                    </select>
+                    <span asp-validation-for="AcademicYearId" class="vf-err"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Upload method *@
+    <div class="vf-section">
+        <div class="vf-section__head">
+            <div class="vf-section__icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-cloud-upload-alt"></i></div>
+            <h2 class="vf-section__title">طريقة إضافة الملف</h2>
+        </div>
+        <div class="vf-section__body">
+            <div class="vf-method-toggle">
+                <label class="vf-method-opt">
+                    <input asp-for="IsLocalFile" type="radio" value="true" id="localFile" checked />
+                    <span class="vf-method-opt__inner">
+                        <i class="fas fa-upload"></i>
+                        <span class="vf-method-opt__title">رفع ملف من الجهاز</span>
+                        <span class="vf-method-opt__sub">PDF أو فيديو من جهازك</span>
+                    </span>
+                </label>
+                <label class="vf-method-opt">
+                    <input asp-for="IsLocalFile" type="radio" value="false" id="externalUrl" />
+                    <span class="vf-method-opt__inner">
+                        <i class="fas fa-link"></i>
+                        <span class="vf-method-opt__title">رابط خارجي</span>
+                        <span class="vf-method-opt__sub">رابط من الإنترنت</span>
+                    </span>
+                </label>
+            </div>
+
+            @* Local file *@
+            <div id="localFileSection" style="margin-top:1.25rem">
+                <div class="vf-drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="vf-drop-zone__content" id="dropContent">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p class="vf-drop-zone__title">اسحب الملف هنا أو اضغط للاختيار</p>
+                        <p class="vf-drop-zone__sub" id="acceptedFmt">PDF, MP4, AVI, MOV (حد أقصى 100 ميجا)</p>
+                    </div>
+                    <div class="vf-drop-zone__selected" id="selectedFile" style="display:none">
+                        <i class="fas fa-file-check"></i>
+                        <span id="selectedFileName"></span>
+                        <button type="button" onclick="event.stopPropagation();clearFile()" class="vf-drop-zone__clear"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <input asp-for="LocalFile" type="file" id="fileInput" style="display:none" accept=".pdf,.mp4,.avi,.mov,.wmv,.mkv" />
+                <span asp-validation-for="LocalFile" class="vf-err"></span>
+            </div>
+
+            @* External URL *@
+            <div id="externalUrlSection" style="display:none;margin-top:1.25rem">
+                <div class="vf-field">
+                    <label asp-for="FileUrl" class="vf-label">رابط الملف <span class="vf-req">*</span></label>
+                    <input asp-for="FileUrl" type="url" class="vf-input" placeholder="https://example.com/file.pdf" dir="ltr" />
+                    <span asp-validation-for="FileUrl" class="vf-err"></span>
+                    <span class="vf-hint">يجب أن يبدأ بـ https://</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="vf-footer">
+        <a href="@Url.Action("Index")" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
+        <button type="submit" form="materialForm" class="vf-submit"><i class="fas fa-save"></i> حفظ المادة</button>
+    </div>
+</form>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<style>
+.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
+.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-back-btn:hover { background:var(--gray-150); }
+.vf-errors { background:var(--danger-50);border:1px solid var(--danger-100);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.8125rem;color:var(--danger); }
+.vf-errors ul { margin:0;padding-inline-start:1.25rem; }
+.vf-section { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;margin-bottom:1.25rem;overflow:hidden; }
+.vf-section__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vf-section__icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
+.vf-section__title { font-size:.9rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-section__body { padding:1.25rem; }
+.vf-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem; }
+.vf-field { }
+.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
+.vf-req { color:var(--danger); }
+.vf-hint { display:block;font-size:.75rem;color:var(--text-muted);margin-top:.3rem; }
+.vf-input,.vf-select { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
+.vf-input:focus,.vf-select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-100); }
+.vf-select { appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23887f74' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:left .6rem center;background-size:13px;padding-inline-start:1.9rem; }
+.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
+/* Method toggle */
+.vf-method-toggle { display:grid;grid-template-columns:1fr 1fr;gap:.75rem; }
+.vf-method-opt { position:relative; }
+.vf-method-opt input { position:absolute;opacity:0;pointer-events:none; }
+.vf-method-opt__inner { display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem;background:var(--bg-subtle);border:1.5px solid var(--border-light);border-radius:.75rem;cursor:pointer;text-align:center;transition:.14s; }
+.vf-method-opt__inner:hover { border-color:var(--primary-200); }
+.vf-method-opt input:checked + .vf-method-opt__inner { border-color:var(--primary);background:var(--primary-50);box-shadow:0 0 0 3px var(--primary-100); }
+.vf-method-opt__inner i { font-size:1.4rem;color:var(--primary); }
+.vf-method-opt__title { font-size:.875rem;font-weight:700;color:var(--text-primary); }
+.vf-method-opt__sub { font-size:.75rem;color:var(--text-muted); }
+/* Drop zone */
+.vf-drop-zone { border:2px dashed var(--border);border-radius:.75rem;padding:2rem;text-align:center;cursor:pointer;transition:.14s;background:var(--bg-subtle);min-height:120px;display:flex;align-items:center;justify-content:center; }
+.vf-drop-zone:hover,.vf-drop-zone.drag-over { border-color:var(--primary);background:var(--primary-50); }
+.vf-drop-zone__content { display:flex;flex-direction:column;align-items:center;gap:.5rem; }
+.vf-drop-zone__content i { font-size:2rem;color:var(--primary); }
+.vf-drop-zone__title { font-size:.875rem;font-weight:600;color:var(--text-primary);margin:0; }
+.vf-drop-zone__sub { font-size:.75rem;color:var(--text-muted);margin:0; }
+.vf-drop-zone__selected { display:flex;align-items:center;gap:.75rem;background:var(--success-50);border-radius:.55rem;padding:.75rem 1rem;width:100%;justify-content:center; }
+.vf-drop-zone__selected i { color:var(--success);font-size:1.2rem; }
+.vf-drop-zone__selected span { font-size:.875rem;font-weight:600;color:var(--success);flex:1; }
+.vf-drop-zone__clear { background:var(--danger-50);color:var(--danger);border:none;border-radius:.35rem;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem; }
+.vf-drop-zone__clear:hover { background:var(--danger);color:#fff; }
+.vf-footer { display:flex;justify-content:flex-end;gap:.5rem;flex-wrap:wrap;padding:1.25rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.85rem;margin-top:1.25rem; }
+.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-cancel:hover { background:var(--gray-150); }
+.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
+.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,125,94,.3); }
+</style>
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const dropContent = document.getElementById('dropContent');
+const selectedFile = document.getElementById('selectedFile');
+const selectedFileName = document.getElementById('selectedFileName');
+
+document.querySelectorAll('input[name="IsLocalFile"]').forEach(r => {
+    r.addEventListener('change', function() {
+        const isLocal = this.value === 'true';
+        document.getElementById('localFileSection').style.display = isLocal ? '' : 'none';
+        document.getElementById('externalUrlSection').style.display = isLocal ? 'none' : '';
+    });
+});
+
+document.getElementById('materialType').addEventListener('change', function() {
+    const fmt = document.getElementById('acceptedFmt');
+    if (this.value == '0') { fileInput.accept = '.pdf'; fmt.textContent = 'PDF فقط'; }
+    else if (this.value == '1') { fileInput.accept = '.mp4,.avi,.mov,.wmv,.mkv'; fmt.textContent = 'MP4, AVI, MOV, WMV, MKV'; }
+    else { fileInput.accept = '.pdf,.mp4,.avi,.mov,.wmv,.mkv'; fmt.textContent = 'PDF, MP4, AVI, MOV, WMV, MKV'; }
+});
+
+fileInput.addEventListener('change', function() {
+    if (this.files[0]) showFile(this.files[0]);
+});
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) { const dt = e.dataTransfer; fileInput.files = dt.files; showFile(dt.files[0]); }
+});
+
+function showFile(file) {
+    selectedFileName.textContent = file.name;
+    dropContent.style.display = 'none';
+    selectedFile.style.display = 'flex';
+}
+
+function clearFile() {
+    fileInput.value = '';
+    dropContent.style.display = 'flex';
+    selectedFile.style.display = 'none';
+}
+
+document.querySelector('input[name="IsLocalFile"][value="true"]').dispatchEvent(new Event('change'));
+</script>
+}

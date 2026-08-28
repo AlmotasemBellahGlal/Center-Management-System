@@ -1,25 +1,54 @@
 ﻿@model Center_Management.Models.AcademicYear
-
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "إضافة سنة دراسية";
 }
 
-<h1>Create</h1>
-
-<h4>AcademicYear</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <partial name="PartialViews/_CreateEditPartialView" model="Model" />
-        </form>
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">إضافة سنة دراسية جديدة</h1>
+        <p class="vf-sub">أدخل اسم السنة الدراسية والسعر الشهري</p>
     </div>
+    <a asp-action="Index" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
-<br />
-<div>
-    <partial name="_BackToListPartialView" />
+
+<div class="vf-card">
+    <div class="vf-card__head">
+        <div class="vf-card__head-icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-graduation-cap"></i></div>
+        <h2 class="vf-card__title">بيانات السنة الدراسية</h2>
+    </div>
+    <form asp-action="Create" class="vf-form">
+        <partial name="PartialViews/_CreateEditPartialView" model="Model" />
+        <div class="vf-form__footer">
+            <a asp-action="Index" class="vf-btn vf-btn--ghost"><i class="fas fa-times"></i> إلغاء</a>
+            <button type="submit" class="vf-btn vf-btn--green"><i class="fas fa-save"></i> حفظ السنة الدراسية</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+<style>
+.vf-top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+.vf-title { font-size:1.4rem; font-weight:700; color:var(--text-primary); margin:0; }
+.vf-sub { font-size:.8rem; color:var(--text-muted); margin:.25rem 0 0; }
+.vf-back-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; text-decoration:none; }
+.vf-back-btn:hover { background:var(--gray-150); }
+.vf-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; overflow:hidden; }
+.vf-card__head { display:flex; align-items:center; gap:.75rem; padding:1rem 1.25rem; border-bottom:1px solid var(--border-light); background:var(--bg-subtle); }
+.vf-card__head-icon { width:36px; height:36px; border-radius:.55rem; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+.vf-card__title { font-size:.9rem; font-weight:700; color:var(--text-primary); margin:0; }
+.vf-form { padding:1.5rem; }
+.vf-form__footer { display:flex; justify-content:flex-end; gap:.5rem; margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--border-light); }
+.vf-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.45rem 1rem; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.14s; }
+.vf-btn--ghost { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); } .vf-btn--ghost:hover { background:var(--gray-150); }
+.vf-btn--green { background:var(--success); color:#fff; } .vf-btn--green:hover { background:var(--success-hover); box-shadow:0 4px 12px rgba(46,125,94,.3); }
+/* override partial styles */
+.form-group { margin-bottom:1.25rem; }
+.form-label { display:block; font-size:.8rem; font-weight:600; color:var(--text-secondary); margin-bottom:.4rem; }
+.form-required { color:var(--danger); }
+.form-input { display:block; width:100%; padding:.5625rem .75rem; font-size:.875rem; background:var(--bg-card); border:1.5px solid var(--border); border-radius:.55rem; transition:border-color .14s, box-shadow .14s; font-family:inherit; color:var(--text-primary); }
+.form-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-100); }
+.form-error { font-size:.75rem; color:var(--danger); display:block; margin-top:.3rem; }
+.form-help { font-size:.75rem; color:var(--text-muted); display:block; margin-top:.3rem; }
+</style>
 }

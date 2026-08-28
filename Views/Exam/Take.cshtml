@@ -1,0 +1,530 @@
+@model Center_Management.Models.Exam
+@{
+    ViewData["Title"] = Model.Title;
+    var attempt = ViewBag.Attempt as Center_Management.Models.StudentExamAttempt;
+    var deadlineTime = (DateTime)ViewBag.DeadlineTime;
+    var durationMinutes = ViewBag.DurationMinutes as int?;
+    var totalPoints = Model.Questions?.Sum(q => q.Points) ?? 0;
+}
+
+@* ── Page Header ── *@
+<div class="page-header page-header--exam">
+    <div class="page-header__icon">
+        <i class="fas fa-edit"></i>
+    </div>
+    <div class="page-header__content">
+        <h1 class="page-header__title">@Model.Title</h1>
+        <p class="page-header__subtitle">@Model.Group?.Name</p>
+    </div>
+    <div class="page-header__timer" id="timer">
+        <i class="fas fa-clock"></i>
+        <span id="timeLeft"></span>
+    </div>
+</div>
+
+@* ── Exam Info ── *@
+<div class="exam-info">
+    <div class="exam-info__item">
+        <i class="fas fa-question-circle"></i>
+        <span>@Model.Questions.Count سؤال</span>
+    </div>
+    <div class="exam-info__item">
+        <i class="fas fa-star"></i>
+        <span>@totalPoints نقطة</span>
+    </div>
+    @if (durationMinutes.HasValue)
+    {
+        <div class="exam-info__item exam-info__item--warn">
+            <i class="fas fa-stopwatch"></i>
+            <span>مدة الحل: @durationMinutes دقيقة</span>
+        </div>
+    }
+    <div class="exam-info__item">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>محاولة واحدة فقط</span>
+    </div>
+</div>
+
+@* ── Questions Form ── *@
+<form method="post" asp-action="Submit" asp-route-attemptId="@attempt?.Id" id="examForm">
+    @Html.AntiForgeryToken()
+
+    <div class="questions-container">
+        @{ int questionNumber = 1; }
+        @foreach (var question in Model.Questions.OrderBy(q => q.Order))
+        {
+            <div class="question-box @(!string.IsNullOrEmpty(question.ImagePath) ? "question-box--has-image" : "")" id="question-@question.Id">
+                <div class="question-box__header">
+                    <span class="question-box__number">السؤال @questionNumber</span>
+                    <span class="question-box__points">@question.Points نقطة</span>
+                </div>
+
+                <div class="question-box__body">
+                    @* content first in DOM → appears on RIGHT in RTL flex *@
+                    <div class="question-box__content">
+                        <div class="question-box__text">@question.QuestionText</div>
+
+                        @if (Model.Type == Center_Management.Models.ExamType.MCQ)
+                        {
+                            <div class="options-list">
+                                <label class="option-item">
+                                    <input type="radio" name="answers[@question.Id]" value="A" required />
+                                    <span class="option-item__radio"></span>
+                                    <span class="option-item__letter">A</span>
+                                    <span class="option-item__text">@question.OptionA</span>
+                                </label>
+
+                                <label class="option-item">
+                                    <input type="radio" name="answers[@question.Id]" value="B" required />
+                                    <span class="option-item__radio"></span>
+                                    <span class="option-item__letter">B</span>
+                                    <span class="option-item__text">@question.OptionB</span>
+                                </label>
+
+                                <label class="option-item">
+                                    <input type="radio" name="answers[@question.Id]" value="C" required />
+                                    <span class="option-item__radio"></span>
+                                    <span class="option-item__letter">C</span>
+                                    <span class="option-item__text">@question.OptionC</span>
+                                </label>
+
+                                <label class="option-item">
+                                    <input type="radio" name="answers[@question.Id]" value="D" required />
+                                    <span class="option-item__radio"></span>
+                                    <span class="option-item__letter">D</span>
+                                    <span class="option-item__text">@question.OptionD</span>
+                                </label>
+                            </div>
+                        }
+                        else
+                        {
+                            <textarea name="answers[@question.Id]"
+                                      class="answer-textarea"
+                                      rows="6"
+                                      placeholder="اكتب إجابتك هنا..."
+                                      required></textarea>
+                        }
+                    </div>
+
+                    @* image second in DOM → appears on LEFT in RTL flex *@
+                    @if (!string.IsNullOrEmpty(question.ImagePath))
+                    {
+                        <div class="question-image">
+                            <img src="@question.ImagePath" alt="صورة السؤال" />
+                        </div>
+                    }
+                </div>
+            </div>
+
+            questionNumber++;
+        }
+    </div>
+
+    <div class="submit-section">
+        <div class="submit-section__warning">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>تأكد من إجابتك على جميع الأسئلة قبل التسليم. لن تتمكن من العودة بعد التسليم.</span>
+        </div>
+        <button type="submit" class="btn btn--success btn--lg" onclick="return confirmSubmit()">
+            <i class="fas fa-paper-plane"></i>
+            تسليم الاختبار
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+<style>
+/* ═══════════════════════════════════════════════════════
+   Take Exam - Scoped Styles
+   ═══════════════════════════════════════════════════════ */
+
+.page-header--exam {
+    background: var(--primary-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.page-header__timer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: rgba(255, 255, 255, 0.2);
+    padding: var(--spacing-sm) var(--spacing);
+    border-radius: var(--radius-full);
+    color: #fff;
+    font-weight: var(--font-bold);
+    font-size: var(--text-lg);
+}
+
+/* Exam Info */
+.exam-info {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing);
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.exam-info__item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
+}
+
+.exam-info__item i {
+    color: var(--primary-color);
+}
+
+/* Questions Container */
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Question Box */
+.question-box {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.question-box__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.question-box__number {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--primary-color);
+}
+
+.question-box__points {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+}
+
+.question-box__text {
+    font-size: var(--text-lg);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    line-height: 1.8;
+    margin-bottom: var(--spacing);
+}
+
+/* Question Body: side-by-side layout when image exists */
+.question-box__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing);
+}
+
+/* Image on LEFT (60%), content on RIGHT (40%) — RTL: second DOM child = left */
+.question-box--has-image .question-box__body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+}
+
+/* Content: smaller right column */
+.question-box__content {
+    flex: 2;
+    min-width: 0;
+}
+
+/* Image: bigger left column */
+.question-image {
+    flex: 3;
+    min-width: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid var(--border-color);
+    background: var(--gray-50);
+    text-align: center;
+}
+
+.question-image img {
+    width: 100%;
+    max-height: 460px;
+    object-fit: contain;
+    display: block;
+}
+
+/* Mobile: image on top, full width */
+@@media (max-width: 640px) {
+    .question-box--has-image .question-box__body {
+        flex-direction: column-reverse; /* image appears on top */
+    }
+
+    .question-image {
+        flex: unset;
+        width: 100%;
+    }
+
+    .question-image img {
+        max-height: 260px;
+    }
+}
+
+/* Duration badge in info bar */
+.exam-info__item--warn i {
+    color: var(--warning-color);
+}
+
+/* Options List (MCQ) */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing);
+    background: var(--gray-50);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+}
+
+.option-item input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.option-item__radio {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--transition);
+}
+
+.option-item__radio::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    background: var(--primary-color);
+    transform: scale(0);
+    transition: transform 0.2s ease;
+}
+
+.option-item input[type="radio"]:checked ~ .option-item__radio {
+    border-color: var(--primary-color);
+}
+
+.option-item input[type="radio"]:checked ~ .option-item__radio::after {
+    transform: scale(1);
+}
+
+.option-item:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.option-item input[type="radio"]:checked ~ .option-item__letter,
+.option-item input[type="radio"]:checked ~ .option-item__text {
+    color: var(--primary-color);
+    font-weight: var(--font-semibold);
+}
+
+.option-item__letter {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-bold);
+    flex-shrink: 0;
+}
+
+.option-item__text {
+    flex: 1;
+    font-size: var(--text-base);
+}
+
+/* Answer Textarea (Written) */
+.answer-textarea {
+    width: 100%;
+    padding: var(--spacing);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-family: inherit;
+    resize: vertical;
+    transition: var(--transition);
+}
+
+.answer-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Submit Section */
+.submit-section {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+
+.submit-section__warning {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing);
+    padding: var(--spacing);
+    background: var(--warning-light);
+    color: var(--warning-color);
+    border-radius: var(--radius);
+    font-weight: var(--font-medium);
+}
+
+.btn--lg {
+    padding: var(--spacing) var(--spacing-xl);
+    font-size: var(--text-lg);
+}
+</style>
+
+<script>
+// الموعد النهائي للطالب (محسوب من السيرفر)
+const deadlineTime = new Date('@deadlineTime.ToString("yyyy-MM-ddTHH:mm:ss")');
+let autoSubmitted = false;
+
+function updateTimer() {
+    const now = new Date();
+    const diff = deadlineTime - now;
+
+    if (diff <= 0) {
+        document.getElementById('timeLeft').textContent = 'انتهى الوقت';
+        
+        // Auto-submit once
+        if (!autoSubmitted) {
+            autoSubmitted = true;
+            alert('انتهى الوقت! سيتم تسليم الاختبار تلقائياً.');
+            document.getElementById('examForm').submit();
+        }
+        return;
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    let timeText = '';
+    if (hours > 0) timeText += hours + ' ساعة ';
+    if (minutes > 0 || hours > 0) timeText += minutes + ' دقيقة ';
+    timeText += seconds + ' ثانية';
+
+    document.getElementById('timeLeft').textContent = timeText;
+
+    // Warning color when less than 5 minutes
+    if (diff < 5 * 60 * 1000) {
+        document.getElementById('timer').style.background = 'var(--danger-color)';
+    }
+}
+
+updateTimer();
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Confirm before submit (manual)
+function confirmSubmit() {
+    return confirm('هل أنت متأكد من تسليم الاختبار؟ لن تتمكن من العودة بعد التسليم.');
+}
+
+// Auto-submit when leaving page (back button, close tab, etc.)
+let isSubmitting = false;
+let hasAutoSubmitted = false;
+
+document.getElementById('examForm').addEventListener('submit', function() {
+    isSubmitting = true;
+});
+
+// Function to auto-submit exam
+function autoSubmitExam() {
+    if (hasAutoSubmitted || isSubmitting) {
+        return; // Already submitted
+    }
+    
+    hasAutoSubmitted = true;
+    
+    // Collect form data
+    const formData = new FormData(document.getElementById('examForm'));
+    const params = new URLSearchParams();
+    
+    // Add answers
+    for (let [key, value] of formData.entries()) {
+        if (key.startsWith('answers[')) {
+            params.append(key, value);
+        }
+    }
+    
+    // Send using Beacon API (works even when page is closing)
+    const success = navigator.sendBeacon(
+        '@Url.Action("AutoSubmit", "Exam")?attemptId=@attempt?.Id',
+        params
+    );
+    
+    console.log('Auto-submit beacon sent:', success);
+}
+
+// Handle beforeunload (back button, close tab, refresh)
+window.addEventListener('beforeunload', function (e) {
+    if (!isSubmitting && !hasAutoSubmitted) {
+        // Auto-submit immediately
+        autoSubmitExam();
+    }
+});
+
+// Handle visibility change (tab switch, minimize)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && !autoSubmitted && !hasAutoSubmitted && !isSubmitting) {
+        autoSubmitExam();
+    }
+});
+
+// Handle page hide (iOS Safari, mobile browsers)
+window.addEventListener('pagehide', function() {
+    if (!isSubmitting && !hasAutoSubmitted) {
+        autoSubmitExam();
+    }
+});
+</script>
+}
