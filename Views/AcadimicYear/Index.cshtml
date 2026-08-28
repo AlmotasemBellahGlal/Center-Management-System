@@ -1,82 +1,107 @@
-﻿@model IEnumerable<Center_Management.Models.AcademicYear>
-
+@model IEnumerable<Center_Management.Models.AcademicYear>
 @{
-    ViewData["Title"] = "Academic Years";
+    ViewData["Title"] = "السنوات الدراسية";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-    <h2>Academic Years</h2>
-
-    <a asp-action="Create" class="btn btn-primary">
-        + Add Academic Year
-    </a>
-
+<div class="vp-top">
+    <div>
+        <h1 class="vp-title"><i class="fas fa-graduation-cap" style="color:var(--primary)"></i> السنوات الدراسية</h1>
+        <p class="vp-sub">إدارة السنوات الدراسية والمجموعات المرتبطة بها</p>
+    </div>
+    <a asp-action="Create" class="vp-btn vp-btn--primary"><i class="fas fa-plus"></i> إضافة سنة دراسية</a>
 </div>
 
-<table class="table table-bordered table-hover align-middle">
-
-    <thead class="table-dark">
-
-        <tr>
-
-            <th>Name</th>
-
-            <th>Subject</th>
-
-            <th>Monthly Price</th>
-
-            <th width="320">Actions</th>
-
-        </tr>
-
-    </thead>
-
-    <tbody>
-
+@if (Model != null && Model.Any())
+{
+    <div class="vp-grid">
         @foreach (var item in Model)
         {
-            <tr>
-
-                <td>
-                    <a asp-action="Details"
-                       asp-route-id="@item.Id"
-                       class="text-decoration-none fw-bold">
-
-                        @item.Name
-
-                    </a>
-                </td>
-
-                <td>
-                    @item.Subject?.Name
-                </td>
-
-                <td>
-                    @item.MonthlyPrice
-                </td>
-
-                <td>
-
-                   
-
-                    <a asp-action="Edit"
-                       asp-route-id="@item.Id"
-                       class="btn btn-warning btn-sm">
-                        Edit
-                    </a>
-
-                    <a asp-action="Delete"
-                       asp-route-id="@item.Id"
-                       class="btn btn-danger btn-sm">
-                        Delete
-                    </a>
-
-                </td>
-
-            </tr>
+            <div class="vp-year-card">
+                <div class="vp-year-card__top">
+                    <div class="vp-year-card__icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="vp-year-card__info">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="vp-year-card__name">@item.Name</a>
+                        <div class="vp-year-card__meta">
+                            <span class="vp-tag vp-tag--green"><i class="fas fa-tag"></i> @item.MonthlyPrice.ToString("N0") ج.م / شهر</span>
+                            <span class="vp-tag"><i class="fas fa-layer-group"></i> @(item.Groups?.Count ?? 0) مجموعة</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="vp-year-card__actions">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="vp-btn-sm vp-btn-sm--slate"><i class="fas fa-eye"></i> عرض</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="vp-btn-sm vp-btn-sm--amber"><i class="fas fa-edit"></i> تعديل</a>
+                    <button type="button" class="vp-btn-sm vp-btn-sm--red"
+                            onclick="openDeleteModal('@item.Id','@Html.Raw(Html.Encode(item.Name))')">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </div>
+            </div>
         }
+    </div>
+}
+else
+{
+    <div class="vp-empty">
+        <div class="vp-empty__icon"><i class="fas fa-graduation-cap"></i></div>
+        <h3>لا توجد سنوات دراسية بعد</h3>
+        <p>ابدأ بإضافة أول سنة دراسية لإنشاء مجموعاتك</p>
+        <a asp-action="Create" class="vp-btn vp-btn--primary"><i class="fas fa-plus"></i> إضافة أول سنة دراسية</a>
+    </div>
+}
 
-    </tbody>
+<div class="modal" id="deleteAcademicYearModal">
+    <div class="modal__backdrop" onclick="closeModal('deleteAcademicYearModal')"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h2 class="modal__title">تأكيد الحذف</h2>
+            <button class="modal__close" onclick="closeModal('deleteAcademicYearModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal__body">
+            <p>هل أنت متأكد من حذف السنة الدراسية <strong id="deleteAcademicYearName"></strong>؟ لا يمكن التراجع عن هذا الإجراء.</p>
+        </div>
+        <div class="modal__footer">
+            <button class="vp-btn vp-btn--ghost" onclick="closeModal('deleteAcademicYearModal')">إلغاء</button>
+            <a id="deleteAcademicYearConfirmLink" href="#" class="vp-btn vp-btn--danger"><i class="fas fa-trash"></i> حذف</a>
+        </div>
+    </div>
+</div>
 
-</table>
+@section Scripts {
+<style>
+.vp-top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.vp-title { font-size:1.4rem; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:.6rem; }
+.vp-title i { font-size:1.2rem; }
+.vp-sub { font-size:.8rem; color:var(--text-muted); margin:.25rem 0 0; }
+.vp-btn { display:inline-flex; align-items:center; gap:.45rem; padding:.45rem 1rem; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.14s; }
+.vp-btn--primary { background:var(--primary); color:#fff; } .vp-btn--primary:hover { background:var(--primary-hover); box-shadow:0 4px 12px rgba(45,95,138,.3); }
+.vp-btn--ghost   { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); } .vp-btn--ghost:hover { background:var(--gray-150); }
+.vp-btn--danger  { background:var(--danger); color:#fff; } .vp-btn--danger:hover { background:var(--danger-hover); }
+.vp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1rem; }
+.vp-year-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; padding:1.25rem; box-shadow:0 1px 4px rgba(30,26,20,.05); transition:box-shadow .18s, transform .18s; overflow:hidden; position:relative; }
+.vp-year-card::before { content:''; position:absolute; top:0; inset-inline-start:0; inset-inline-end:0; height:3px; background:var(--primary); border-radius:.85rem .85rem 0 0; }
+.vp-year-card:hover { box-shadow:0 4px 14px rgba(30,26,20,.09); transform:translateY(-2px); }
+.vp-year-card__top { display:flex; align-items:flex-start; gap:.875rem; margin-bottom:1rem; }
+.vp-year-card__icon { width:44px; height:44px; background:var(--primary-50); color:var(--primary); border-radius:.65rem; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.vp-year-card__name { font-size:1.05rem; font-weight:700; color:var(--text-primary); text-decoration:none; display:block; margin-bottom:.5rem; transition:color .12s; }
+.vp-year-card__name:hover { color:var(--primary); }
+.vp-year-card__meta { display:flex; flex-wrap:wrap; gap:.4rem; }
+.vp-tag { display:inline-flex; align-items:center; gap:.3rem; padding:.2em .65em; background:var(--bg-subtle); border:1px solid var(--border-light); border-radius:2rem; font-size:.75rem; font-weight:600; color:var(--text-muted); }
+.vp-tag--green { background:var(--success-50); border-color:var(--success-100); color:var(--success); }
+.vp-year-card__actions { display:flex; gap:.4rem; flex-wrap:wrap; border-top:1px solid var(--border-light); padding-top:.875rem; margin-top:.875rem; }
+.vp-btn-sm { display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .65rem; border-radius:.4rem; font-size:.75rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.12s; }
+.vp-btn-sm--slate { background:var(--info-50); color:var(--info); }     .vp-btn-sm--slate:hover { background:var(--info); color:#fff; }
+.vp-btn-sm--amber { background:var(--warning-50); color:var(--warning); } .vp-btn-sm--amber:hover { background:var(--warning); color:#fff; }
+.vp-btn-sm--red   { background:var(--danger-50); color:var(--danger); }   .vp-btn-sm--red:hover   { background:var(--danger); color:#fff; }
+.vp-empty { text-align:center; padding:4rem 2rem; background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; }
+.vp-empty__icon { font-size:3rem; color:var(--text-disabled); margin-bottom:1rem; }
+.vp-empty h3 { font-size:1.15rem; font-weight:700; margin:0 0 .5rem; }
+.vp-empty p { font-size:.875rem; color:var(--text-muted); margin:0 0 1.5rem; }
+</style>
+<script>
+function openDeleteModal(id, name) {
+    document.getElementById('deleteAcademicYearName').textContent = name;
+    document.getElementById('deleteAcademicYearConfirmLink').href = '/AcadimicYear/Delete/' + id;
+    openModal('deleteAcademicYearModal');
+}
+</script>
+}

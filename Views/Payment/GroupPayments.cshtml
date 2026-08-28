@@ -1,0 +1,195 @@
+@model Center_Management.View_Models.GroupPaymentStatusVM
+
+@* Page Header *@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); flex-wrap: wrap; gap: var(--spacing);">
+    <h1 style="font-size: var(--text-2xl); font-weight: var(--font-bold); margin: 0;">
+        <i class="fas fa-chart-pie" style="margin-inline-start: var(--spacing-xs);"></i>
+        حالة المدفوعات - @Model.GroupName
+    </h1>
+    <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+        <a href="@Url.Action("Create", "Payment", new { groupId = Model.GroupId })"
+           class="btn btn--success">
+            <i class="fas fa-plus" style="margin-inline-start: var(--spacing-xs);"></i>
+            تسجيل دفعة جديدة
+        </a>
+        <a href="@Url.Action("Index", "Group")"
+           class="btn btn--secondary">
+            <i class="fas fa-arrow-right" style="margin-inline-start: var(--spacing-xs);"></i>
+            رجوع
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header card__header--primary">
+        <h2 class="card__title">
+            <i class="fas fa-money-check-alt" style="margin-inline-start: var(--spacing-xs);"></i>
+            حالة المدفوعات - @Model.GroupName
+        </h2>
+    </div>
+
+    <div class="card__body">
+
+        @* فلتر الشهر والسنة *@
+        <div class="card" style="margin-bottom: var(--spacing); border: 1px solid var(--border-color);">
+            <div class="card__header card__header--info">
+                <h3 class="card__title">
+                    <i class="fas fa-filter" style="margin-inline-start: var(--spacing-xs);"></i>
+                    فلتر الشهر والسنة
+                </h3>
+            </div>
+            <div class="card__body">
+                <form method="get" asp-action="GroupPayments" style="background: var(--gray-50); padding: var(--spacing); border-radius: var(--radius);">
+                    <input type="hidden" name="groupId" value="@Model.GroupId" />
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing); align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="month" class="form-label">
+                                <i class="fas fa-calendar-alt" style="margin-inline-start: var(--spacing-xs);"></i>
+                                الشهر
+                            </label>
+                            <select name="month" class="form-select">
+                                <option value="1" selected="@(Model.Month == 1)">يناير</option>
+                                <option value="2" selected="@(Model.Month == 2)">فبراير</option>
+                                <option value="3" selected="@(Model.Month == 3)">مارس</option>
+                                <option value="4" selected="@(Model.Month == 4)">أبريل</option>
+                                <option value="5" selected="@(Model.Month == 5)">مايو</option>
+                                <option value="6" selected="@(Model.Month == 6)">يونيو</option>
+                                <option value="7" selected="@(Model.Month == 7)">يوليو</option>
+                                <option value="8" selected="@(Model.Month == 8)">أغسطس</option>
+                                <option value="9" selected="@(Model.Month == 9)">سبتمبر</option>
+                                <option value="10" selected="@(Model.Month == 10)">أكتوبر</option>
+                                <option value="11" selected="@(Model.Month == 11)">نوفمبر</option>
+                                <option value="12" selected="@(Model.Month == 12)">ديسمبر</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="year" class="form-label">
+                                <i class="fas fa-calendar" style="margin-inline-start: var(--spacing-xs);"></i>
+                                السنة
+                            </label>
+                            <input type="number" name="year" class="form-input" value="@Model.Year" min="2000" max="2100" />
+                        </div>
+
+                        <div>
+                            <button type="submit" class="btn btn--primary">
+                                <i class="fas fa-search" style="margin-inline-start: var(--spacing-xs);"></i>
+                                عرض
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @* إحصائيات سريعة *@
+        <div class="card" style="margin-bottom: var(--spacing); border: 1px solid var(--border-color);">
+            <div class="card__header card__header--primary">
+                <h3 class="card__title">
+                    <i class="fas fa-chart-bar" style="margin-inline-start: var(--spacing-xs);"></i>
+                    إحصائيات سريعة
+                </h3>
+            </div>
+            <div class="card__body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing); margin-bottom: var(--spacing-lg);">
+                    <div class="card" style="background: var(--success-color); border: none; transform: scale(1); transition: var(--transition);">
+                        <div class="card__body" style="text-align: center; color: white; padding: var(--spacing-lg);">
+                            <i class="fas fa-check-circle" style="font-size: var(--text-4xl); margin-bottom: var(--spacing); opacity: 0.9;"></i>
+                            <h2 style="font-size: var(--text-4xl); font-weight: var(--font-bold); margin-bottom: var(--spacing-xs);">@Model.PaidStudents.Count</h2>
+                            <p style="font-size: var(--text-base); margin: 0; opacity: 0.9;">الطلاب المدفوعين</p>
+                        </div>
+                    </div>
+                    <div class="card" style="background: var(--danger-color); border: none; transform: scale(1); transition: var(--transition);">
+                        <div class="card__body" style="text-align: center; color: white; padding: var(--spacing-lg);">
+                            <i class="fas fa-times-circle" style="font-size: var(--text-4xl); margin-bottom: var(--spacing); opacity: 0.9;"></i>
+                            <h2 style="font-size: var(--text-4xl); font-weight: var(--font-bold); margin-bottom: var(--spacing-xs);">@Model.UnpaidStudents.Count</h2>
+                            <p style="font-size: var(--text-base); margin: 0; opacity: 0.9;">الطلاب غير المدفوعين</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* جداول المدفوعات *@
+        <div class="card" style="margin-bottom: var(--spacing); border: 1px solid var(--border-color);">
+            <div class="card__header card__header--primary">
+                <h3 class="card__title">
+                    <i class="fas fa-table" style="margin-inline-start: var(--spacing-xs);"></i>
+                    جداول المدفوعات
+                </h3>
+            </div>
+            <div class="card__body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--spacing);">
+                    @* الطلاب المدفوعين *@
+                    <div class="card" style="border: 2px solid var(--success-color);">
+                        <div class="card__header" style="background: var(--success-color); color: white;">
+                            <h5 class="card__title">
+                                <i class="fas fa-check-circle" style="margin-inline-start: var(--spacing-xs);"></i>
+                                الطلاب المدفوعين (@Model.PaidStudents.Count)
+                            </h5>
+                        </div>
+                        <div class="card__body">
+                            @if (!Model.PaidStudents.Any())
+                            {
+                                <div class="empty-state" style="padding: var(--spacing);">
+                                    <div class="empty-state__icon">
+                                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                                    </div>
+                                    <p class="empty-state__message">لا يوجد طلاب دفعوا لهذا الشهر بعد</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                                    @foreach (var student in Model.PaidStudents)
+                                    {
+                                        <div style="padding: var(--spacing-sm); border: 1px solid var(--success-color); background: var(--success-light); border-radius: var(--radius); display: flex; align-items: center; gap: var(--spacing-sm);">
+                                            <span class="badge badge--success" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-full);">
+                                                <i class="fas fa-check"></i>
+                                            </span>
+                                            <span style="font-weight: var(--font-medium);">@student</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @* الطلاب غير المدفوعين *@
+                    <div class="card" style="border: 2px solid var(--danger-color);">
+                        <div class="card__header" style="background: var(--danger-color); color: white;">
+                            <h5 class="card__title">
+                                <i class="fas fa-times-circle" style="margin-inline-start: var(--spacing-xs);"></i>
+                                الطلاب غير المدفوعين (@Model.UnpaidStudents.Count)
+                            </h5>
+                        </div>
+                        <div class="card__body">
+                            @if (!Model.UnpaidStudents.Any())
+                            {
+                                <div style="padding: var(--spacing-lg); text-align: center; color: var(--success-color); background: var(--success-light); border-radius: var(--radius);">
+                                    <i class="fas fa-check-circle fa-3x" style="margin-bottom: var(--spacing-sm);"></i>
+                                    <p style="margin: 0; font-weight: var(--font-medium);">جميع الطلاب النشطين دفعوا لهذا الشهر</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                                    @foreach (var student in Model.UnpaidStudents)
+                                    {
+                                        <div style="padding: var(--spacing-sm); border: 1px solid var(--danger-color); background: var(--danger-light); border-radius: var(--radius); display: flex; align-items: center; gap: var(--spacing-sm);">
+                                            <span class="badge badge--danger" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-full);">
+                                                <i class="fas fa-times"></i>
+                                            </span>
+                                            <span style="font-weight: var(--font-medium);">@student</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,50 @@
+## Build output
 bin/
 obj/
+
+## Visual Studio
 .vs/
 *.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider
+.idea/
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Sensitive config — never commit real credentials
+appsettings.Production.json
+appsettings.*.local.json
+secrets.json
+
+## Published / deployed output
+publish/
+Test Production/
+
+## Logs
+*.log
+Logs/
+
+## Temporary / zip files
+*.zip
+*.bak
+*.tmp
+
+## NuGet
+*.nupkg
+.nuget/
+
+## Node (if ever used)
+node_modules/
+
+## dotnet tools manifest (optional — keep or remove)
+# .config/dotnet-tools.json
+
+## Uploaded user files (keep folder structure but not content)
+wwwroot/uploads/**/*
+!wwwroot/uploads/questions/.gitkeep
+!wwwroot/uploads/materials/.gitkeep

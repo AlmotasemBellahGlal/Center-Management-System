@@ -3,6 +3,7 @@ using Center_Management.Interfaces;
 using Center_Management.Models;
 using Center_Management.Repositories;
 using Center_Management.View_Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace Center_Management.Controllers
 {
+    [Authorize(Roles = "Teacher,Admin")]
     public class GroupController : Controller
     {
         private readonly IGroupRepository grouprepo;

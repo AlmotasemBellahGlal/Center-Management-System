@@ -1,4 +1,4 @@
-﻿
+
 using Center_Management.Context;
 using Center_Management.Interfaces;
 using Center_Management.Models;
@@ -26,16 +26,22 @@ namespace Center_Management.Repositories
         {
             return await ctx.Groups
                 .Include(g => g.AcademicYear)
-                    .ThenInclude(a => a.Subject)
+                    
                 .ToListAsync();
         }
         public async Task<List<Group>> GetGroupsByIdsAsync(List<int> groupIds)
         {
             return await ctx.Groups
                 .Include(g => g.AcademicYear)
-                    .ThenInclude(a => a.Subject)
+                    
                 .Where(g => groupIds.Contains(g.Id))
                 .ToListAsync();
+        }
+        public async Task<Group?> GetGroupWithAcademicYearAsync(int groupId)
+        {
+            return await ctx.Groups
+                .Include(g => g.AcademicYear)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
         }
         public async Task UpdateGroupAsync(CreateGroupVM vm)
         {

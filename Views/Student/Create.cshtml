@@ -1,102 +1,157 @@
-﻿@model CreateStudentVM
-
+@model CreateStudentVM
 @{
-    ViewData["Title"] = "Create Student";
+    ViewData["Title"] = "إضافة طالب جديد";
 }
 
-<h2>Create Student</h2>
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">إضافة طالب جديد</h1>
+        <p class="vf-sub">أدخل بيانات الطالب واختر مجموعته الدراسية</p>
+    </div>
+    <a asp-action="Index" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div>
 
 <form asp-action="Create">
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <div class="mb-3">
+    <div asp-validation-summary="All" class="vf-errors"></div>
 
-        <label asp-for="FullName"></label>
-
-        <input asp-for="FullName" class="form-control" />
-
-        <span asp-validation-for="FullName"
-              class="text-danger"></span>
-
-    </div>
-
-    <div class="mb-3">
-
-        <label asp-for="PhoneNumber"></label>
-
-        <input asp-for="PhoneNumber"
-               class="form-control" />
-
-        <span asp-validation-for="PhoneNumber"
-              class="text-danger"></span>
-
-    </div>
-
-    <div class="mb-3">
-
-        <label asp-for="ParentPhoneNumber"></label>
-
-        <input asp-for="ParentPhoneNumber"
-               class="form-control" />
-
-        <span asp-validation-for="ParentPhoneNumber"
-              class="text-danger"></span>
-
-    </div>
-
-    <hr />
-
-    <h4>Groups</h4>
-
-    @for (int i = 0; i < Model.AcademicYears.Count; i++)
-    {
-        <div class="card mb-3">
-
-            <div class="card-header">
-
-                <strong>
-                    @Model.AcademicYears[i].AcademicYearName
-                </strong>
-
-                -
-
-                @Model.AcademicYears[i].SubjectName
-
+    @* ── Personal info ── *@
+    <div class="vf-section">
+        <div class="vf-section__head">
+            <div class="vf-section__icon" style="background:var(--primary-50);color:var(--primary)">
+                <i class="fas fa-id-card"></i>
             </div>
-
-            <div class="card-body">
-
-                @for (int j = 0; j < Model.AcademicYears[i].Groups.Count; j++)
-                {
-                    <div class="form-check">
-
-                        <input class="form-check-input"
-                               type="radio"
-                               asp-for="AcademicYears[i].SelectedGroupId"
-                               value="@Model.AcademicYears[i].Groups[j].GroupId" />
-
-                        <label class="form-check-label">
-
-                            @Model.AcademicYears[i].Groups[j].GroupName
-
-                        </label>
-
-                    </div>
-                }
-
-            </div>
-
+            <h2 class="vf-section__title">المعلومات الشخصية</h2>
         </div>
-    }
+        <div class="vf-row">
+            <div class="vf-field">
+                <label asp-for="FullName" class="vf-label">الاسم الكامل <span class="vf-req">*</span></label>
+                <input asp-for="FullName" class="vf-input" placeholder="أدخل الاسم الكامل للطالب" />
+                <span asp-validation-for="FullName" class="vf-err"></span>
+            </div>
+            <div class="vf-field">
+                <label asp-for="PhoneNumber" class="vf-label">رقم الهاتف <span class="vf-req">*</span></label>
+                <input asp-for="PhoneNumber" class="vf-input" placeholder="01XXXXXXXXX" dir="ltr" />
+                <span asp-validation-for="PhoneNumber" class="vf-err"></span>
+            </div>
+            <div class="vf-field">
+                <label asp-for="ParentPhoneNumber" class="vf-label">هاتف ولي الأمر <span class="vf-req">*</span></label>
+                <input asp-for="ParentPhoneNumber" class="vf-input" placeholder="01XXXXXXXXX" dir="ltr" />
+                <span asp-validation-for="ParentPhoneNumber" class="vf-err"></span>
+            </div>
+        </div>
+    </div>
 
-    <button class="btn btn-primary">
+    @* ── Group selector ── *@
+    <div class="vf-section">
+        <div class="vf-section__head">
+            <div class="vf-section__icon" style="background:var(--success-50);color:var(--success)">
+                <i class="fas fa-users"></i>
+            </div>
+            <h2 class="vf-section__title">اختر المجموعة الدراسية <span class="vf-req">*</span></h2>
+        </div>
+        <span asp-validation-for="SelectedGroupId" class="vf-err" style="display:block;margin-bottom:.75rem"></span>
 
-        Save
+        @if (Model.AcademicYears.Any())
+        {
+            @foreach (var year in Model.AcademicYears)
+            {
+                <div class="vf-year-block">
+                    <div class="vf-year-label">
+                        <i class="fas fa-graduation-cap"></i>
+                        @year.AcademicYearName
+                    </div>
+                    @if (year.Groups.Any())
+                    {
+                        <div class="vf-group-grid">
+                            @foreach (var group in year.Groups)
+                            {
+                                <div class="vf-group-option">
+                                    <input type="radio"
+                                           asp-for="SelectedGroupId"
+                                           value="@group.GroupId"
+                                           id="grp_@group.GroupId" />
+                                    <label for="grp_@group.GroupId" class="vf-group-label">
+                                        <div class="vf-group-label__icon"><i class="fas fa-users"></i></div>
+                                        <span class="vf-group-label__name">@group.GroupName</span>
+                                        <span class="vf-group-label__check"><i class="fas fa-check-circle"></i></span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="vf-no-groups">لا توجد مجموعات لهذه السنة</p>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <p class="vf-no-groups" style="text-align:center;padding:2rem">
+                <i class="fas fa-calendar-times"></i> لا توجد سنوات دراسية أو مجموعات متاحة
+            </p>
+        }
+    </div>
 
-    </button>
-
+    <div class="vf-footer">
+        <a asp-action="Index" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
+        <button type="submit" class="vf-submit"><i class="fas fa-save"></i> حفظ البيانات</button>
+    </div>
 </form>
 
-@section Scripts
-{
-    <partial name="_ValidationScriptsPartial" />
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<style>
+.vf-top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.75rem; flex-wrap:wrap; }
+.vf-title { font-size:1.4rem; font-weight:700; color:var(--text-primary); margin:0; }
+.vf-sub { font-size:.8rem; color:var(--text-muted); margin:.25rem 0 0; }
+.vf-back-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; text-decoration:none; }
+.vf-back-btn:hover { background:var(--gray-150); }
+.vf-errors { background:var(--danger-50); border:1px solid var(--danger-100); border-radius:.6rem; padding:.75rem 1rem; margin-bottom:1.25rem; font-size:.8125rem; color:var(--danger); }
+.vf-errors ul { margin:0; padding-inline-start:1.25rem; }
+.vf-section { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; margin-bottom:1.25rem; overflow:hidden; }
+.vf-section__head { display:flex; align-items:center; gap:.75rem; padding:1rem 1.25rem; border-bottom:1px solid var(--border-light); background:var(--bg-subtle); }
+.vf-section__icon { width:36px; height:36px; border-radius:.55rem; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+.vf-section__title { font-size:.9rem; font-weight:700; color:var(--text-primary); margin:0; }
+.vf-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.25rem; padding:1.25rem; }
+.vf-field { }
+.vf-label { display:block; font-size:.8rem; font-weight:600; color:var(--text-secondary); margin-bottom:.4rem; }
+.vf-req { color:var(--danger); }
+.vf-input, .vf-select, .vf-textarea {
+    display:block; width:100%; padding:.5rem .75rem;
+    font-size:.875rem; font-family:inherit; color:var(--text-primary);
+    background:var(--bg-card); border:1.5px solid var(--border); border-radius:.55rem;
+    transition:border-color .14s, box-shadow .14s;
+}
+.vf-input:focus, .vf-select:focus, .vf-textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-100); }
+.vf-err { display:block; font-size:.75rem; color:var(--danger); margin-top:.3rem; }
+.vf-year-block { padding:1.25rem; border-bottom:1px solid var(--border-light); }
+.vf-year-block:last-child { border-bottom:none; }
+.vf-year-label { font-size:.8125rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.875rem; display:flex; align-items:center; gap:.4rem; }
+.vf-year-label i { color:var(--primary); }
+.vf-group-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; }
+.vf-group-option { position:relative; }
+.vf-group-option input { position:absolute; opacity:0; pointer-events:none; }
+.vf-group-label {
+    display:flex; flex-direction:column; align-items:center; gap:.5rem;
+    padding:1rem; background:var(--bg-card);
+    border:1.5px solid var(--border-light); border-radius:.75rem;
+    cursor:pointer; text-align:center;
+    transition:border-color .14s, box-shadow .14s, background .14s;
+}
+.vf-group-label:hover { border-color:var(--primary-200); box-shadow:0 2px 8px rgba(45,95,138,.1); }
+.vf-group-option input:checked + .vf-group-label { border-color:var(--primary); background:var(--primary-50); box-shadow:0 0 0 3px var(--primary-100); }
+.vf-group-label__icon { width:44px; height:44px; background:var(--primary-50); color:var(--primary); border-radius:.55rem; display:flex; align-items:center; justify-content:center; font-size:1rem; transition:.14s; }
+.vf-group-option input:checked + .vf-group-label .vf-group-label__icon { background:var(--primary); color:#fff; }
+.vf-group-label__name { font-size:.875rem; font-weight:600; color:var(--text-primary); }
+.vf-group-label__check { color:var(--primary); font-size:.9rem; opacity:0; transition:opacity .14s; }
+.vf-group-option input:checked + .vf-group-label .vf-group-label__check { opacity:1; }
+.vf-no-groups { color:var(--text-muted); font-size:.875rem; margin:0; padding:.75rem 0; }
+.vf-footer { display:flex; justify-content:flex-end; gap:.5rem; flex-wrap:wrap; padding:1.25rem; background:var(--bg-subtle); border:1px solid var(--border-light); border-radius:.85rem; margin-top:1.25rem; }
+.vf-cancel { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; text-decoration:none; }
+.vf-cancel:hover { background:var(--gray-150); }
+.vf-submit { display:inline-flex; align-items:center; gap:.4rem; padding:.5rem 1.25rem; background:var(--success); color:#fff; border:none; border-radius:.55rem; font-size:.875rem; font-weight:700; cursor:pointer; transition:.14s; }
+.vf-submit:hover { background:var(--success-hover); transform:translateY(-1px); box-shadow:0 4px 12px rgba(46,125,94,.3); }
+</style>
 }

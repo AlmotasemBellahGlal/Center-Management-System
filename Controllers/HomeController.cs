@@ -1,25 +1,27 @@
-using System.Diagnostics;
-using Center_Management.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Center_Management.Controllers
 {
     public class HomeController : Controller
     {
+        // GET: Home/Index - Welcome page
         public IActionResult Index()
         {
-            return View();
-        }
+            // If user is logged in, redirect based on role
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                if (User.IsInRole("Student"))
+                {
+                    return RedirectToAction("MyExams", "Exam");
+                }
+                else if (User.IsInRole("Teacher") || User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Index", "Dashboard");
+                }
+            }
 
-        public IActionResult Privacy()
-        {
+            // Show welcome page for non-authenticated users
             return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

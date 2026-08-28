@@ -1,4 +1,4 @@
-﻿using Center_Management.Context;
+using Center_Management.Context;
 using Center_Management.Interfaces;
 using Center_Management.Models;
 using Center_Management.View_Models;
@@ -17,31 +17,31 @@ namespace Center_Management.Repositories
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
-                            .ThenInclude(a => a.Subject)
+                             
                 .FirstOrDefaultAsync(s => s.Id == vm.Id);
 
             if (student == null)
                 return false;
 
-            // تحديث البيانات الأساسية
+            // ????? ???????? ????????
             student.FullName = vm.FullName;
             student.PhoneNumber = vm.PhoneNumber;
             student.ParentPhoneNumber = vm.ParentPhoneNumber;
 
-            // هنكمل هنا...
+            // ????? ???...
             var selectedGroupIds = vm.AcademicYears
                 .Where(a => a.SelectedGroupId.HasValue)
                 .Select(a => a.SelectedGroupId!.Value)
                 .ToList();
             var selectedGroups = await ctx.Groups
                 .Include(g => g.AcademicYear)
-                    .ThenInclude(a => a.Subject)
+                     
                 .Where(g => selectedGroupIds.Contains(g.Id))
                 .ToListAsync();
             var duplicatedSubjects = selectedGroups
 .GroupBy(g => new
 {
-g.AcademicYear.SubjectId,
+
 g.AcademicYearId
 })
 .Any(g => g.Count() > 1);
@@ -92,7 +92,7 @@ g.AcademicYearId
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
-                            .ThenInclude(a => a.Subject)
+                             
                 .ToListAsync();
         }
         public async Task<Student?> GetDetailsAsync(int id)
@@ -101,7 +101,7 @@ g.AcademicYearId
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
-                            .ThenInclude(a => a.Subject)
+                             
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.Schedules)
@@ -113,7 +113,7 @@ g.AcademicYearId
                 .Include(s => s.StudentGroups.Where(sg => sg.IsActive))
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
-                            .ThenInclude(a => a.Subject)
+                             
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
         public async Task<bool> RegisterStudentAsync(CreateStudentVM vm)
@@ -128,7 +128,7 @@ g.AcademicYearId
 
             var selectedGroups = await ctx.Groups
     .Include(g => g.AcademicYear)
-        .ThenInclude(a => a.Subject)
+         
     .Where(g => selectedGroupIds.Contains(g.Id))
     .ToListAsync();
 
@@ -136,11 +136,11 @@ g.AcademicYearId
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
-                            .ThenInclude(a => a.Subject)
+                             
                                 .FirstOrDefaultAsync(s => s.PhoneNumber == vm.PhoneNumber);
 
             //=========================
-            // طالب جديد
+            // ???? ????
             //=========================
 
             if (student == null)
@@ -168,7 +168,7 @@ g.AcademicYearId
             }
 
             //=========================
-            // طالب موجود
+            // ???? ?????
             //=========================
 
             foreach (var group in selectedGroups)
@@ -209,10 +209,6 @@ g.AcademicYearId
         {
             return student.StudentGroups.Any(sg =>
 
-                sg.Group.AcademicYear.SubjectId ==
-                group.AcademicYear.SubjectId
-
-                &&
 
                 sg.Group.AcademicYearId ==
                 group.AcademicYearId

@@ -1,0 +1,116 @@
+@model Center_Management.View_Models.AttendanceReportVM
+@{
+    ViewData["Title"] = "تقرير الحضور — " + Model.GroupName;
+    int presentTotal = Model.Records.Count(r => r.IsPresent);
+    int absentTotal  = Model.Records.Count(r => !r.IsPresent);
+}
+
+<div class="vr-top">
+    <div>
+        <h1 class="vr-title"><i class="fas fa-chart-line" style="color:var(--success)"></i> تقرير الحضور</h1>
+        <p class="vr-sub">@Model.GroupName</p>
+    </div>
+    <div class="vr-actions">
+        <a href="@Url.Action("Create","Attendance",new{groupId=Model.GroupId})" class="vr-btn vr-btn--green"><i class="fas fa-plus"></i> تسجيل حضور</a>
+        <a href="@Url.Action("Groups","Attendance")" class="vr-btn vr-btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+    </div>
+</div>
+
+@* ── Stats ── *@
+<div class="vr-stats">
+    <div class="vr-stat vr-stat--blue">
+        <div class="vr-stat__num">@Model.Records.Count</div>
+        <div class="vr-stat__lbl">إجمالي السجلات</div>
+        <i class="fas fa-list vr-stat__ico"></i>
+    </div>
+    <div class="vr-stat vr-stat--green">
+        <div class="vr-stat__num">@presentTotal</div>
+        <div class="vr-stat__lbl">حاضر</div>
+        <i class="fas fa-check-circle vr-stat__ico"></i>
+    </div>
+    <div class="vr-stat vr-stat--red">
+        <div class="vr-stat__num">@absentTotal</div>
+        <div class="vr-stat__lbl">غائب</div>
+        <i class="fas fa-times-circle vr-stat__ico"></i>
+    </div>
+    @if (Model.Records.Count > 0)
+    {
+        int rate = (int)Math.Round(presentTotal * 100.0 / Model.Records.Count);
+        <div class="vr-stat vr-stat--amber">
+            <div class="vr-stat__num">@rate%</div>
+            <div class="vr-stat__lbl">نسبة الحضور</div>
+            <i class="fas fa-percentage vr-stat__ico"></i>
+        </div>
+    }
+</div>
+
+<div class="vr-card">
+    <div class="vr-card__head"><i class="fas fa-clipboard-list"></i> السجل التفصيلي</div>
+    @if (!Model.Records.Any())
+    {
+        <div style="padding:4rem;text-align:center;color:var(--text-muted)">
+            <i class="fas fa-clipboard-list" style="font-size:2.5rem;display:block;margin-bottom:.875rem;opacity:.35"></i>
+            <p style="margin:0 0 1.25rem">لا توجد سجلات حضور بعد</p>
+            <a href="@Url.Action("Create","Attendance",new{groupId=Model.GroupId})" class="vr-btn vr-btn--green"><i class="fas fa-plus"></i> تسجيل حضور</a>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x:auto">
+            <table class="vr-table">
+                <thead>
+                    <tr><th>اسم الطالب</th><th>التاريخ</th><th>الحالة</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var record in Model.Records.OrderByDescending(r => r.Date).ThenBy(r => r.StudentFullName))
+                    {
+                        <tr>
+                            <td><strong>@record.StudentFullName</strong></td>
+                            <td>@record.Date.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (record.IsPresent)
+                                { <span class="vr-badge vr-badge--green"><i class="fas fa-check"></i> حاضر</span> }
+                                else
+                                { <span class="vr-badge vr-badge--red"><i class="fas fa-times"></i> غائب</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<style>
+.vr-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
+.vr-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
+.vr-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vr-actions { display:flex;gap:.5rem;flex-wrap:wrap; }
+.vr-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
+.vr-btn--green { background:var(--success);color:#fff; } .vr-btn--green:hover { background:var(--success-hover); }
+.vr-btn--ghost  { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vr-btn--ghost:hover { background:var(--gray-150); }
+.vr-stats { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem; }
+.vr-stat { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem 1rem 1rem;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .18s; }
+.vr-stat:hover { transform:translateY(-2px); }
+.vr-stat__num { font-size:2rem;font-weight:700;line-height:1;margin-bottom:.25rem; }
+.vr-stat__lbl { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.8; }
+.vr-stat__ico { position:absolute;inset-inline-end:.5rem;bottom:.25rem;font-size:2.5rem;opacity:.1; }
+.vr-stat--blue  { border-inline-start:4px solid var(--primary); } .vr-stat--blue  .vr-stat__num { color:var(--primary); }
+.vr-stat--green { border-inline-start:4px solid var(--success); } .vr-stat--green .vr-stat__num { color:var(--success); }
+.vr-stat--red   { border-inline-start:4px solid var(--danger);  } .vr-stat--red   .vr-stat__num { color:var(--danger);  }
+.vr-stat--amber { border-inline-start:4px solid var(--warning); } .vr-stat--amber .vr-stat__num { color:var(--warning); }
+.vr-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
+.vr-card__head { display:flex;align-items:center;gap:.6rem;padding:.875rem 1.25rem;font-size:.875rem;font-weight:700;color:var(--text-primary);border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vr-card__head i { color:var(--success); }
+.vr-table { width:100%;border-collapse:collapse;font-size:.8125rem; }
+.vr-table thead th { padding:.6rem 1rem;text-align:start;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--bg-subtle);border-bottom:1px solid var(--border-light); }
+.vr-table tbody tr { border-bottom:1px solid var(--border-light);transition:background .1s; }
+.vr-table tbody tr:last-child { border-bottom:none; }
+.vr-table tbody tr:hover { background:var(--success-50); }
+.vr-table td { padding:.65rem 1rem;color:var(--text-primary);vertical-align:middle; }
+.vr-badge { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .65em;border-radius:2rem;font-size:.75rem;font-weight:700; }
+.vr-badge--green { background:var(--success-50);color:var(--success); }
+.vr-badge--red   { background:var(--danger-50);color:var(--danger); }
+</style>
+}

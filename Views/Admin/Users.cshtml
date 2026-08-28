@@ -1,0 +1,197 @@
+@model List<UserManagementVM>
+@{
+    ViewData["Title"] = "إدارة المستخدمين";
+}
+
+@* ── Page header ── *@
+<div class="au-header">
+    <div class="au-header__left">
+        <div class="au-header__icon"><i class="fas fa-users-cog"></i></div>
+        <div>
+            <h1 class="au-header__title">إدارة المستخدمين</h1>
+            <p class="au-header__sub">حسابات المعلمين والطلاب والمسؤولين</p>
+        </div>
+    </div>
+    <a asp-action="CreateTeacher" class="au-new-btn">
+        <i class="fas fa-user-plus"></i> إضافة معلم
+    </a>
+</div>
+
+@* ── Stats ── *@
+<div class="au-stats">
+    <div class="au-stat au-stat--blue">
+        <div class="au-stat__num">@Model.Count</div>
+        <div class="au-stat__lbl">إجمالي المستخدمين</div>
+        <i class="fas fa-users au-stat__ico"></i>
+    </div>
+    <div class="au-stat au-stat--green">
+        <div class="au-stat__num">@Model.Count(u => u.Roles.Contains("Teacher"))</div>
+        <div class="au-stat__lbl">معلمون</div>
+        <i class="fas fa-chalkboard-teacher au-stat__ico"></i>
+    </div>
+    <div class="au-stat au-stat--slate">
+        <div class="au-stat__num">@Model.Count(u => u.Roles.Contains("Student"))</div>
+        <div class="au-stat__lbl">طلاب</div>
+        <i class="fas fa-user-graduate au-stat__ico"></i>
+    </div>
+    <div class="au-stat au-stat--amber">
+        <div class="au-stat__num">@Model.Count(u => u.Roles.Contains("Admin"))</div>
+        <div class="au-stat__lbl">مسؤولون</div>
+        <i class="fas fa-user-shield au-stat__ico"></i>
+    </div>
+</div>
+
+@* ── Table card ── *@
+<div class="au-card">
+    <div class="au-card__head">
+        <div class="au-card__head-left">
+            <i class="fas fa-list"></i>
+            <span>قائمة المستخدمين</span>
+            <span class="au-pill">@Model.Count</span>
+        </div>
+        <div class="au-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchUsers" placeholder="بحث بالاسم أو البريد الإلكتروني..." />
+        </div>
+    </div>
+    @if (Model.Any())
+    {
+        <div style="overflow-x:auto">
+            <table class="au-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>المستخدم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الدور</th>
+                        <th>الحالة</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int idx = 1; }
+                    @foreach (var user in Model.OrderBy(u => u.Roles).ThenBy(u => u.FullName))
+                    {
+                        <tr class="user-row">
+                            <td><span class="au-num">@idx</span></td>
+                            <td>
+                                <div class="au-user-cell">
+                                    <div class="au-avatar au-avatar--@(user.Roles.Contains("Admin") ? "amber" : user.Roles.Contains("Teacher") ? "green" : "blue")">
+                                        @if (user.Roles.Contains("Admin")) { <i class="fas fa-user-shield"></i> }
+                                        else if (user.Roles.Contains("Teacher")) { <i class="fas fa-chalkboard-teacher"></i> }
+                                        else { <i class="fas fa-user-graduate"></i> }
+                                    </div>
+                                    <div>
+                                        <div class="au-user-name">@user.FullName</div>
+                                        <div class="au-user-username">@@@user.UserName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="au-email">@user.Email</td>
+                            <td>
+                                @if (user.Roles.Contains("Admin"))
+                                { <span class="au-role au-role--amber"><i class="fas fa-shield-alt"></i> مسؤول</span> }
+                                else if (user.Roles.Contains("Teacher"))
+                                { <span class="au-role au-role--green"><i class="fas fa-chalkboard-teacher"></i> معلم</span> }
+                                else
+                                { <span class="au-role au-role--blue"><i class="fas fa-user-graduate"></i> طالب</span> }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(user.StudentName))
+                                {
+                                    <span class="au-link-badge"><i class="fas fa-link"></i> @user.StudentName</span>
+                                }
+                                else
+                                { <span style="color:var(--text-muted)">—</span> }
+                            </td>
+                            <td>
+                                @if (!user.Roles.Contains("Admin"))
+                                {
+                                    <a asp-action="DeleteUser" asp-route-id="@user.Id" class="au-del-btn">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="au-protected"><i class="fas fa-lock"></i> محمي</span>
+                                }
+                            </td>
+                        </tr>
+                        idx++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div style="padding:4rem;text-align:center;color:var(--text-muted)">
+            <i class="fas fa-users" style="font-size:3rem;display:block;margin-bottom:1rem;opacity:.3"></i>
+            <p>لا يوجد مستخدمون</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<style>
+.au-header { display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem; }
+.au-header__left { display:flex;align-items:center;gap:1rem; }
+.au-header__icon { width:52px;height:52px;background:var(--primary);color:#fff;border-radius:.75rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0; }
+.au-header__title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
+.au-header__sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.au-new-btn { display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1.1rem;background:var(--success);color:#fff;border:none;border-radius:.6rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none;transition:.14s; }
+.au-new-btn:hover { background:var(--success-hover);box-shadow:0 4px 12px rgba(46,125,94,.3); }
+.au-stats { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem; }
+.au-stat { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem 1rem 1rem;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s; }
+.au-stat:hover { transform:translateY(-2px);box-shadow:0 4px 12px rgba(30,26,20,.08); }
+.au-stat__num { font-size:2rem;font-weight:700;line-height:1;margin-bottom:.25rem; }
+.au-stat__lbl { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.8; }
+.au-stat__ico { position:absolute;inset-inline-end:.5rem;bottom:.25rem;font-size:2.8rem;opacity:.1; }
+.au-stat--blue  { border-inline-start:4px solid var(--primary); } .au-stat--blue  .au-stat__num { color:var(--primary); }
+.au-stat--green { border-inline-start:4px solid var(--success); } .au-stat--green .au-stat__num { color:var(--success); }
+.au-stat--slate { border-inline-start:4px solid var(--info);    } .au-stat--slate .au-stat__num { color:var(--info);    }
+.au-stat--amber { border-inline-start:4px solid var(--warning); } .au-stat--amber .au-stat__num { color:var(--warning); }
+.au-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
+.au-card__head { display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.875rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle);flex-wrap:wrap; }
+.au-card__head-left { display:flex;align-items:center;gap:.5rem;font-size:.875rem;font-weight:700;color:var(--text-primary); }
+.au-card__head-left i { color:var(--primary); }
+.au-pill { display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700;background:var(--primary-100);color:var(--primary); }
+.au-search { display:flex;align-items:center;gap:.5rem;padding:.4rem .85rem;background:var(--bg-page);border:1.5px solid var(--border);border-radius:2rem;transition:.14s; }
+.au-search:focus-within { border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-100); }
+.au-search i { color:var(--text-muted);font-size:.8rem; }
+.au-search input { border:none;outline:none;font-size:.8125rem;background:transparent;color:var(--text-primary);min-width:200px; }
+.au-table { width:100%;border-collapse:collapse;font-size:.8125rem; }
+.au-table thead th { padding:.6rem 1rem;text-align:start;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--bg-subtle);border-bottom:1px solid var(--border-light);white-space:nowrap; }
+.au-table tbody tr { border-bottom:1px solid var(--border-light);transition:background .1s; }
+.au-table tbody tr:last-child { border-bottom:none; }
+.au-table tbody tr:hover { background:var(--primary-50); }
+.au-table td { padding:.7rem 1rem;color:var(--text-primary);vertical-align:middle; }
+.au-num { width:24px;height:24px;background:var(--bg-subtle);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--text-muted); }
+.au-user-cell { display:flex;align-items:center;gap:.75rem; }
+.au-avatar { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
+.au-avatar--amber { background:var(--warning-50);color:var(--warning); }
+.au-avatar--green { background:var(--success-50);color:var(--success); }
+.au-avatar--blue  { background:var(--primary-50);color:var(--primary); }
+.au-user-name { font-weight:700;color:var(--text-primary);font-size:.875rem; }
+.au-user-username { font-size:.75rem;color:var(--text-muted); }
+.au-email { color:var(--text-secondary);font-size:.8125rem; }
+.au-role { display:inline-flex;align-items:center;gap:.3rem;padding:.25em .7em;border-radius:2rem;font-size:.75rem;font-weight:700; }
+.au-role--amber { background:var(--warning-50);color:var(--warning); }
+.au-role--green { background:var(--success-50);color:var(--success); }
+.au-role--blue  { background:var(--primary-50);color:var(--primary); }
+.au-link-badge { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .65em;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:2rem;font-size:.75rem;color:var(--text-secondary); }
+.au-link-badge i { color:var(--primary); }
+.au-del-btn { display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;background:var(--danger-50);color:var(--danger);border:1px solid var(--danger-100);border-radius:.4rem;font-size:.75rem;font-weight:600;cursor:pointer;text-decoration:none;transition:.12s; }
+.au-del-btn:hover { background:var(--danger);color:#fff; }
+.au-protected { display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;background:var(--gray-100);color:var(--text-muted);border-radius:.4rem;font-size:.75rem;font-weight:600; }
+@@media (max-width:600px) { .au-stats { grid-template-columns:repeat(2,1fr); } .au-search input { min-width:140px; } }
+</style>
+<script>
+document.getElementById('searchUsers').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.user-row').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+</script>
+}

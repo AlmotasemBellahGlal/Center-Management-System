@@ -1,127 +1,154 @@
 ﻿@model AcademicYearDetailsVM
-
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Name;
 }
 
-<h2>@Model.Name</h2>
+<div class="vp-top">
+    <div>
+        <h1 class="vp-title"><i class="fas fa-graduation-cap" style="color:var(--primary)"></i> @Model.Name</h1>
+        <p class="vp-sub">السنة الدراسية · @Model.Groups.Count() مجموعة</p>
+    </div>
+    <div class="vp-actions">
+        <a asp-controller="Group" asp-action="Create" asp-route-academicYearId="@Model.Id" class="vp-btn vp-btn--green"><i class="fas fa-plus"></i> إضافة مجموعة</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="vp-btn vp-btn--amber"><i class="fas fa-edit"></i> تعديل</a>
+        <a asp-action="Index" class="vp-btn vp-btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+    </div>
+</div>
 
-<hr />
+@* ── Info strip ── *@
+<div class="vp-info-strip">
+    <div class="vp-info-strip__item">
+        <span class="vp-info-strip__label">اسم السنة</span>
+        <span class="vp-info-strip__value">@Model.Name</span>
+    </div>
+    <div class="vp-info-strip__sep"></div>
+    <div class="vp-info-strip__item">
+        <span class="vp-info-strip__label">السعر الشهري</span>
+        <span class="vp-info-strip__value vp-info-strip__value--green">@Model.MonthlyPrice.ToString("N0") ج.م</span>
+    </div>
+    <div class="vp-info-strip__sep"></div>
+    <div class="vp-info-strip__item">
+        <span class="vp-info-strip__label">عدد المجموعات</span>
+        <span class="vp-info-strip__value vp-info-strip__value--blue">@Model.Groups.Count()</span>
+    </div>
+</div>
 
-<p>
-    <strong>Subject :</strong>
-    @Model.SubjectName
-</p>
-
-<p>
-    <strong>Monthly Price :</strong>
-    @Model.MonthlyPrice
-</p>
-
-<hr />
-
-<h4>Groups</h4>
-
-<a asp-controller="Group"
-   asp-action="Create"
-   asp-route-academicYearId="@Model.Id"
-   class="btn btn-success mb-3">
-
-    Add Group
-
-</a>
-
-@if (Model.Groups.Any())
-{
-    <table class="table table-bordered">
-
-        <thead>
-
-            <tr>
-
-                <th>Group</th>
-
-                <th>Schedules</th>
-
-                <th>Actions</th>
-
-            </tr>
-
-        </thead>
-
-        <tbody>
-
+@* ── Groups ── *@
+<div class="vp-card">
+    <div class="vp-card__head">
+        <i class="fas fa-layer-group"></i>
+        المجموعات
+        <span class="vp-pill" style="margin-inline-start:auto">@Model.Groups.Count()</span>
+    </div>
+    @if (Model.Groups.Any())
+    {
+        <div class="vp-groups-list">
             @foreach (var group in Model.Groups)
             {
-                <tr>
-
-                    <td>
-
-                        @group.Name
-
-                    </td>
-
-                    <td>
-
-                        @if (group.Schedules.Any())
-                        {
-                            <ul class="mb-0">
-
-                                @foreach (var schedule in group.Schedules)
+                <div class="vp-group-row">
+                    <div class="vp-group-row__left">
+                        <div class="vp-group-row__dot"><i class="fas fa-users"></i></div>
+                        <div>
+                            <div class="vp-group-row__name">@group.Name</div>
+                            <div class="vp-group-row__sched">
+                                @if (group.Schedules != null && group.Schedules.Any())
                                 {
-                                    <li>
-
-                                        @schedule.Day
-                                        -
-                                        @schedule.StartTime
-
-                                    </li>
+                                    @foreach (var s in group.Schedules)
+                                    {
+                                        <span class="vp-sched-tag">@s.Day — @s.StartTime.ToString(@"hh\:mm")</span>
+                                    }
                                 }
-
-                            </ul>
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                No Schedules
-                            </span>
-                        }
-
-                    </td>
-
-                    <td>
-
-                        <a asp-controller="Group"
-                           asp-action="Details"
-                           asp-route-id="@group.Id"
-                           class="btn btn-info btn-sm">
-                            Details
-                        </a>
-
-                        <a asp-controller="Group"
-                           asp-action="Edit"
-                           asp-route-id="@group.Id"
-                           class="btn btn-warning btn-sm">
-                            Edit
-                        </a>
-
-                        <a asp-controller="Group"
-                           asp-action="Delete"
-                           asp-route-id="@group.Id"
-                           class="btn btn-danger btn-sm">
-                            Delete
-                        </a>
-
-                    </td>
-
-                </tr>
+                                else
+                                {
+                                    <span style="color:var(--text-muted);font-size:.75rem">لا يوجد جدول</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vp-group-row__actions">
+                        <a asp-controller="Group" asp-action="Details" asp-route-id="@group.Id" class="vp-btn-sm vp-btn-sm--slate"><i class="fas fa-eye"></i> عرض</a>
+                        <a asp-controller="Group" asp-action="Edit" asp-route-id="@group.Id" class="vp-btn-sm vp-btn-sm--amber"><i class="fas fa-edit"></i> تعديل</a>
+                        <button type="button" class="vp-btn-sm vp-btn-sm--red"
+                                onclick="openDeleteGroupModal('@group.Id','@Html.Raw(Html.Encode(group.Name))')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
             }
+        </div>
+    }
+    else
+    {
+        <div style="padding:2.5rem;text-align:center;color:var(--text-muted)">
+            <i class="fas fa-layer-group" style="font-size:2rem;display:block;margin-bottom:.75rem;opacity:.35"></i>
+            <p style="margin:0 0 1rem">لا توجد مجموعات بعد</p>
+            <a asp-controller="Group" asp-action="Create" asp-route-academicYearId="@Model.Id" class="vp-btn vp-btn--green">
+                <i class="fas fa-plus"></i> إضافة مجموعة
+            </a>
+        </div>
+    }
+</div>
 
-        </tbody>
+@* Delete Group Modal *@
+<div class="modal" id="deleteGroupModal">
+    <div class="modal__backdrop" onclick="closeModal('deleteGroupModal')"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h2 class="modal__title">تأكيد الحذف</h2>
+            <button class="modal__close" onclick="closeModal('deleteGroupModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal__body">
+            <p>هل أنت متأكد من حذف المجموعة <strong id="deleteGroupName"></strong>؟</p>
+        </div>
+        <div class="modal__footer">
+            <button class="vp-btn vp-btn--ghost" onclick="closeModal('deleteGroupModal')">إلغاء</button>
+            <a id="deleteGroupConfirmLink" href="#" class="vp-btn vp-btn--danger"><i class="fas fa-trash"></i> حذف</a>
+        </div>
+    </div>
+</div>
 
-    </table>
+@section Scripts {
+<style>
+.vp-top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.vp-title { font-size:1.4rem; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:.6rem; }
+.vp-sub { font-size:.8rem; color:var(--text-muted); margin:.25rem 0 0; }
+.vp-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+.vp-btn { display:inline-flex; align-items:center; gap:.45rem; padding:.45rem 1rem; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.14s; }
+.vp-btn--green  { background:var(--success); color:#fff; } .vp-btn--green:hover  { background:var(--success-hover); }
+.vp-btn--amber  { background:var(--warning); color:#fff; } .vp-btn--amber:hover  { background:var(--warning-hover); }
+.vp-btn--ghost  { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); } .vp-btn--ghost:hover { background:var(--gray-150); }
+.vp-btn--danger { background:var(--danger); color:#fff; } .vp-btn--danger:hover { background:var(--danger-hover); }
+.vp-info-strip { display:flex; align-items:center; gap:0; background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; padding:1rem 1.5rem; margin-bottom:1.25rem; flex-wrap:wrap; box-shadow:0 1px 3px rgba(30,26,20,.04); }
+.vp-info-strip__item { display:flex; flex-direction:column; gap:.2rem; padding:.25rem .75rem; }
+.vp-info-strip__sep { width:1px; height:36px; background:var(--border-light); flex-shrink:0; }
+.vp-info-strip__label { font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+.vp-info-strip__value { font-size:1rem; font-weight:700; color:var(--text-primary); }
+.vp-info-strip__value--green { color:var(--success); }
+.vp-info-strip__value--blue  { color:var(--primary); }
+.vp-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; overflow:hidden; }
+.vp-card__head { display:flex; align-items:center; gap:.6rem; padding:.875rem 1.25rem; font-size:.875rem; font-weight:700; color:var(--text-primary); border-bottom:1px solid var(--border-light); background:var(--bg-subtle); }
+.vp-card__head i { color:var(--primary); }
+.vp-pill { display:inline-flex; align-items:center; padding:.15em .6em; border-radius:2rem; font-size:.7rem; font-weight:700; background:var(--primary-100); color:var(--primary); }
+.vp-groups-list { }
+.vp-group-row { display:flex; align-items:center; justify-content:space-between; padding:.875rem 1.25rem; border-bottom:1px solid var(--border-light); transition:background .1s; }
+.vp-group-row:last-child { border-bottom:none; }
+.vp-group-row:hover { background:var(--bg-subtle); }
+.vp-group-row__left { display:flex; align-items:flex-start; gap:.75rem; }
+.vp-group-row__dot { width:36px; height:36px; background:var(--primary-50); color:var(--primary); border-radius:.5rem; display:flex; align-items:center; justify-content:center; font-size:.8rem; flex-shrink:0; margin-top:2px; }
+.vp-group-row__name { font-size:.875rem; font-weight:700; color:var(--text-primary); margin-bottom:.35rem; }
+.vp-group-row__sched { display:flex; flex-wrap:wrap; gap:.3rem; }
+.vp-sched-tag { display:inline-flex; align-items:center; padding:.15em .5em; background:var(--info-50); color:var(--info); border-radius:2rem; font-size:.7rem; font-weight:600; }
+.vp-group-row__actions { display:flex; gap:.35rem; flex-shrink:0; }
+.vp-btn-sm { display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .65rem; border-radius:.4rem; font-size:.75rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.12s; }
+.vp-btn-sm--slate { background:var(--info-50); color:var(--info); }     .vp-btn-sm--slate:hover { background:var(--info); color:#fff; }
+.vp-btn-sm--amber { background:var(--warning-50); color:var(--warning); } .vp-btn-sm--amber:hover { background:var(--warning); color:#fff; }
+.vp-btn-sm--red   { background:var(--danger-50); color:var(--danger); }   .vp-btn-sm--red:hover   { background:var(--danger); color:#fff; }
+</style>
+<script>
+function openDeleteGroupModal(id, name) {
+    document.getElementById('deleteGroupName').textContent = name;
+    document.getElementById('deleteGroupConfirmLink').href = '/Group/Delete/' + id;
+    openModal('deleteGroupModal');
 }
-else
-{
-    <p>No Groups Yet.</p>
+</script>
 }

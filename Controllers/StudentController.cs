@@ -1,10 +1,12 @@
-﻿using Center_Management.Interfaces;
+using Center_Management.Interfaces;
 using Center_Management.Models;
 using Center_Management.View_Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Center_Management.Controllers
 {
+    [Authorize(Roles = "Teacher,Admin")]
     public class StudentController : Controller
     {
         private readonly IStudentRepository studentRepository;
@@ -21,7 +23,37 @@ namespace Center_Management.Controllers
         {
             var students = await studentRepository.GetAllWithGroupsAsync();
 
-            return View(students);
+            // Separate students with active groups and those without
+            var studentsWithActiveGroup = students.Where(s => s.StudentGroups.Any(g => g.IsActive)).ToList();
+            var studentsWithoutActiveGroup = students.Where(s => !s.StudentGroups.Any(g => g.IsActive)).ToList();
+
+            // Group students with active groups by Academic Year, then by Group name
+            var groupedStudents = studentsWithActiveGroup
+                .GroupBy(s => s.StudentGroups.FirstOrDefault(g => g.IsActive)?.Group?.AcademicYear?.Name ?? "بدون سنة دراسية")
+                .OrderBy(g => g.Key)
+                .Select(yearGroup => new
+                {
+                    AcademicYearName = yearGroup.Key,
+                    Groups = yearGroup
+                        .GroupBy(s => s.StudentGroups.FirstOrDefault(g => g.IsActive)?.Group?.Name ?? "بدون مجموعة")
+                        .OrderBy(g => g.Key)
+                        .Select(groupGroup => new
+                        {
+                            GroupName = groupGroup.Key,
+                            GroupId   = groupGroup.First()
+                                            .StudentGroups
+                                            .FirstOrDefault(sg => sg.IsActive)?.GroupId ?? 0,
+                            Students = groupGroup.OrderBy(s => s.FullName).ToList()
+                        })
+                        .ToList()
+                })
+                .ToList();
+
+            // Pass data to view via ViewData
+            ViewData["GroupedStudents"] = groupedStudents;
+            ViewData["StudentsWithoutActiveGroup"] = studentsWithoutActiveGroup;
+
+            return View();
         }
         public async Task<IActionResult> Details(int id)
         {
@@ -43,14 +75,13 @@ namespace Center_Management.Controllers
                 {
                     AcademicYearId = g.Key,
                     AcademicYearName = g.First().AcademicYear!.Name,
-                    SubjectName = g.First().AcademicYear!.Subject!.Name,
+                   
 
                     Groups = g.Select(x => new GroupSelectionVM
                     {
                         GroupId = x.Id,
                         GroupName = x.Name,
 
-                       
                     }).ToList()
 
                 }).ToList();
@@ -68,29 +99,36 @@ namespace Center_Management.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateStudentVM vm)
         {
-            foreach (var item in ModelState)
+            // التحقق من اختيار مجموعة
+            if (vm.SelectedGroupId <= 0)
             {
-                foreach (var error in item.Value.Errors)
-                {
-                    Console.WriteLine($"{item.Key} ---> {error.ErrorMessage}");
-                }
+                ModelState.AddModelError("SelectedGroupId", "يجب اختيار مجموعة دراسية");
             }
+
             if (!ModelState.IsValid)
             {
                 await LoadGroups(vm);
                 return View(vm);
             }
 
-            bool result = await studentRepository.RegisterStudentAsync(vm);
-
-            if (!result)
+            // إنشاء الطالب الجديد
+            var student = new Student
             {
-                ModelState.AddModelError("", "لا يمكن تسجيل الطالب في أكثر من مجموعة لنفس السنة الدراسية.");
+                FullName = vm.FullName,
+                PhoneNumber = vm.PhoneNumber,
+                ParentPhoneNumber = vm.ParentPhoneNumber
+            };
 
-                await LoadGroups(vm);
+            // إضافة الطالب للمجموعة المختارة
+            student.StudentGroups.Add(new StudentGroup
+            {
+                GroupId = vm.SelectedGroupId,
+                IsActive = true,
+                EnrollmentDate = DateOnly.FromDateTime(DateTime.Now)
+            });
 
-                return View(vm);
-            }
+            studentRepository.Add(student);
+            await studentRepository.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }
@@ -112,15 +150,11 @@ namespace Center_Management.Controllers
 
             await LoadGroups(vm);
 
-            foreach (var sg in student.StudentGroups)
+            // تعيين المجموعة الحالية للطالب
+            var currentGroup = student.StudentGroups.FirstOrDefault(sg => sg.IsActive);
+            if (currentGroup != null)
             {
-                var academicYear = vm.AcademicYears
-                    .FirstOrDefault(a => a.AcademicYearId == sg.Group.AcademicYearId);
-
-                if (academicYear != null)
-                {
-                    academicYear.SelectedGroupId = sg.GroupId;
-                }
+                vm.SelectedGroupId = currentGroup.GroupId;
             }
 
             return View(vm);
@@ -130,22 +164,55 @@ namespace Center_Management.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CreateStudentVM vm)
         {
+            // التحقق من اختيار مجموعة
+            if (vm.SelectedGroupId <= 0)
+            {
+                ModelState.AddModelError("SelectedGroupId", "يجب اختيار مجموعة دراسية");
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadGroups(vm);
                 return View(vm);
             }
 
-            bool result = await studentRepository.UpdateStudentAsync(vm);
+            var student = await studentRepository.GetForEditAsync(vm.Id);
+            if (student == null)
+                return NotFound();
 
-            if (!result)
+            // تحديث البيانات الأساسية
+            student.FullName = vm.FullName;
+            student.PhoneNumber = vm.PhoneNumber;
+            student.ParentPhoneNumber = vm.ParentPhoneNumber;
+
+            // إلغاء تفعيل جميع المجموعات القديمة
+            foreach (var sg in student.StudentGroups)
             {
-                ModelState.AddModelError("", "لا يمكن تسجيل الطالب في أكثر من مجموعة لنفس المادة والسنة الدراسية.");
-
-                await LoadGroups(vm);
-
-                return View(vm);
+                sg.IsActive = false;
             }
+
+            // التحقق إذا كانت المجموعة الجديدة موجودة مسبقاً
+            var existingGroup = student.StudentGroups
+                .FirstOrDefault(sg => sg.GroupId == vm.SelectedGroupId);
+
+            if (existingGroup != null)
+            {
+                // إعادة تفعيل المجموعة الموجودة
+                existingGroup.IsActive = true;
+            }
+            else
+            {
+                // إضافة مجموعة جديدة
+                student.StudentGroups.Add(new StudentGroup
+                {
+                    GroupId = vm.SelectedGroupId,
+                    IsActive = true,
+                    EnrollmentDate = DateOnly.FromDateTime(DateTime.Now)
+                });
+            }
+
+            studentRepository.Update(student);
+            await studentRepository.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }

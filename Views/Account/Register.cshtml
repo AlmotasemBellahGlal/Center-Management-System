@@ -1,0 +1,152 @@
+@model RegisterVM
+
+@{
+    ViewData["Title"] = "إنشاء حساب";
+    Layout = null;
+    var students = ViewBag.Students as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - إدارة المركز</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body, html { height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .auth-page {
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--primary-color);
+            padding: 1rem;
+        }
+        .auth-card {
+            background: var(--white); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: 2.5rem 2rem; width: 100%; max-width: 480px;
+            animation: authSlideUp .4s ease;
+        }
+        @@keyframes authSlideUp {
+            from { opacity:0; transform:translateY(24px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .auth-logo { text-align: center; margin-bottom: 1.5rem; }
+        .auth-logo__icon {
+            width: 64px; height: 64px;
+            background: var(--primary-color);
+            border-radius: 16px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: var(--white);
+            box-shadow: var(--shadow-md); margin-bottom: .75rem;
+        }
+        .auth-logo__title { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
+        .auth-logo__subtitle { font-size: .875rem; color: var(--text-secondary); margin: 0; }
+        .auth-form .form-label { font-weight: 600; font-size: .875rem; color: var(--text-primary); margin-bottom: .35rem; }
+        .auth-form .form-control, .auth-form .form-select {
+            border-radius: 8px; border: 1.5px solid var(--border-color);
+            padding: .6rem .85rem; font-size: .9375rem; transition: border-color .2s;
+        }
+        .auth-form .form-control:focus, .auth-form .form-select:focus {
+            border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        .btn-auth {
+            width: 100%; padding: .7rem; border-radius: 8px;
+            background: var(--primary-color);
+            color: var(--white); border: none; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: opacity .2s, transform .1s; margin-top: .5rem;
+        }
+        .btn-auth:hover { opacity: .9; transform: translateY(-1px); }
+        .auth-footer { text-align: center; margin-top: 1.25rem; font-size: .875rem; color: var(--text-secondary); }
+        .auth-footer a { color: var(--primary-color); font-weight: 600; text-decoration: none; }
+        .auth-footer a:hover { text-decoration: underline; }
+        .auth-divider { border: none; border-top: 1px solid var(--border-color); margin: 1.25rem 0; }
+        .text-danger { font-size: .8125rem; }
+        .role-radio-group { display: flex; gap: 1rem; }
+        .role-radio-item {
+            flex: 1; border: 2px solid var(--border-color); border-radius: 10px;
+            padding: .75rem; cursor: pointer; transition: all .2s; text-align: center;
+        }
+        .role-radio-item:has(input:checked) {
+            border-color: var(--primary-color); background: var(--primary-light);
+        }
+        .role-radio-item input { display: none; }
+        .role-radio-item__icon { font-size: 1.5rem; margin-bottom: .25rem; }
+        .role-radio-item__label { font-size: .875rem; font-weight: 600; color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo__icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h1 class="auth-logo__title">تسجيل معلم جديد</h1>
+                <p class="auth-logo__subtitle">أدخل بياناتك للتسجيل كمعلم</p>
+            </div>
+
+            <form asp-action="Register" method="post" class="auth-form">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label">
+                        <i class="fas fa-user me-1" style="color:var(--primary-color);"></i>
+                        الاسم الكامل
+                    </label>
+                    <input asp-for="FullName" type="text" class="form-control" placeholder="أدخل اسمك الكامل" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">
+                        <i class="fas fa-envelope me-1" style="color:var(--primary-color);"></i>
+                        البريد الإلكتروني
+                    </label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="example@email.com" dir="ltr" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">
+                        <i class="fas fa-lock me-1" style="color:var(--primary-color);"></i>
+                        كلمة المرور
+                    </label>
+                    <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" dir="ltr" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label">
+                        <i class="fas fa-lock me-1" style="color:var(--primary-color);"></i>
+                        تأكيد كلمة المرور
+                    </label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••••" dir="ltr" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <input type="hidden" asp-for="Role" value="Teacher" />
+                </div>
+
+                <button type="submit" class="btn-auth">
+                    <i class="fas fa-user-plus me-1"></i>
+                    إنشاء الحساب
+                </button>
+            </form>
+
+            <hr class="auth-divider" />
+
+            <div class="auth-footer">
+                لديك حساب بالفعل؟
+                <a asp-controller="Account" asp-action="Login">تسجيل الدخول</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

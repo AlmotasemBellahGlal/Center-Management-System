@@ -1,138 +1,144 @@
 ﻿@model CreateGroupVM
-
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "إضافة مجموعة جديدة";
 }
 
-<form asp-action="Create">
-
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <div class="mb-3">
-        <label asp-for="Name"></label>
-
-        <input asp-for="Name" class="form-control" />
-
-        <span asp-validation-for="Name" class="text-danger"></span>
+<div class="vf-top">
+    <div>
+        <h1 class="vf-title">إضافة مجموعة جديدة</h1>
+        <p class="vf-sub">حدد اسم المجموعة ومواعيد الحصص الأسبوعية</p>
     </div>
-    <div class="mb-3">
-        <input asp-for="AcademicYearId" type="hidden" />
-
-        <label>Schedules</label>
-        <div id="scheduleContainer">
-
-            @for (int i = 0; i < Model.Schedules.Count; i++)
-            {
-                <div class="schedule-row row mb-2">
-
-                    <div class="col-md-6">
-                        <select asp-for="Schedules[i].Day"
-                                asp-items="Html.GetEnumSelectList<DaysOfWeek>()"
-                                class="form-select">
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <input asp-for="Schedules[i].StartTime"
-                               type="time"
-                               class="form-control" />
-                    </div>
-
-                </div>
-            }
-
-        </div>
-        <button type="button"
-                id="addSchedule"
-                class="btn btn-success">
-            Add Schedule
-        </button>
-
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-        Save
-    </button>
-
-</form>
-<div>
-    <partial name="_BackToListPartialView" />
+    <a asp-action="Index" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
 
-@section Scripts
-{
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <partial name="_ValidationScriptsPartial" />
+<form asp-action="Create">
+    <input asp-for="AcademicYearId" type="hidden" />
+    <div asp-validation-summary="All" class="vf-errors"></div>
 
-    <script>
+    @* Name *@
+    <div class="vf-section">
+        <div class="vf-section__head">
+            <div class="vf-section__icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-tag"></i></div>
+            <h2 class="vf-section__title">اسم المجموعة</h2>
+        </div>
+        <div class="vf-section__body">
+            <div class="vf-field">
+                <label asp-for="Name" class="vf-label">الاسم <span class="vf-req">*</span></label>
+                <input asp-for="Name" class="vf-input" placeholder="مثال: مجموعة الثانوية أ" />
+                <span asp-validation-for="Name" class="vf-err"></span>
+            </div>
+        </div>
+    </div>
 
-        let index = @Model.Schedules.Count;
-
-        document
-        .getElementById("addSchedule")
-        .addEventListener("click", function () {
-
-            const html = `
-                <div class="schedule-row row mb-2">
-
-                    <div class="col-md-5">
-
-                        <select name="Schedules[${index}].Day"
-                                class="form-select">
-
-                            <option value="0">السبت</option>
-                            <option value="1">الأحد</option>
-                            <option value="2">الإثنين</option>
-                            <option value="3">الثلاثاء</option>
-                            <option value="4">الأربعاء</option>
-                            <option value="5">الخميس</option>
-                            <option value="6">الجمعة</option>
-
-                        </select>
-
-                    </div>
-
-                    <div class="col-md-5">
-
-                        <input type="time"
-                               name="Schedules[${index}].StartTime"
-                               class="form-control"/>
-
-                    </div>
-
-                    <div class="col-md-2">
-
-                        <button type="button"
-                                class="btn btn-danger remove-btn">
-
-                            Remove
-
+    @* Schedule *@
+    <div class="vf-section">
+        <div class="vf-section__head">
+            <div class="vf-section__icon" style="background:var(--success-50);color:var(--success)"><i class="fas fa-calendar-alt"></i></div>
+            <h2 class="vf-section__title">جدول المواعيد الأسبوعي</h2>
+            <p class="vf-section__hint">حدد أيام ومواعيد الحصص</p>
+        </div>
+        <div class="vf-section__body">
+            <div id="scheduleContainer" class="vf-sched-list">
+                @for (int i = 0; i < Model.Schedules.Count; i++)
+                {
+                    <div class="vf-sched-row">
+                        <div class="vf-sched-row__num">@(i+1)</div>
+                        <div class="vf-field vf-field--flex">
+                            <label class="vf-label vf-label--sm">اليوم</label>
+                            <select asp-for="Schedules[i].Day" asp-items="Html.GetEnumSelectList<DaysOfWeek>()" class="vf-select"></select>
+                        </div>
+                        <div class="vf-field vf-field--flex">
+                            <label class="vf-label vf-label--sm">وقت البدء</label>
+                            <input asp-for="Schedules[i].StartTime" type="time" class="vf-input" />
+                        </div>
+                        <button type="button" class="vf-sched-remove remove-btn" title="حذف هذا الموعد">
+                            <i class="fas fa-times"></i>
                         </button>
-
                     </div>
+                }
+            </div>
+            <button type="button" id="addSchedule" class="vf-add-sched">
+                <i class="fas fa-plus"></i> إضافة موعد
+            </button>
+        </div>
+    </div>
 
-                </div>
-            `;
+    <div class="vf-footer">
+        <a asp-action="Index" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
+        <button type="submit" class="vf-submit"><i class="fas fa-save"></i> حفظ المجموعة</button>
+    </div>
+</form>
 
-            document
-                .getElementById("scheduleContainer")
-                .insertAdjacentHTML("beforeend", html);
+@section Scripts {
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+<style>
+.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
+.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
+.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-back-btn:hover { background:var(--gray-150); }
+.vf-errors { background:var(--danger-50);border:1px solid var(--danger-100);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.8125rem;color:var(--danger); }
+.vf-errors ul { margin:0;padding-inline-start:1.25rem; }
+.vf-section { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;margin-bottom:1.25rem;overflow:hidden; }
+.vf-section__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
+.vf-section__icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
+.vf-section__title { font-size:.9rem;font-weight:700;color:var(--text-primary);margin:0; }
+.vf-section__hint { font-size:.75rem;color:var(--text-muted);margin:0 0 0 auto; }
+.vf-section__body { padding:1.25rem; }
+.vf-field { margin-bottom:0; }
+.vf-field--flex { flex:1;min-width:160px; }
+.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
+.vf-label--sm { font-size:.75rem; }
+.vf-req { color:var(--danger); }
+.vf-input, .vf-select { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
+.vf-input:focus,.vf-select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-100); }
+.vf-select { appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23887f74' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:left .6rem center;background-size:13px;padding-inline-start:1.9rem; }
+.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
+.vf-sched-list { display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem; }
+.vf-sched-row { display:flex;align-items:flex-end;gap:.75rem;padding:1rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.65rem; }
+.vf-sched-row__num { width:24px;height:24px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-bottom:.1rem; }
+.vf-sched-remove { width:32px;height:32px;background:var(--danger-50);color:var(--danger);border:1px solid var(--danger-100);border-radius:.45rem;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;flex-shrink:0;transition:.12s; }
+.vf-sched-remove:hover { background:var(--danger);color:#fff; }
+.vf-add-sched { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .875rem;background:var(--success-50);color:var(--success);border:1.5px dashed var(--success);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;transition:.14s; }
+.vf-add-sched:hover { background:var(--success);color:#fff;border-style:solid; }
+.vf-footer { display:flex;justify-content:flex-end;gap:.5rem;flex-wrap:wrap;padding:1.25rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.85rem;margin-top:1.25rem; }
+.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
+.vf-cancel:hover { background:var(--gray-150); }
+.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
+.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,125,94,.3); }
+</style>
+<script>
+let idx = @Model.Schedules.Count;
+const days = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 
-            index++;
-        });
+document.getElementById('addSchedule').addEventListener('click', function () {
+    const n = document.querySelectorAll('.vf-sched-row').length + 1;
+    const opts = days.map((d,i) => `<option value="${i}">${d}</option>`).join('');
+    const html = `
+        <div class="vf-sched-row">
+            <div class="vf-sched-row__num">${n}</div>
+            <div class="vf-field vf-field--flex">
+                <label class="vf-label vf-label--sm">اليوم</label>
+                <select name="Schedules[${idx}].Day" class="vf-select">${opts}</select>
+            </div>
+            <div class="vf-field vf-field--flex">
+                <label class="vf-label vf-label--sm">وقت البدء</label>
+                <input type="time" name="Schedules[${idx}].StartTime" class="vf-input" />
+            </div>
+            <button type="button" class="vf-sched-remove remove-btn"><i class="fas fa-times"></i></button>
+        </div>`;
+    document.getElementById('scheduleContainer').insertAdjacentHTML('beforeend', html);
+    idx++;
+    renumberRows();
+});
 
-        document.addEventListener("click", function (e) {
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.remove-btn');
+    if (btn) { btn.closest('.vf-sched-row').remove(); renumberRows(); }
+});
 
-            if (e.target.classList.contains("remove-btn")) {
-
-                e.target
-                    .closest(".schedule-row")
-                    .remove();
-            }
-
-        });
-
-    </script>
+function renumberRows() {
+    document.querySelectorAll('.vf-sched-row__num').forEach((el,i) => el.textContent = i + 1);
 }
-
+</script>
+}

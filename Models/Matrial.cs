@@ -18,7 +18,5 @@ namespace Center_Management.Models
         public string FileUrl { get; set; }
         public int AcademicYearId { get; set; }
         public AcademicYear? AcademicYear { get; set; }
-        public int SubjectId { get; set; }
-        public Subject? Subject { get; set; }
     }
 }

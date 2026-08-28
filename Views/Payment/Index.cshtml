@@ -1,0 +1,604 @@
+@using Center_Management.Controllers
+@model PaymentGroupVM
+@{
+    ViewData["Title"] = "مدفوعات " + Model.GroupName;
+
+    string[] arabicMonths = {
+        "يناير","فبراير","مارس","إبريل","مايو","يونيو",
+        "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"
+    };
+    string monthName = arabicMonths[Model.Month - 1];
+
+    int paidCount   = Model.Students.Count(s => s.IsPaid);
+    int unpaidCount = Model.Students.Count(s => !s.IsPaid);
+    int total       = Model.Students.Count;
+    decimal totalRevenue = Model.Students.Where(s => s.IsPaid).Sum(s => s.Amount);
+}
+
+@* ── Back + Page Header ── *@
+<div class="pay-header">
+    <div class="pay-header__top">
+        <a href="@Url.Action("Groups", "Payment")" class="btn btn--outline-success btn--sm">
+            <i class="fas fa-arrow-right"></i>
+            رجوع للمجموعات
+        </a>
+        <div class="pay-header__breadcrumb">
+            <span>@Model.SubjectName</span>
+            <i class="fas fa-chevron-left pay-bc-sep"></i>
+            <span>@Model.AcademicYearName</span>
+            <i class="fas fa-chevron-left pay-bc-sep"></i>
+            <span class="pay-bc-current">@Model.GroupName</span>
+        </div>
+    </div>
+
+    <div class="pay-header__main">
+        <div class="pay-header__icon">
+            <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="pay-header__info">
+            <h1 class="pay-header__title">@Model.GroupName</h1>
+            <div class="pay-header__meta">
+                <span><i class="fas fa-credit-card"></i> @monthName @Model.Year</span>
+                @if (Model.MonthlyPrice > 0)
+                {
+                    <span class="pay-meta-sep">·</span>
+                    <span><i class="fas fa-tag"></i> @Model.MonthlyPrice.ToString("N0") ج.م / شهر</span>
+                }
+                <span class="pay-meta-sep">·</span>
+                <span><i class="fas fa-wallet"></i> الإيرادات: @totalRevenue.ToString("N0") ج.م</span>
+            </div>
+        </div>
+
+        @* Month/Year pickers *@
+        <form method="get" class="pay-header__filters" id="filterForm">
+            <input type="hidden" name="groupId" value="@Model.GroupId" />
+            <div class="pay-filter">
+                <label class="pay-filter__label"><i class="fas fa-calendar-alt"></i> الشهر</label>
+                <div class="pay-filter__row">
+                    <select name="month" class="form-select pay-filter__select"
+                            onchange="document.getElementById('filterForm').submit()">
+                        @for (int m = 1; m <= 12; m++)
+                        {
+                            <option value="@m" selected="@(m == Model.Month ? "selected" : null)">@arabicMonths[m - 1]</option>
+                        }
+                    </select>
+                    <select name="year" class="form-select pay-filter__select"
+                            onchange="document.getElementById('filterForm').submit()">
+                        @for (int y = DateTime.Now.Year - 1; y <= DateTime.Now.Year + 1; y++)
+                        {
+                            <option value="@y" selected="@(y == Model.Year ? "selected" : null)">@y</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ── Summary Stats ── *@
+<div class="pay-stats">
+    <div class="pay-stat pay-stat--paid">
+        <div class="pay-stat__val" id="statPaid">@paidCount</div>
+        <div class="pay-stat__lbl"><i class="fas fa-check-circle"></i> دفع</div>
+    </div>
+    <div class="pay-stat pay-stat--unpaid">
+        <div class="pay-stat__val" id="statUnpaid">@unpaidCount</div>
+        <div class="pay-stat__lbl"><i class="fas fa-times-circle"></i> لم يدفع</div>
+    </div>
+    <div class="pay-stat pay-stat--total">
+        <div class="pay-stat__val">@total</div>
+        <div class="pay-stat__lbl"><i class="fas fa-users"></i> إجمالي</div>
+    </div>
+    <div class="pay-stat pay-stat--revenue">
+        <div class="pay-stat__val" id="statRevenue" style="font-size: var(--text-xl);">@totalRevenue.ToString("N0")</div>
+        <div class="pay-stat__lbl"><i class="fas fa-coins"></i> الإيرادات (ج.م)</div>
+    </div>
+</div>
+
+@* ── Quick-action toolbar ── *@
+<div class="pay-toolbar">
+    <div class="pay-toolbar__left">
+        <button class="btn btn--sm btn--success" onclick="markAllPayment(true)">
+            <i class="fas fa-check-double"></i> تسجيل دفع الكل
+        </button>
+        <button class="btn btn--sm btn--danger" onclick="markAllPayment(false)">
+            <i class="fas fa-ban"></i> إلغاء دفع الكل
+        </button>
+    </div>
+    <div class="pay-toolbar__right">
+        <div id="saveStatus" class="pay-save-status" style="display:none">
+            <i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ...
+        </div>
+    </div>
+</div>
+
+@* ── Empty state ── *@
+@if (!Model.Students.Any())
+{
+    <div class="card"><div class="card__body">
+        <div class="empty-state">
+            <div class="empty-state__icon"><i class="fas fa-users-slash fa-3x"></i></div>
+            <h3 class="empty-state__title">لا يوجد طلاب نشطون</h3>
+            <p class="empty-state__message">لا يوجد طلاب مسجلون بشكل نشط في هذه المجموعة</p>
+        </div>
+    </div></div>
+}
+else
+{
+    @* ── Student Grid ── *@
+    <div class="pay-grid" id="studentGrid">
+        @{ int cardNum = 1; }
+        @foreach (var student in Model.Students)
+        {
+            string payState = student.IsPaid ? "paid" : "unpaid";
+
+            <div class="pay-card @(student.IsPaid ? "pay-card--paid" : "pay-card--unpaid")"
+                 id="card-@student.StudentId"
+                 data-student-id="@student.StudentId"
+                 data-name="@student.FullName.ToLower()">
+
+                @* Card top: avatar + name + number ── *@
+                <div class="pay-card__top">
+                    <div class="pay-card__num">@cardNum</div>
+                    <div class="pay-card__avatar pay-avatar--@(student.IsPaid ? "green" : "orange")"
+                         id="avatar-@student.StudentId">
+                        @student.FullName[0]
+                    </div>
+                    <div class="pay-card__info">
+                        <div class="pay-card__name">@student.FullName</div>
+                        <div class="pay-card__pay-label" id="payLabel-@student.StudentId">
+                            @if (student.IsPaid)
+                            {
+                                <span class="pay-badge pay-badge--paid"><i class="fas fa-check"></i> تم الدفع</span>
+                            }
+                            else
+                            {
+                                <span class="pay-badge pay-badge--unpaid"><i class="fas fa-times"></i> لم يدفع</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @* ── Payment Section ── *@
+                <div class="pay-card__section">
+                    <div class="pay-card__section-label">
+                        <i class="fas fa-money-bill-wave"></i>
+                        دفعة @monthName @Model.Year
+                        @if (student.Amount > 0)
+                        {
+                            <span class="pay-price">@student.Amount.ToString("N0") ج.م</span>
+                        }
+                    </div>
+                    <button class="pay-toggle-btn @(student.IsPaid ? "pay-toggle-btn--paid" : "pay-toggle-btn--unpaid")"
+                            id="btnPay-@student.StudentId"
+                            onclick="togglePayment(@student.StudentId)"
+                            title="@(student.IsPaid ? "إلغاء الدفع" : "تسجيل الدفع")">
+                        <i class="fas @(student.IsPaid ? "fa-check-circle" : "fa-times-circle")" id="payIcon-@student.StudentId"></i>
+                        <span id="payLabelBtn-@student.StudentId">@(student.IsPaid ? "تم الدفع - اضغط للإلغاء" : "لم يدفع - اضغط للتسجيل")</span>
+                    </button>
+                </div>
+
+                @* Spinner overlay ── *@
+                <div class="pay-card__overlay" id="overlay-@student.StudentId" style="display:none">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+            </div>
+
+            cardNum++;
+        }
+    </div>
+
+    @* ── Search filter for cards ── *@
+    <div class="pay-search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" class="pay-search-input" placeholder="ابحث عن طالب..."
+               oninput="filterCards(this.value)" />
+    </div>
+}
+
+@* ── Toast container ── *@
+<div id="payToastContainer" class="pay-toast-container"></div>
+
+@section Scripts {
+<style>
+/* ═══════════════════════════════════════════════════════
+   Payment Page — Scoped Styles
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Header ── */
+.pay-header {
+    margin-bottom: var(--spacing-lg);
+}
+.pay-header__top {
+    display: flex; align-items: center; gap: var(--spacing-sm);
+    margin-bottom: var(--spacing);
+    flex-wrap: wrap;
+}
+.pay-header__breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: var(--text-sm); color: var(--text-secondary);
+}
+.pay-bc-sep { font-size: .6rem; color: var(--text-muted); }
+.pay-bc-current { color: var(--success-color); font-weight: var(--font-semibold); }
+
+.pay-header__main {
+    display: flex; align-items: flex-start; gap: var(--spacing);
+    padding: var(--spacing-md);
+    background: var(--success-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    color: #fff;
+    flex-wrap: wrap;
+}
+.pay-header__icon {
+    width: 56px; height: 56px; flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+}
+.pay-header__info { flex: 1; min-width: 160px; }
+.pay-header__title { font-size: var(--text-2xl); font-weight: var(--font-bold); margin: 0 0 4px; }
+.pay-header__meta { display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); opacity: .9; flex-wrap: wrap; }
+.pay-meta-sep { opacity: .5; }
+
+/* Filters */
+.pay-header__filters {
+    display: flex; gap: var(--spacing); align-items: flex-end; flex-wrap: wrap; margin-inline-start: auto;
+}
+.pay-filter { display: flex; flex-direction: column; gap: 4px; }
+.pay-filter__label { font-size: var(--text-xs); opacity: .85; white-space: nowrap; }
+.pay-filter__select {
+    background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3);
+    border-radius: var(--radius); padding: 6px 10px; font-size: var(--text-sm);
+    min-width: 120px;
+}
+.pay-filter__select option { background: var(--gray-800); color: #fff; }
+.pay-filter__row { display: flex; gap: var(--spacing-xs); }
+
+/* ── Stats ── */
+.pay-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing);
+}
+@@media (max-width: 767px) { .pay-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.pay-stat {
+    border-radius: var(--radius-md); padding: var(--spacing-sm) var(--spacing);
+    text-align: center; box-shadow: var(--shadow-sm); transition: var(--transition);
+    border: 2px solid transparent;
+}
+.pay-stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.pay-stat__val { font-size: var(--text-3xl); font-weight: var(--font-bold); line-height: 1; }
+.pay-stat__lbl { font-size: var(--text-xs); margin-top: 4px; opacity: .85; }
+
+.pay-stat--paid    { background: var(--success-light); color: var(--success-color); border-color: var(--success-color); }
+.pay-stat--unpaid  { background: var(--warning-light); color: var(--warning-color); border-color: var(--warning-color); }
+.pay-stat--total   { background: var(--primary-light); color: var(--primary-color); border-color: var(--primary-color); }
+.pay-stat--revenue { background: var(--warning-light); color: var(--warning-color); border-color: var(--warning-color); }
+
+/* ── Toolbar ── */
+.pay-toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing);
+    background: var(--bg-primary); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); margin-bottom: var(--spacing);
+    box-shadow: var(--shadow-sm);
+}
+.pay-toolbar__left  { display: flex; gap: var(--spacing-xs); flex-wrap: wrap; }
+.pay-save-status    { font-size: var(--text-sm); color: var(--success-color); display: flex; align-items: center; gap: 6px; }
+
+/* ── Search ── */
+.pay-search-wrap {
+    display: flex; align-items: center; gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing);
+    background: var(--bg-primary); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); margin-top: var(--spacing);
+    box-shadow: var(--shadow-sm); color: var(--text-muted);
+}
+.pay-search-input {
+    flex: 1; border: none; outline: none; font-size: var(--text-base);
+    background: transparent; color: var(--text-primary);
+}
+
+/* ── Student Grid ── */
+.pay-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: var(--spacing);
+}
+@@media (max-width: 480px) { .pay-grid { grid-template-columns: 1fr; } }
+
+/* ── Student Card ── */
+.pay-card {
+    position: relative;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing);
+    box-shadow: var(--shadow-md);
+    transition: all .2s ease;
+    overflow: hidden;
+}
+.pay-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.pay-card--paid   { border-color: var(--success-color); background: var(--success-light); }
+.pay-card--unpaid { border-color: var(--warning-color); background: var(--warning-light); }
+
+/* Card accent bar */
+.pay-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.pay-card--paid::before   { background: var(--success-color); }
+.pay-card--unpaid::before { background: var(--warning-color); }
+
+/* Card top */
+.pay-card__top { display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm); }
+.pay-card__num {
+    width: 24px; height: 24px; border-radius: var(--radius-full);
+    background: var(--gray-100); color: var(--text-muted);
+    font-size: var(--text-xs); font-weight: var(--font-bold);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pay-card__avatar {
+    width: 42px; height: 42px; border-radius: var(--radius-full);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--text-lg); font-weight: var(--font-bold); color: #fff; flex-shrink: 0;
+    text-transform: uppercase; transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+.pay-avatar--green  { background: var(--success-color); }
+.pay-avatar--orange { background: var(--warning-color); }
+
+.pay-card__info { flex: 1; min-width: 0; }
+.pay-card__name { font-weight: var(--font-semibold); font-size: var(--text-base); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Badges */
+.pay-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: var(--text-xs); font-weight: var(--font-bold);
+}
+.pay-badge--paid   { background: var(--success-light); color: var(--success-color); }
+.pay-badge--unpaid { background: var(--warning-light); color: var(--warning-color); }
+
+/* Card section */
+.pay-card__section {
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-xs);
+}
+.pay-card__section-label {
+    font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--spacing-xs);
+    display: flex; align-items: center; gap: 4px;
+}
+.pay-price {
+    margin-inline-start: auto; background: var(--success-light);
+    color: var(--success-dark); padding: 2px 8px; border-radius: var(--radius-full);
+    font-weight: var(--font-bold); font-size: var(--text-xs);
+}
+
+/* Payment toggle button */
+.pay-toggle-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: var(--spacing-sm) var(--spacing); border-radius: var(--radius);
+    border: 2px solid; cursor: pointer; font-size: var(--text-sm);
+    font-weight: var(--font-semibold); transition: all .15s ease;
+}
+.pay-toggle-btn--unpaid {
+    background: var(--warning-light); color: var(--warning-color); border-color: var(--warning-color);
+}
+.pay-toggle-btn--unpaid:hover {
+    background: var(--success-color); color: #fff; border-color: var(--success-color);
+    box-shadow: var(--shadow-sm);
+}
+.pay-toggle-btn--paid {
+    background: var(--success-light); color: var(--success-color); border-color: var(--success-color);
+}
+.pay-toggle-btn--paid:hover {
+    background: var(--danger-color); color: #fff; border-color: var(--danger-color);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Loading overlay on card */
+.pay-card__overlay {
+    position: absolute; inset: 0; background: rgba(255,255,255,.7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: var(--success-color);
+    border-radius: var(--radius-lg); backdrop-filter: blur(2px);
+}
+
+/* ── Toast ── */
+.pay-toast-container {
+    position: fixed; bottom: var(--spacing); inset-inline-end: var(--spacing);
+    z-index: var(--z-tooltip); display: flex; flex-direction: column; gap: var(--spacing-xs);
+    pointer-events: none;
+}
+.pay-toast {
+    display: flex; align-items: center; gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing); border-radius: var(--radius);
+    font-size: var(--text-sm); font-weight: var(--font-medium);
+    box-shadow: var(--shadow-lg); pointer-events: auto;
+    animation: paySlideUp .25s ease;
+    min-width: 220px; color: #fff;
+}
+@@keyframes paySlideUp {
+    from { opacity:0; transform: translateY(16px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+.pay-toast--success { background: var(--success-color); }
+.pay-toast--error   { background: var(--danger-color); }
+.pay-toast--info    { background: var(--info-color); }
+</style>
+
+<script>
+const GROUP_ID  = @Model.GroupId;
+const PAY_MONTH = @Model.Month;
+const PAY_YEAR  = @Model.Year;
+const MONTHLY_PRICE = @Model.MonthlyPrice;
+
+// ── State tracking ───────────────────────────────────────────────
+// Maps studentId → { isPaid: bool, amount: decimal }
+const state = {};
+@foreach (var s in Model.Students)
+{
+    @:state[@s.StudentId] = { isPaid: @s.IsPaid.ToString().ToLower(), amount: @s.Amount };
+}
+
+// ── AJAX helper ──────────────────────────────────────────────────
+async function apiPost(url, data) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    return res.json();
+}
+
+// ── Show loading overlay on a card ───────────────────────────────
+function showOverlay(studentId, show) {
+    const el = document.getElementById('overlay-' + studentId);
+    if (el) el.style.display = show ? 'flex' : 'none';
+}
+
+// ── Update a single card's visual state ──────────────────────────
+function updateCardUI(studentId) {
+    const s      = state[studentId];
+    const card   = document.getElementById('card-' + studentId);
+    const avatar = document.getElementById('avatar-' + studentId);
+    const payLbl = document.getElementById('payLabel-' + studentId);
+    const btnPay = document.getElementById('btnPay-' + studentId);
+    const payIco = document.getElementById('payIcon-' + studentId);
+    const payLblBtn = document.getElementById('payLabelBtn-' + studentId);
+
+    // Card class
+    card.classList.remove('pay-card--paid','pay-card--unpaid');
+    card.classList.add(s.isPaid ? 'pay-card--paid' : 'pay-card--unpaid');
+
+    // Avatar colour
+    avatar.classList.remove('pay-avatar--green','pay-avatar--orange');
+    avatar.classList.add(s.isPaid ? 'pay-avatar--green' : 'pay-avatar--orange');
+
+    // Payment label badge
+    if (s.isPaid)
+        payLbl.innerHTML = '<span class="pay-badge pay-badge--paid"><i class="fas fa-check"></i> تم الدفع</span>';
+    else
+        payLbl.innerHTML = '<span class="pay-badge pay-badge--unpaid"><i class="fas fa-times"></i> لم يدفع</span>';
+
+    // Payment button
+    btnPay.classList.remove('pay-toggle-btn--paid','pay-toggle-btn--unpaid');
+    btnPay.classList.add(s.isPaid ? 'pay-toggle-btn--paid' : 'pay-toggle-btn--unpaid');
+    payIco.className = 'fas ' + (s.isPaid ? 'fa-check-circle' : 'fa-times-circle');
+    payLblBtn.textContent = s.isPaid ? 'تم الدفع - اضغط للإلغاء' : 'لم يدفع - اضغط للتسجيل';
+    btnPay.title = s.isPaid ? 'إلغاء الدفع' : 'تسجيل الدفع';
+
+    // Update stats
+    updateStats();
+}
+
+// ── Update summary counters ───────────────────────────────────────
+function updateStats() {
+    const vals = Object.values(state);
+    const paidCount = vals.filter(v => v.isPaid).length;
+    const unpaidCount = vals.filter(v => !v.isPaid).length;
+    const revenue = vals.filter(v => v.isPaid).reduce((sum, v) => sum + v.amount, 0);
+    
+    document.getElementById('statPaid').textContent = paidCount;
+    document.getElementById('statUnpaid').textContent = unpaidCount;
+    document.getElementById('statRevenue').textContent = revenue.toFixed(0);
+}
+
+// ── Toggle payment for one student ───────────────────────────────
+async function togglePayment(studentId) {
+    const markPaid = !state[studentId].isPaid;
+
+    // Optimistic UI
+    state[studentId].isPaid = markPaid;
+    updateCardUI(studentId);
+    showOverlay(studentId, true);
+
+    try {
+        const res = await apiPost('/Payment/TogglePayment', {
+            studentId,
+            groupId : GROUP_ID,
+            month   : PAY_MONTH,
+            year    : PAY_YEAR,
+            amount  : state[studentId].amount,
+            markPaid
+        });
+
+        if (!res.success) {
+            state[studentId].isPaid = !markPaid;
+            updateCardUI(studentId);
+            showToast(res.message || 'حدث خطأ', 'error');
+        } else {
+            showToast(markPaid ? '💰 تم تسجيل الدفع' : 'تم إلغاء الدفع',
+                      markPaid ? 'success' : 'info', 2000);
+        }
+    } catch {
+        state[studentId].isPaid = !markPaid;
+        updateCardUI(studentId);
+        showToast('خطأ في الاتصال', 'error');
+    } finally {
+        showOverlay(studentId, false);
+    }
+}
+
+// ── Bulk: mark all payment ────────────────────────────────────────
+async function markAllPayment(markPaid) {
+    const ids = Object.keys(state).map(Number);
+
+    // Optimistic
+    ids.forEach(id => { state[id].isPaid = markPaid; updateCardUI(id); });
+
+    document.getElementById('saveStatus').style.display = 'flex';
+
+    try {
+        const res = await apiPost('/Payment/BulkPayment', {
+            groupId : GROUP_ID,
+            month   : PAY_MONTH,
+            year    : PAY_YEAR,
+            amount  : MONTHLY_PRICE,
+            markPaid
+        });
+
+        if (!res.success) {
+            // Revert
+            ids.forEach(id => { state[id].isPaid = !markPaid; updateCardUI(id); });
+            showToast(res.message || 'حدث خطأ', 'error');
+        } else {
+            showToast(markPaid ? '✓ تم تسجيل دفع الجميع' : 'تم إلغاء دفع الجميع',
+                      markPaid ? 'success' : 'info', 3000);
+        }
+    } catch {
+        ids.forEach(id => { state[id].isPaid = !markPaid; updateCardUI(id); });
+        showToast('خطأ في الاتصال', 'error');
+    } finally {
+        document.getElementById('saveStatus').style.display = 'none';
+    }
+}
+
+// ── Filter cards by search text ──────────────────────────────────
+function filterCards(q) {
+    q = q.toLowerCase().trim();
+    const cards = document.querySelectorAll('.pay-card');
+    cards.forEach(card => {
+        const match = !q || card.dataset.name.includes(q);
+        card.style.display = match ? '' : 'none';
+    });
+}
+
+// ── Toast notification ───────────────────────────────────────────
+function showToast(msg, type = 'info', duration = 3000) {
+    const container = document.getElementById('payToastContainer');
+    const toast = document.createElement('div');
+    toast.className = `pay-toast pay-toast--${type}`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove(); }, duration);
+}
+</script>
+}
