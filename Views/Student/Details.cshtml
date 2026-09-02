@@ -1,123 +1,211 @@
-﻿@model Center_Management.Models.Student
+@model Center_Management.Models.Student
 @{
     ViewData["Title"] = "ملف الطالب";
+
+    var attendanceRecords = Model.Attendences?.ToList() ?? new List<Attendence>();
+    var paymentRecords = Model.Payments?.ToList() ?? new List<Payment>();
+    var groupRecords = Model.StudentGroups?.ToList() ?? new List<StudentGroup>();
+    var activeGroup = groupRecords.FirstOrDefault(sg => sg.IsActive);
+    var presentCount = attendanceRecords.Count(a => a.IsPresent);
+    var absentCount = attendanceRecords.Count(a => !a.IsPresent);
+    var attendanceRate = attendanceRecords.Count == 0
+        ? 0
+        : (int)Math.Round((double)presentCount / attendanceRecords.Count * 100);
+    var paidCount = paymentRecords.Count(p => p.IsPaid);
+    var unpaidCount = paymentRecords.Count(p => !p.IsPaid);
+    var paidAmount = paymentRecords.Where(p => p.IsPaid).Sum(p => p.Amount);
+    var studentInitial = string.IsNullOrWhiteSpace(Model.FullName) ? "؟" : Model.FullName.Trim()[0].ToString();
 }
 
-@* ── Page Top ── *@
-<div class="v-page-top">
-    <div class="v-page-top__left">
-        <div class="v-page-title-row">
-            <div class="v-student-hero-avatar">@Model.FullName[0]</div>
-            <div>
-                <h1 class="v-page-title">@Model.FullName</h1>
-                <p class="v-page-sub">ملف الطالب التفصيلي</p>
+<section class="card student-profile-hero" aria-labelledby="studentProfileTitle">
+    <div class="student-profile-hero__identity">
+        <span class="student-profile-avatar" aria-hidden="true">@studentInitial</span>
+        <div>
+            <div class="student-profile-hero__status-row">
+                @if (activeGroup != null)
+                {
+                    <span class="badge badge-success"><i class="fas fa-circle-check" aria-hidden="true"></i> طالب نشط</span>
+                }
+                else
+                {
+                    <span class="badge badge-warning"><i class="fas fa-circle-exclamation" aria-hidden="true"></i> بدون مجموعة نشطة</span>
+                }
+                <span class="student-profile-hero__id">ملف رقم @Model.Id</span>
             </div>
+            <h1 id="studentProfileTitle">@Model.FullName</h1>
+            <p>
+                @if (activeGroup != null)
+                {
+                    <span>@activeGroup.Group.Name · @activeGroup.Group.AcademicYear!.Name</span>
+                }
+                else
+                {
+                    <span>ملف الطالب التفصيلي</span>
+                }
+            </p>
         </div>
     </div>
-    <div class="v-action-group">
-        <a href="@Url.Action("Index","StudentReport",new{id=Model.Id})" class="btn-act btn-act--green">
-            <i class="fas fa-chart-line"></i> التقرير الشامل
+    <div class="student-profile-hero__actions">
+        <a href="@Url.Action("Index","StudentReport",new{id=Model.Id})" class="btn btn-outline-primary">
+            <i class="fas fa-chart-line" aria-hidden="true"></i> التقرير الشامل
         </a>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-act btn-act--amber">
-            <i class="fas fa-edit"></i> تعديل
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+            <i class="fas fa-pen" aria-hidden="true"></i> تعديل البيانات
         </a>
-        <button type="button" class="btn-act btn-act--red"
+        <button type="button"
+                class="btn btn-outline-danger"
                 onclick="openDeleteModal('@Model.Id','@Html.Raw(Html.Encode(Model.FullName))')">
-            <i class="fas fa-trash"></i> حذف
+            <i class="fas fa-trash-can" aria-hidden="true"></i> حذف
         </button>
-        <a asp-action="Index" class="btn-act btn-act--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
+        <a asp-action="Index" class="btn btn-neutral">
+            <i class="fas fa-arrow-right" aria-hidden="true"></i> رجوع
+        </a>
     </div>
-</div>
+</section>
 
-@* ── Info + Groups ── *@
-<div class="v-detail-grid">
-    @* Info card *@
-    <div class="v-card v-card--padded">
-        <div class="v-card__head"><i class="fas fa-id-card"></i> المعلومات الأساسية</div>
-        <div class="v-info-list">
-            <div class="v-info-item">
-                <span class="v-info-label">الاسم الكامل</span>
-                <span class="v-info-value v-info-value--primary">@Model.FullName</span>
-            </div>
-            <div class="v-info-item">
-                <span class="v-info-label">رقم الهاتف</span>
-                <span class="v-info-value"><code class="v-phone">@Model.PhoneNumber</code></span>
-            </div>
-            <div class="v-info-item">
-                <span class="v-info-label">هاتف ولي الأمر</span>
-                <span class="v-info-value">
-                    @if(string.IsNullOrWhiteSpace(Model.ParentPhoneNumber))
-                    { <span style="color:var(--text-muted)">—</span> }
-                    else
-                    { <code class="v-phone v-phone--parent">@Model.ParentPhoneNumber</code> }
-                </span>
+<div class="student-profile-overview">
+    <section class="card student-profile-card" aria-labelledby="personalInfoTitle">
+        <div class="card-header">
+            <span class="card-header-icon"><i class="fas fa-id-card" aria-hidden="true"></i></span>
+            <div>
+                <h2 class="card-title" id="personalInfoTitle">المعلومات الشخصية</h2>
+                <p class="student-card-subtitle">بيانات التواصل الأساسية للطالب وولي الأمر</p>
             </div>
         </div>
-    </div>
+        <div class="student-profile-info-grid">
+            <div class="student-profile-info-item student-profile-info-item--wide">
+                <span class="student-profile-info-item__icon"><i class="fas fa-user" aria-hidden="true"></i></span>
+                <div>
+                    <span class="student-profile-info-item__label">الاسم الكامل</span>
+                    <strong>@Model.FullName</strong>
+                </div>
+            </div>
+            <div class="student-profile-info-item">
+                <span class="student-profile-info-item__icon"><i class="fas fa-phone" aria-hidden="true"></i></span>
+                <div>
+                    <span class="student-profile-info-item__label">رقم هاتف الطالب</span>
+                    <strong><bdi dir="ltr">@Model.PhoneNumber</bdi></strong>
+                </div>
+            </div>
+            <div class="student-profile-info-item">
+                <span class="student-profile-info-item__icon"><i class="fas fa-user-shield" aria-hidden="true"></i></span>
+                <div>
+                    <span class="student-profile-info-item__label">هاتف ولي الأمر</span>
+                    @if (string.IsNullOrWhiteSpace(Model.ParentPhoneNumber))
+                    {
+                        <strong class="student-profile-info-item__empty">غير مسجل</strong>
+                    }
+                    else
+                    {
+                        <strong><bdi dir="ltr">@Model.ParentPhoneNumber</bdi></strong>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
 
-    @* Groups card *@
-    <div class="v-card v-card--padded">
-        <div class="v-card__head">
-            <i class="fas fa-layer-group"></i>
-            المجموعات
+    <section class="card student-profile-card" aria-labelledby="enrollmentInfoTitle">
+        <div class="card-header">
+            <span class="card-header-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
+            <div>
+                <h2 class="card-title" id="enrollmentInfoTitle">المجموعات والتسجيل</h2>
+                <p class="student-card-subtitle">السجل الحالي والسابق لالتحاق الطالب</p>
+            </div>
             @if (Model.StudentGroups != null && Model.StudentGroups.Any())
             {
-                <span class="v-pill v-pill--blue ms-auto">@Model.StudentGroups.Count()</span>
+                <span class="badge badge-primary student-card-count">@Model.StudentGroups.Count() مجموعة</span>
             }
         </div>
-        @if (Model.StudentGroups != null && Model.StudentGroups.Any())
-        {
-            @foreach (var sg in Model.StudentGroups)
+        <div class="student-enrollment-list">
+            @if (Model.StudentGroups != null && Model.StudentGroups.Any())
             {
-                <div class="v-group-tag @(sg.IsActive ? "v-group-tag--active" : "v-group-tag--inactive")">
-                    <div class="v-group-tag__left">
-                        <div class="v-group-tag__dot"><i class="fas fa-layer-group"></i></div>
-                        <div>
-                            <div class="v-group-tag__name">@sg.Group.Name</div>
-                            <div class="v-group-tag__meta">
-                                @sg.Group.AcademicYear.Name · سجّل @sg.EnrollmentDate.ToString("dd/MM/yyyy")
+                @foreach (var sg in Model.StudentGroups)
+                {
+                    <article class="student-enrollment-item @(sg.IsActive ? "student-enrollment-item--active" : "student-enrollment-item--inactive")">
+                        <span class="student-enrollment-item__icon"><i class="fas fa-user-group" aria-hidden="true"></i></span>
+                        <div class="student-enrollment-item__content">
+                            <div class="student-enrollment-item__heading">
+                                <h3>@sg.Group.Name</h3>
+                                <span class="badge @(sg.IsActive ? "badge-success" : "badge-neutral")">
+                                    <i class="fas @(sg.IsActive ? "fa-circle-check" : "fa-clock-rotate-left")" aria-hidden="true"></i>
+                                    @(sg.IsActive ? "نشط" : "غير نشط")
+                                </span>
                             </div>
+                            <p><i class="fas fa-graduation-cap" aria-hidden="true"></i> @sg.Group.AcademicYear!.Name</p>
+                            <p><i class="fas fa-calendar-plus" aria-hidden="true"></i> تاريخ التسجيل: <time dir="ltr">@sg.EnrollmentDate.ToString("dd/MM/yyyy")</time></p>
                         </div>
-                    </div>
-                    <span class="v-badge @(sg.IsActive ? "v-badge--green" : "v-badge--muted")">
-                        @(sg.IsActive ? "نشط" : "غير نشط")
-                    </span>
+                    </article>
+                }
+            }
+            else
+            {
+                <div class="student-section-empty">
+                    <i class="fas fa-layer-group" aria-hidden="true"></i>
+                    <strong>لم يُسجَّل في أي مجموعة</strong>
+                    <span>يمكن تعيين مجموعة من صفحة تعديل الطالب.</span>
                 </div>
             }
-        }
-        else
-        {
-            <p class="v-no-data">لم يُسجَّل في أي مجموعة</p>
-        }
-    </div>
+        </div>
+    </section>
 </div>
 
-@* ── Recent Attendance ── *@
-<div class="v-card" style="margin-top:1.25rem">
-    <div class="v-card__head-bar v-card__head-bar--green">
-        <i class="fas fa-clipboard-check"></i>
-        آخر سجلات الحضور
+<section class="card student-record-section" aria-labelledby="attendanceTitle">
+    <div class="student-record-section__header">
+        <div class="student-record-section__title">
+            <span class="student-record-section__icon student-record-section__icon--success"><i class="fas fa-clipboard-check" aria-hidden="true"></i></span>
+            <div>
+                <h2 id="attendanceTitle">ملخص الحضور</h2>
+                <p>نظرة سريعة على انتظام الطالب وآخر سجلاته.</p>
+            </div>
+        </div>
         @if (Model.Attendences != null && Model.Attendences.Any())
         {
-            <span class="v-pill" style="background:rgba(255,255,255,.25);color:#fff;margin-inline-start:auto">@Model.Attendences.Count()</span>
+            <span class="badge badge-neutral">@Model.Attendences.Count() سجل</span>
         }
     </div>
+
+    <div class="student-summary-grid">
+        <div class="student-summary-metric">
+            <span>إجمالي السجلات</span>
+            <strong>@attendanceRecords.Count</strong>
+        </div>
+        <div class="student-summary-metric student-summary-metric--success">
+            <span>حضور</span>
+            <strong>@presentCount</strong>
+        </div>
+        <div class="student-summary-metric student-summary-metric--danger">
+            <span>غياب</span>
+            <strong>@absentCount</strong>
+        </div>
+        <div class="student-summary-metric student-summary-metric--primary">
+            <span>نسبة الحضور</span>
+            <strong>@attendanceRate%</strong>
+        </div>
+    </div>
+
     @if (Model.Attendences != null && Model.Attendences.Any())
     {
-        <div class="v-table-wrap">
-            <table class="v-table">
-                <thead><tr><th>التاريخ</th><th>المجموعة</th><th>الحالة</th></tr></thead>
+        <div class="table-wrap student-record-table">
+            <table class="data-table">
+                <caption class="student-visually-hidden">آخر سجلات حضور الطالب</caption>
+                <thead>
+                    <tr><th>التاريخ</th><th>المجموعة</th><th>الحالة</th></tr>
+                </thead>
                 <tbody>
-                    @foreach (var att in Model.Attendences.OrderByDescending(a=>a.Date).Take(10))
+                    @foreach (var att in Model.Attendences.OrderByDescending(a => a.Date).Take(10))
                     {
                         <tr>
-                            <td>@att.Date.ToString("dd/MM/yyyy")</td>
+                            <td><time dir="ltr">@att.Date.ToString("dd/MM/yyyy")</time></td>
                             <td>@(att.Group?.Name ?? "—")</td>
                             <td>
                                 @if (att.IsPresent)
-                                { <span class="v-badge v-badge--green"><i class="fas fa-check"></i> حاضر</span> }
+                                {
+                                    <span class="badge badge-success"><i class="fas fa-check" aria-hidden="true"></i> حاضر</span>
+                                }
                                 else
-                                { <span class="v-badge v-badge--red"><i class="fas fa-times"></i> غائب</span> }
+                                {
+                                    <span class="badge badge-danger"><i class="fas fa-xmark" aria-hidden="true"></i> غائب</span>
+                                }
                             </td>
                         </tr>
                     }
@@ -126,46 +214,81 @@
         </div>
         @if (Model.Attendences.Count() > 10)
         {
-            <div style="padding:.75rem 1rem;font-size:.8rem;color:var(--text-muted);border-top:1px solid var(--border-light)">
-                <i class="fas fa-info-circle"></i>
+            <p class="student-record-section__note">
+                <i class="fas fa-circle-info" aria-hidden="true"></i>
                 عرض آخر 10 سجلات — اضغط "التقرير الشامل" لكل السجلات
-            </div>
+            </p>
         }
     }
     else
     {
-        <div style="padding:2rem;text-align:center;color:var(--text-muted)"><i class="fas fa-clipboard-list"></i> لا يوجد سجل حضور</div>
+        <div class="student-section-empty student-section-empty--record">
+            <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+            <strong>لا يوجد سجل حضور</strong>
+            <span>ستظهر سجلات الحضور هنا بعد تسجيل أول جلسة.</span>
+        </div>
     }
-</div>
+</section>
 
-@* ── Recent Payments ── *@
-<div class="v-card" style="margin-top:1.25rem">
-    <div class="v-card__head-bar v-card__head-bar--amber">
-        <i class="fas fa-money-bill-wave"></i>
-        آخر المدفوعات
+<section class="card student-record-section" aria-labelledby="paymentsTitle">
+    <div class="student-record-section__header">
+        <div class="student-record-section__title">
+            <span class="student-record-section__icon student-record-section__icon--warning"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+            <div>
+                <h2 id="paymentsTitle">ملخص المدفوعات</h2>
+                <p>حالة السداد وآخر الدفعات المسجلة للطالب.</p>
+            </div>
+        </div>
         @if (Model.Payments != null && Model.Payments.Any())
         {
-            <span class="v-pill" style="background:rgba(255,255,255,.25);color:#fff;margin-inline-start:auto">@Model.Payments.Count()</span>
+            <span class="badge badge-neutral">@Model.Payments.Count() سجل</span>
         }
     </div>
+
+    <div class="student-summary-grid">
+        <div class="student-summary-metric">
+            <span>إجمالي السجلات</span>
+            <strong>@paymentRecords.Count</strong>
+        </div>
+        <div class="student-summary-metric student-summary-metric--success">
+            <span>مدفوع</span>
+            <strong>@paidCount</strong>
+        </div>
+        <div class="student-summary-metric student-summary-metric--danger">
+            <span>غير مدفوع</span>
+            <strong>@unpaidCount</strong>
+        </div>
+        <div class="student-summary-metric student-summary-metric--primary">
+            <span>إجمالي المدفوع</span>
+            <strong>@paidAmount.ToString("N0") <small>ج.م</small></strong>
+        </div>
+    </div>
+
     @if (Model.Payments != null && Model.Payments.Any())
     {
-        <div class="v-table-wrap">
-            <table class="v-table">
-                <thead><tr><th>التاريخ</th><th>المجموعة</th><th>الشهر / السنة</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+        <div class="table-wrap student-record-table">
+            <table class="data-table">
+                <caption class="student-visually-hidden">آخر مدفوعات الطالب</caption>
+                <thead>
+                    <tr><th>التاريخ</th><th>المجموعة</th><th>الشهر / السنة</th><th>المبلغ</th><th>الحالة</th></tr>
+                </thead>
                 <tbody>
-                    @foreach (var p in Model.Payments.OrderByDescending(p=>p.PaymentDate).Take(10))
+                    @foreach (var p in Model.Payments.OrderByDescending(p => p.PaymentDate).Take(10))
                     {
                         <tr>
-                            <td>@p.PaymentDate.ToString("dd/MM/yyyy")</td>
+                            <td><time dir="ltr">@p.PaymentDate.ToString("dd/MM/yyyy")</time></td>
                             <td>@(p.Group?.Name ?? "—")</td>
                             <td>@(new System.Globalization.CultureInfo("ar-SA").DateTimeFormat.GetMonthName(p.Month)) @p.Year</td>
-                            <td><strong>@p.Amount.ToString("N0") ج.م</strong></td>
+                            <td><strong class="student-payment-amount">@p.Amount.ToString("N0") ج.م</strong></td>
                             <td>
                                 @if (p.IsPaid)
-                                { <span class="v-badge v-badge--green"><i class="fas fa-check"></i> مدفوع</span> }
+                                {
+                                    <span class="badge badge-success"><i class="fas fa-check" aria-hidden="true"></i> مدفوع</span>
+                                }
                                 else
-                                { <span class="v-badge v-badge--red"><i class="fas fa-times"></i> غير مدفوع</span> }
+                                {
+                                    <span class="badge badge-danger"><i class="fas fa-clock" aria-hidden="true"></i> غير مدفوع</span>
+                                }
                             </td>
                         </tr>
                     }
@@ -175,87 +298,37 @@
     }
     else
     {
-        <div style="padding:2rem;text-align:center;color:var(--text-muted)"><i class="fas fa-receipt"></i> لا يوجد سجل مدفوعات</div>
+        <div class="student-section-empty student-section-empty--record">
+            <i class="fas fa-receipt" aria-hidden="true"></i>
+            <strong>لا يوجد سجل مدفوعات</strong>
+            <span>ستظهر الدفعات هنا عند تسجيل أول عملية سداد.</span>
+        </div>
     }
-</div>
+</section>
 
-@* ── Delete Modal ── *@
-<div class="modal" id="deleteStudentModal" role="dialog" aria-modal="true">
-    <div class="modal__backdrop"></div>
+<div class="modal" id="deleteStudentModal" role="dialog" aria-modal="true" aria-labelledby="deleteStudentTitle">
+    <div class="modal__backdrop" onclick="closeModal('deleteStudentModal')"></div>
     <div class="modal__content">
         <div class="modal__header">
-            <h2 class="modal__title">تأكيد الحذف</h2>
-            <button class="modal__close" onclick="closeModal('deleteStudentModal')"><i class="fas fa-times"></i></button>
+            <span class="student-delete-modal__icon"><i class="fas fa-user-minus" aria-hidden="true"></i></span>
+            <h2 class="modal__title" id="deleteStudentTitle">تأكيد حذف الطالب</h2>
+            <button type="button" class="modal__close" onclick="closeModal('deleteStudentModal')" aria-label="إغلاق نافذة الحذف">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
         </div>
-        <div class="modal__body">
-            <p>هل أنت متأكد من حذف الطالب <strong id="deleteStudentName"></strong>؟ لا يمكن التراجع عن هذا الإجراء.</p>
+        <div class="modal__body student-delete-modal__body">
+            <p>أنت على وشك حذف ملف الطالب:</p>
+            <strong id="deleteStudentName"></strong>
+            <p class="student-delete-modal__warning"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> لا يمكن التراجع عن هذا الإجراء.</p>
         </div>
         <div class="modal__footer">
-            <button class="btn-ghost" onclick="closeModal('deleteStudentModal')">إلغاء</button>
-            <a id="deleteConfirmLink" href="#" class="btn-danger"><i class="fas fa-trash"></i> حذف</a>
+            <button type="button" class="btn btn-neutral" onclick="closeModal('deleteStudentModal')">إلغاء</button>
+            <a id="deleteConfirmLink" href="#" class="btn btn-danger"><i class="fas fa-trash-can" aria-hidden="true"></i> حذف الطالب</a>
         </div>
     </div>
 </div>
 
 @section Scripts {
-<style>
-.v-page-top { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
-.v-page-title-row { display:flex; align-items:center; gap:1rem; }
-.v-student-hero-avatar { width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; flex-shrink:0; }
-.v-page-title { font-size:1.5rem; font-weight:700; color:var(--text-primary); margin:0; }
-.v-page-sub { font-size:.8rem; color:var(--text-muted); margin:.2rem 0 0; }
-.v-action-group { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
-.btn-act { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:.14s; }
-.btn-act--green { background:var(--success); color:#fff; } .btn-act--green:hover { background:var(--success-hover); }
-.btn-act--amber { background:var(--warning); color:#fff; } .btn-act--amber:hover { background:var(--warning-hover); }
-.btn-act--red   { background:var(--danger); color:#fff; }  .btn-act--red:hover   { background:var(--danger-hover); }
-.btn-act--ghost { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); } .btn-act--ghost:hover { background:var(--gray-150); }
-.v-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
-@@media (max-width:700px) { .v-detail-grid { grid-template-columns:1fr; } }
-.v-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:.85rem; overflow:hidden; }
-.v-card--padded { }
-.v-card__head { display:flex; align-items:center; gap:.6rem; padding:.875rem 1.25rem; font-size:.875rem; font-weight:700; color:var(--text-primary); border-bottom:1px solid var(--border-light); background:var(--bg-subtle); }
-.v-card__head i { color:var(--primary); font-size:.9rem; }
-.v-card__head-bar { display:flex; align-items:center; gap:.6rem; padding:.875rem 1.25rem; font-size:.875rem; font-weight:700; color:#fff; }
-.v-card__head-bar--green { background:var(--success); }
-.v-card__head-bar--amber { background:var(--warning); }
-.v-info-list { }
-.v-info-item { display:flex; align-items:center; justify-content:space-between; padding:.75rem 1.25rem; border-bottom:1px solid var(--border-light); }
-.v-info-item:last-child { border-bottom:none; }
-.v-info-label { font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
-.v-info-value { font-size:.875rem; font-weight:500; color:var(--text-primary); }
-.v-info-value--primary { color:var(--primary); font-weight:700; font-size:1rem; }
-.v-phone { font-size:.8rem; background:var(--bg-subtle); padding:2px 8px; border-radius:.3rem; border:1px solid var(--border-light); }
-.v-phone--parent { background:var(--warning-50); border-color:var(--warning-100); }
-.v-no-data { padding:1.5rem 1.25rem; color:var(--text-muted); font-size:.875rem; margin:0; text-align:center; }
-.v-group-tag { display:flex; align-items:center; justify-content:space-between; padding:.875rem 1.25rem; border-bottom:1px solid var(--border-light); transition:background .12s; }
-.v-group-tag:last-child { border-bottom:none; }
-.v-group-tag:hover { background:var(--bg-subtle); }
-.v-group-tag--active  { }
-.v-group-tag--inactive{ opacity:.7; }
-.v-group-tag__left { display:flex; align-items:center; gap:.6rem; }
-.v-group-tag__dot { width:34px; height:34px; border-radius:.5rem; background:var(--primary-50); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:.8rem; flex-shrink:0; }
-.v-group-tag__name { font-size:.875rem; font-weight:700; color:var(--text-primary); }
-.v-group-tag__meta { font-size:.75rem; color:var(--text-muted); }
-.v-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.2em .65em; border-radius:2rem; font-size:.7rem; font-weight:700; }
-.v-badge--green { background:var(--success-50); color:var(--success); }
-.v-badge--red   { background:var(--danger-50);  color:var(--danger); }
-.v-badge--muted { background:var(--gray-100);   color:var(--text-muted); }
-.v-pill { display:inline-flex; align-items:center; padding:.15em .6em; border-radius:2rem; font-size:.7rem; font-weight:700; }
-.v-pill--blue { background:var(--primary-100); color:var(--primary); }
-.v-table-wrap { overflow-x:auto; }
-.v-table { width:100%; border-collapse:collapse; font-size:.8125rem; }
-.v-table thead th { padding:.6rem 1rem; text-align:start; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); background:var(--bg-subtle); border-bottom:1px solid var(--border-light); white-space:nowrap; }
-.v-table tbody tr { border-bottom:1px solid var(--border-light); transition:background .1s; }
-.v-table tbody tr:last-child { border-bottom:none; }
-.v-table tbody tr:hover { background:var(--primary-50); }
-.v-table td { padding:.6rem 1rem; color:var(--text-primary); vertical-align:middle; }
-.btn-ghost { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border); border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; transition:.14s; }
-.btn-ghost:hover { background:var(--gray-150); }
-.btn-danger { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .85rem; background:var(--danger); color:#fff; border:none; border-radius:.55rem; font-size:.8125rem; font-weight:600; cursor:pointer; text-decoration:none; transition:.14s; }
-.btn-danger:hover { background:var(--danger-hover); }
-.ms-auto { margin-inline-start:auto; }
-</style>
 <script>
 function openDeleteModal(sid, name) {
     document.getElementById('deleteStudentName').textContent = name;

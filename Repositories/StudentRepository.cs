@@ -11,14 +11,14 @@ namespace Center_Management.Repositories
         public StudentRepository(CenterDBContext ctx) : base(ctx)
         {
         }
-        public async Task<bool> UpdateStudentAsync(CreateStudentVM vm)
+        public async Task<bool> UpdateStudentAsync(CreateStudentVM vm, CancellationToken cancellationToken)
         {
             var student = await ctx.Students
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
                              
-                .FirstOrDefaultAsync(s => s.Id == vm.Id);
+                .FirstOrDefaultAsync(s => s.Id == vm.Id, cancellationToken);
 
             if (student == null)
                 return false;
@@ -37,7 +37,7 @@ namespace Center_Management.Repositories
                 .Include(g => g.AcademicYear)
                      
                 .Where(g => selectedGroupIds.Contains(g.Id))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             var duplicatedSubjects = selectedGroups
 .GroupBy(g => new
 {
@@ -76,26 +76,26 @@ g.AcademicYearId
                 }
             }
 
-            await ctx.SaveChangesAsync();
+            await ctx.SaveChangesAsync(cancellationToken);
 
             return true;
         }
-        public async Task<Student?> GetByPhoneNumberAsync(string phoneNumber)
+        public async Task<Student?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
         {
             return await ctx.Students
                 .Include(s => s.StudentGroups)
-                .FirstOrDefaultAsync(s => s.PhoneNumber == phoneNumber);
+                .FirstOrDefaultAsync(s => s.PhoneNumber == phoneNumber, cancellationToken);
         }
-        public async Task<IEnumerable<Student>> GetAllWithGroupsAsync()
+        public async Task<IEnumerable<Student>> GetAllWithGroupsAsync(CancellationToken cancellationToken)
         {
             return await ctx.Students
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
                              
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
-        public async Task<Student?> GetDetailsAsync(int id)
+        public async Task<Student?> GetDetailsAsync(int id, CancellationToken cancellationToken)
         {
             return await ctx.Students
                 .Include(s => s.StudentGroups)
@@ -105,18 +105,18 @@ g.AcademicYearId
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.Schedules)
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         }
-        public async Task<Student?> GetForEditAsync(int id)
+        public async Task<Student?> GetForEditAsync(int id, CancellationToken cancellationToken)
         {
             return await ctx.Students
                 .Include(s => s.StudentGroups.Where(sg => sg.IsActive))
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
                              
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         }
-        public async Task<bool> RegisterStudentAsync(CreateStudentVM vm)
+        public async Task<bool> RegisterStudentAsync(CreateStudentVM vm, CancellationToken cancellationToken)
         {
             var selectedGroupIds = vm.AcademicYears
                 .Where(a => a.SelectedGroupId.HasValue)
@@ -130,14 +130,14 @@ g.AcademicYearId
     .Include(g => g.AcademicYear)
          
     .Where(g => selectedGroupIds.Contains(g.Id))
-    .ToListAsync();
+    .ToListAsync(cancellationToken);
 
             var student = await ctx.Students
                 .Include(s => s.StudentGroups)
                     .ThenInclude(sg => sg.Group)
                         .ThenInclude(g => g.AcademicYear)
                              
-                                .FirstOrDefaultAsync(s => s.PhoneNumber == vm.PhoneNumber);
+                                .FirstOrDefaultAsync(s => s.PhoneNumber == vm.PhoneNumber, cancellationToken);
 
             //=========================
             // ???? ????
@@ -162,7 +162,7 @@ g.AcademicYearId
 
                 ctx.Students.Add(student);
 
-                await ctx.SaveChangesAsync();
+                await ctx.SaveChangesAsync(cancellationToken);
 
                 return true;
             }
@@ -190,7 +190,7 @@ g.AcademicYearId
                 });
             }
 
-            await ctx.SaveChangesAsync();
+            await ctx.SaveChangesAsync(cancellationToken);
 
             return true;
         }

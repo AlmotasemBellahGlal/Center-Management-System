@@ -29,17 +29,18 @@ namespace Center_Management.Repositories
             ctx.Set<T>().Update(entity);
         }
 
-        public async Task<int> SaveChangesAsync()
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
         {
-            return await ctx.SaveChangesAsync();
+            return await ctx.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return await ctx.Set<T>().ToListAsync();
+            return await ctx.Set<T>().ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<T>> GetAllAsync(
+            CancellationToken cancellationToken,
             params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = ctx.Set<T>();
@@ -49,16 +50,17 @@ namespace Center_Management.Repositories
                 query = query.Include(include);
             }
 
-            return await query.ToListAsync();
+            return await query.ToListAsync(cancellationToken);
         }
 
-        public async Task<T?> GetByIdAsync(int id)
+        public async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
-            return await ctx.Set<T>().FindAsync(id);
+            return await ctx.Set<T>().FindAsync(new object[] { id }, cancellationToken);
         }
 
         public async Task<T?> GetByIdAsync(
             int id,
+            CancellationToken cancellationToken,
             params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = ctx.Set<T>();
@@ -69,7 +71,7 @@ namespace Center_Management.Repositories
             }
 
             var entity = await query.FirstOrDefaultAsync(e =>
-                EF.Property<int>(e, "Id") == id);
+                EF.Property<int>(e, "Id") == id, cancellationToken);
 
             return entity;
         }

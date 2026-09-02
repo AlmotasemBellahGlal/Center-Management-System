@@ -37,7 +37,7 @@ namespace Center_Management.Controllers
         // POST: Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginVM vm, string? returnUrl = null)
+        public async Task<IActionResult> Login(LoginVM vm, string? returnUrl = null, CancellationToken cancellationToken = default)
         {
             ViewBag.ReturnUrl = returnUrl;
             if (!ModelState.IsValid)
@@ -83,9 +83,9 @@ namespace Center_Management.Controllers
         // GET: Account/Register — Admin only, use Admin/CreateTeacher instead
         [HttpGet]
         [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Register()
+        public async Task<IActionResult> Register(CancellationToken cancellationToken)
         {
-            await LoadStudentsViewBag();
+            await LoadStudentsViewBag(cancellationToken);
             return View(new RegisterVM());
         }
 
@@ -93,9 +93,9 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Register(RegisterVM vm)
+        public async Task<IActionResult> Register(RegisterVM vm, CancellationToken cancellationToken)
         {
-            await LoadStudentsViewBag();
+            await LoadStudentsViewBag(cancellationToken);
 
             if (vm.Role == "Student" && !vm.StudentId.HasValue)
                 ModelState.AddModelError("StudentId", "يجب اختيار الطالب لدور الطالب");
@@ -109,7 +109,7 @@ namespace Center_Management.Controllers
 
             if (vm.Role == "Student" && vm.StudentId.HasValue)
             {
-                var student = await _context.Students.FindAsync(vm.StudentId.Value);
+                var student = await _context.Students.FindAsync(new object[] { vm.StudentId.Value }, cancellationToken);
                 if (student != null)
                 {
                     userName = student.PhoneNumber; // Use phone as username
@@ -163,14 +163,14 @@ namespace Center_Management.Controllers
         // POST: Account/StudentRegister
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> StudentRegister(StudentRegisterVM vm)
+        public async Task<IActionResult> StudentRegister(StudentRegisterVM vm, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return View(vm);
 
             // البحث عن الطالب برقم الهاتف
             var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.PhoneNumber == vm.PhoneNumber);
+                .FirstOrDefaultAsync(s => s.PhoneNumber == vm.PhoneNumber, cancellationToken);
 
             if (student == null)
             {
@@ -180,7 +180,7 @@ namespace Center_Management.Controllers
 
             // التحقق من عدم وجود حساب مسبق لهذا الطالب
             var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.StudentId == student.Id);
+                .FirstOrDefaultAsync(u => u.StudentId == student.Id, cancellationToken);
 
             if (existingUser != null)
             {
@@ -221,12 +221,12 @@ namespace Center_Management.Controllers
             return View(vm);
         }
 
-        private async Task LoadStudentsViewBag()
+        private async Task LoadStudentsViewBag(CancellationToken cancellationToken)
         {
             ViewBag.Students = await _context.Students
                 .OrderBy(s => s.FullName)
                 .Select(s => new { s.Id, s.FullName })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
     }
 }

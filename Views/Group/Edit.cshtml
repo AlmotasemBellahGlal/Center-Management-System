@@ -1,131 +1,132 @@
-﻿@model CreateGroupVM
+@model CreateGroupVM
 @{
     ViewData["Title"] = "تعديل المجموعة";
 }
 
-<div class="vf-top">
+<div class="group-page-heading group-page-heading--form">
     <div>
-        <h1 class="vf-title">تعديل المجموعة</h1>
-        <p class="vf-sub">تحديث الاسم والجدول الدراسي للمجموعة</p>
+        <span class="group-page-heading__eyebrow">تحديث المجموعة</span>
+        <h1 class="group-page-heading__title">تعديل المجموعة</h1>
+        <p class="group-page-heading__subtitle">حدّث اسم المجموعة أو نظّم مواعيد جدولها الأسبوعي.</p>
     </div>
-    <a asp-action="Index" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
+    <a asp-action="Index" class="btn btn-neutral">
+        <i class="fas fa-arrow-right" aria-hidden="true"></i> العودة إلى المجموعات
+    </a>
 </div>
 
-<form asp-action="Edit">
+<form asp-action="Edit" class="group-form">
     <input asp-for="Id" type="hidden" />
     <input asp-for="AcademicYearId" type="hidden" />
-    <div asp-validation-summary="All" class="vf-errors"></div>
+    <div asp-validation-summary="All" class="group-form-errors" role="alert"></div>
 
-    <div class="vf-section">
-        <div class="vf-section__head">
-            <div class="vf-section__icon" style="background:var(--warning-50);color:var(--warning)"><i class="fas fa-tag"></i></div>
-            <h2 class="vf-section__title">اسم المجموعة</h2>
+    <section class="card group-form-section" aria-labelledby="groupIdentityTitle">
+        <div class="card-header group-form-section__header">
+            <span class="card-header-icon"><i class="fas fa-tag" aria-hidden="true"></i></span>
+            <div>
+                <h2 class="card-title" id="groupIdentityTitle">بيانات المجموعة</h2>
+                <p class="group-card-subtitle">الاسم المستخدم في قوائم الطلاب والحضور والمدفوعات.</p>
+            </div>
+            <span class="group-form-step">01</span>
         </div>
-        <div class="vf-section__body">
-            <div class="vf-field">
-                <label asp-for="Name" class="vf-label">الاسم <span class="vf-req">*</span></label>
-                <input asp-for="Name" class="vf-input vf-input--amber" placeholder="مثال: مجموعة الثانوية أ" />
-                <span asp-validation-for="Name" class="vf-err"></span>
+        <div class="card-body group-form-section__body">
+            <div class="form-group group-name-field">
+                <label asp-for="Name" class="form-label">اسم المجموعة <span class="form-required" aria-hidden="true">*</span></label>
+                <div class="group-input-shell">
+                    <i class="fas fa-user-group" aria-hidden="true"></i>
+                    <input asp-for="Name"
+                           class="form-control"
+                           placeholder="مثال: مجموعة الثانوية أ"
+                           autocomplete="off"
+                           aria-describedby="GroupNameHint GroupNameError" />
+                </div>
+                <p class="form-hint" id="GroupNameHint">سيظهر التعديل في كل الصفحات المرتبطة بهذه المجموعة.</p>
+                <span asp-validation-for="Name" class="field-error" id="GroupNameError"></span>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="vf-section">
-        <div class="vf-section__head">
-            <div class="vf-section__icon" style="background:var(--warning-50);color:var(--warning)"><i class="fas fa-calendar-alt"></i></div>
-            <h2 class="vf-section__title">جدول المواعيد</h2>
+    <section class="card group-form-section" aria-labelledby="groupScheduleEditorTitle">
+        <div class="card-header group-form-section__header group-form-section__header--schedule">
+            <span class="card-header-icon"><i class="fas fa-calendar-week" aria-hidden="true"></i></span>
+            <div>
+                <h2 class="card-title" id="groupScheduleEditorTitle">الجدول الأسبوعي</h2>
+                <p class="group-card-subtitle">عدّل المواعيد الحالية أو أضف موعدًا جديدًا. لا يمكن تكرار اليوم نفسه.</p>
+            </div>
+            <span class="group-form-step">02</span>
+            <button type="button" id="addSchedule" class="btn btn-outline-primary">
+                <i class="fas fa-plus" aria-hidden="true"></i> إضافة موعد
+            </button>
         </div>
-        <div class="vf-section__body">
-            <div id="scheduleContainer" class="vf-sched-list">
+        <div class="card-body group-form-section__body">
+            <div id="scheduleContainer" class="group-schedule-editor" aria-live="polite">
                 @for (int i = 0; i < Model.Schedules.Count; i++)
                 {
-                    <div class="vf-sched-row">
-                        <div class="vf-sched-row__num">@(i+1)</div>
+                    <div class="group-schedule-editor-row">
+                        <div class="group-schedule-editor-row__number" aria-label="الموعد رقم @(i + 1)">@(i + 1)</div>
                         <input asp-for="Schedules[i].Id" type="hidden" />
-                        <div class="vf-field vf-field--flex">
-                            <label class="vf-label vf-label--sm">اليوم</label>
-                            <select asp-for="Schedules[i].Day" asp-items="Html.GetEnumSelectList<DaysOfWeek>()" class="vf-select"></select>
+                        <div class="form-group group-schedule-editor-row__day">
+                            <label for="Schedules_@(i)__Day" class="form-label">اليوم</label>
+                            <select asp-for="Schedules[i].Day"
+                                    asp-items="Html.GetEnumSelectList<DaysOfWeek>()"
+                                    class="form-control form-select"></select>
                         </div>
-                        <div class="vf-field vf-field--flex">
-                            <label class="vf-label vf-label--sm">وقت البدء</label>
-                            <input asp-for="Schedules[i].StartTime" type="time" class="vf-input" />
+                        <div class="form-group group-schedule-editor-row__time">
+                            <label for="Schedules_@(i)__StartTime" class="form-label">وقت البدء</label>
+                            <input asp-for="Schedules[i].StartTime" type="time" class="form-control group-time-input" />
                         </div>
-                        <button type="button" class="vf-sched-remove remove-btn"><i class="fas fa-times"></i></button>
+                        <button type="button" class="btn btn-outline-danger btn-icon remove-btn" aria-label="حذف هذا الموعد" title="حذف هذا الموعد">
+                            <i class="fas fa-trash-can" aria-hidden="true"></i>
+                        </button>
                     </div>
                 }
             </div>
-            <button type="button" id="addSchedule" class="vf-add-sched">
-                <i class="fas fa-plus"></i> إضافة موعد
-            </button>
-        </div>
-    </div>
 
-    <div class="vf-footer">
-        <a asp-action="Index" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
-        <button type="submit" class="vf-submit vf-submit--amber"><i class="fas fa-save"></i> حفظ التعديلات</button>
+            <div id="scheduleEmptyState" class="group-schedule-editor-empty d-none">
+                <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                <div>
+                    <strong>لا توجد مواعيد في الجدول</strong>
+                    <span>اضغط «إضافة موعد» لإضافة حصة أسبوعية.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="card group-form-actions">
+        <div class="group-form-actions__hint">
+            <i class="fas fa-circle-info" aria-hidden="true"></i>
+            المواعيد المحذوفة لن تبقى ضمن جدول المجموعة بعد الحفظ.
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-neutral"><i class="fas fa-xmark" aria-hidden="true"></i> إلغاء</a>
+            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-floppy-disk" aria-hidden="true"></i> حفظ التعديلات</button>
+        </div>
     </div>
 </form>
 
 @section Scripts {
 <partial name="_ValidationScriptsPartial" />
-<style>
-.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
-.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
-.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
-.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
-.vf-back-btn:hover { background:var(--gray-150); }
-.vf-errors { background:var(--danger-50);border:1px solid var(--danger-100);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.8125rem;color:var(--danger); }
-.vf-errors ul { margin:0;padding-inline-start:1.25rem; }
-.vf-section { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;margin-bottom:1.25rem;overflow:hidden; }
-.vf-section__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
-.vf-section__icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
-.vf-section__title { font-size:.9rem;font-weight:700;color:var(--text-primary);margin:0; }
-.vf-section__body { padding:1.25rem; }
-.vf-field { margin-bottom:0; }
-.vf-field--flex { flex:1;min-width:160px; }
-.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
-.vf-label--sm { font-size:.75rem; }
-.vf-req { color:var(--danger); }
-.vf-input,.vf-select { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
-.vf-input:focus,.vf-select:focus { outline:none;border-color:var(--warning);box-shadow:0 0 0 3px var(--warning-100); }
-.vf-input--amber:focus { border-color:var(--warning);box-shadow:0 0 0 3px var(--warning-100); }
-.vf-select { appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23887f74' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:left .6rem center;background-size:13px;padding-inline-start:1.9rem; }
-.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
-.vf-sched-list { display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem; }
-.vf-sched-row { display:flex;align-items:flex-end;gap:.75rem;padding:1rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.65rem; }
-.vf-sched-row__num { width:24px;height:24px;background:var(--warning);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-bottom:.1rem; }
-.vf-sched-remove { width:32px;height:32px;background:var(--danger-50);color:var(--danger);border:1px solid var(--danger-100);border-radius:.45rem;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;flex-shrink:0;transition:.12s; }
-.vf-sched-remove:hover { background:var(--danger);color:#fff; }
-.vf-add-sched { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .875rem;background:var(--warning-50);color:var(--warning);border:1.5px dashed var(--warning);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;transition:.14s; }
-.vf-add-sched:hover { background:var(--warning);color:#fff;border-style:solid; }
-.vf-footer { display:flex;justify-content:flex-end;gap:.5rem;flex-wrap:wrap;padding:1.25rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.85rem;margin-top:1.25rem; }
-.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
-.vf-cancel:hover { background:var(--gray-150); }
-.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
-.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px); }
-.vf-submit--amber { background:var(--warning); }
-.vf-submit--amber:hover { background:var(--warning-hover);box-shadow:0 4px 12px rgba(176,120,48,.3); }
-</style>
 <script>
 let idx = @Model.Schedules.Count;
 const days = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 
 document.getElementById('addSchedule').addEventListener('click', function() {
-    const n = document.querySelectorAll('.vf-sched-row').length + 1;
+    const n = document.querySelectorAll('.group-schedule-editor-row').length + 1;
     const opts = days.map((d,i) => `<option value="${i}">${d}</option>`).join('');
     const html = `
-        <div class="vf-sched-row">
-            <div class="vf-sched-row__num">${n}</div>
-            <input type="hidden" name="Schedules[${idx}].Id" value="0"/>
-            <div class="vf-field vf-field--flex">
-                <label class="vf-label vf-label--sm">اليوم</label>
-                <select name="Schedules[${idx}].Day" class="vf-select">${opts}</select>
+        <div class="group-schedule-editor-row">
+            <div class="group-schedule-editor-row__number" aria-label="الموعد رقم ${n}">${n}</div>
+            <input type="hidden" name="Schedules[${idx}].Id" value="0" />
+            <div class="form-group group-schedule-editor-row__day">
+                <label for="Schedules_${idx}__Day" class="form-label">اليوم</label>
+                <select id="Schedules_${idx}__Day" name="Schedules[${idx}].Day" class="form-control form-select">${opts}</select>
             </div>
-            <div class="vf-field vf-field--flex">
-                <label class="vf-label vf-label--sm">وقت البدء</label>
-                <input type="time" name="Schedules[${idx}].StartTime" class="vf-input"/>
+            <div class="form-group group-schedule-editor-row__time">
+                <label for="Schedules_${idx}__StartTime" class="form-label">وقت البدء</label>
+                <input id="Schedules_${idx}__StartTime" type="time" name="Schedules[${idx}].StartTime" class="form-control group-time-input" />
             </div>
-            <button type="button" class="vf-sched-remove remove-btn"><i class="fas fa-times"></i></button>
+            <button type="button" class="btn btn-outline-danger btn-icon remove-btn" aria-label="حذف هذا الموعد" title="حذف هذا الموعد">
+                <i class="fas fa-trash-can" aria-hidden="true"></i>
+            </button>
         </div>`;
     document.getElementById('scheduleContainer').insertAdjacentHTML('beforeend', html);
     idx++;
@@ -134,11 +135,21 @@ document.getElementById('addSchedule').addEventListener('click', function() {
 
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('.remove-btn');
-    if (btn) { btn.closest('.vf-sched-row').remove(); renumberRows(); }
+    if (btn) {
+        btn.closest('.group-schedule-editor-row').remove();
+        renumberRows();
+    }
 });
 
 function renumberRows() {
-    document.querySelectorAll('.vf-sched-row__num').forEach((el,i) => el.textContent = i + 1);
+    document.querySelectorAll('.group-schedule-editor-row__number').forEach((el,i) => {
+        el.textContent = i + 1;
+        el.setAttribute('aria-label', 'الموعد رقم ' + (i + 1));
+    });
+    const hasSchedules = document.querySelectorAll('.group-schedule-editor-row').length > 0;
+    document.getElementById('scheduleEmptyState').classList.toggle('d-none', hasSchedules);
 }
+
+renumberRows();
 </script>
 }

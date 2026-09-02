@@ -29,7 +29,7 @@ namespace Center_Management.Controllers
         }
 
         // GET: Attendance/Groups — group picker page
-        public async Task<IActionResult> Groups()
+        public async Task<IActionResult> Groups(CancellationToken cancellationToken)
         {
             var groups = await _context.Groups
                 .Include(g => g.AcademicYear)
@@ -37,13 +37,13 @@ namespace Center_Management.Controllers
                 .Include(g => g.StudentGroups)
                 .OrderBy(g => g.AcademicYear!.Name)
                 .ThenBy(g => g.Name)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return View(groups);
         }
 
         // GET: Attendance/Create?groupId=5&date=2024-01-15
-        public async Task<IActionResult> Create(int groupId, DateTime? date)
+        public async Task<IActionResult> Create(int groupId, DateTime? date, CancellationToken cancellationToken)
         {
             var selectedDate = date?.Date ?? DateTime.Today;
 
@@ -52,7 +52,7 @@ namespace Center_Management.Controllers
                 .Include(g => g.Schedules)
                 .Include(g => g.AcademicYear)
                      
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
 
             if (group == null)
                 return NotFound();
@@ -63,12 +63,12 @@ namespace Center_Management.Controllers
                 .Include(sg => sg.Student)
                 .Select(sg => sg.Student!)
                 .OrderBy(s => s.FullName)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // جلب سجلات الحضور الموجودة لهذا التاريخ
             var existingAttendance = await _context.Attendences
                 .Where(a => a.GroupId == groupId && a.Date.Date == selectedDate.Date)
-                .ToDictionaryAsync(a => a.StudentId, a => a.IsPresent);
+                .ToDictionaryAsync(a => a.StudentId, a => a.IsPresent, cancellationToken);
 
             if (!activeStudents.Any())
             {
@@ -111,13 +111,13 @@ namespace Center_Management.Controllers
 
         // POST: Attendance/ToggleAttendance (AJAX)
         [HttpPost]
-        public async Task<IActionResult> ToggleAttendance([FromBody] AttendanceToggleRequest req)
+        public async Task<IActionResult> ToggleAttendance([FromBody] AttendanceToggleRequest req, CancellationToken cancellationToken)
         {
             try
             {
                 // التحقق من أن الطالب نشط في المجموعة
                 var isActive = await _context.StudentGroups
-                    .AnyAsync(sg => sg.StudentId == req.StudentId && sg.GroupId == req.GroupId && sg.IsActive);
+                    .AnyAsync(sg => sg.StudentId == req.StudentId && sg.GroupId == req.GroupId && sg.IsActive, cancellationToken);
 
                 if (!isActive)
                     return Ok(new { success = false, message = "الطالب غير نشط في هذه المجموعة" });
@@ -128,7 +128,7 @@ namespace Center_Management.Controllers
                 var existing = await _context.Attendences
                     .FirstOrDefaultAsync(a => a.StudentId == req.StudentId
                                            && a.GroupId == req.GroupId
-                                           && a.Date.Date == targetDate);
+                                           && a.Date.Date == targetDate, cancellationToken);
 
                 if (existing != null)
                 {
@@ -147,10 +147,10 @@ namespace Center_Management.Controllers
                     });
                 }
 
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return Ok(new { success = false, message = "حدث خطأ: " + ex.Message });
             }
@@ -158,7 +158,7 @@ namespace Center_Management.Controllers
 
         // POST: Attendance/BulkAttendance (AJAX)
         [HttpPost]
-        public async Task<IActionResult> BulkAttendance([FromBody] BulkAttendanceRequest req)
+        public async Task<IActionResult> BulkAttendance([FromBody] BulkAttendanceRequest req, CancellationToken cancellationToken)
         {
             try
             {
@@ -168,14 +168,14 @@ namespace Center_Management.Controllers
                 var activeStudentIds = await _context.StudentGroups
                     .Where(sg => sg.GroupId == req.GroupId && sg.IsActive)
                     .Select(sg => sg.StudentId)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 foreach (var studentId in activeStudentIds)
                 {
                     var existing = await _context.Attendences
                         .FirstOrDefaultAsync(a => a.StudentId == studentId
                                                && a.GroupId == req.GroupId
-                                               && a.Date.Date == targetDate);
+                                               && a.Date.Date == targetDate, cancellationToken);
                     if (existing != null)
                     {
                         existing.IsPresent = req.IsPresent;
@@ -192,23 +192,23 @@ namespace Center_Management.Controllers
                     }
                 }
 
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return Ok(new { success = false, message = "حدث خطأ: " + ex.Message });
             }
         }
 
         // GET: Attendance/Report?groupId=5
-        public async Task<IActionResult> Report(int groupId)
+        public async Task<IActionResult> Report(int groupId, CancellationToken cancellationToken)
         {
-            var group = await _groupRepo.GetByIdAsync(groupId);
+            var group = await _groupRepo.GetByIdAsync(groupId, cancellationToken);
             if (group == null)
                 return NotFound();
 
-            var attendances = await _attendenceRepo.GetGroupAttendanceAsync(groupId);
+            var attendances = await _attendenceRepo.GetGroupAttendanceAsync(groupId, cancellationToken);
 
             var vm = new AttendanceReportVM
             {
@@ -226,24 +226,24 @@ namespace Center_Management.Controllers
         }
 
         // GET: Attendance/StudentReport?studentId=3&groupId=5
-        public async Task<IActionResult> StudentReport(int studentId, int groupId)
+        public async Task<IActionResult> StudentReport(int studentId, int groupId, CancellationToken cancellationToken)
         {
-            var group = await _groupRepo.GetByIdAsync(groupId);
+            var group = await _groupRepo.GetByIdAsync(groupId, cancellationToken);
             if (group == null)
                 return NotFound();
 
-            var student = await _studentRepo.GetByIdAsync(studentId);
+            var student = await _studentRepo.GetByIdAsync(studentId, cancellationToken);
             if (student == null)
                 return NotFound();
 
-            var studentAttendances = await _attendenceRepo.GetStudentAttendanceInGroupAsync(studentId, groupId);
+            var studentAttendances = await _attendenceRepo.GetStudentAttendanceInGroupAsync(studentId, groupId, cancellationToken);
             var studentAttendancesList = studentAttendances.ToList();
 
             var totalDistinctDates = await _context.Attendences
                 .Where(a => a.GroupId == groupId)
                 .Select(a => a.Date.Date)
                 .Distinct()
-                .CountAsync();
+                .CountAsync(cancellationToken);
 
             var presentCount = studentAttendancesList.Count(a => a.IsPresent);
             var absentCount = studentAttendancesList.Count - presentCount;

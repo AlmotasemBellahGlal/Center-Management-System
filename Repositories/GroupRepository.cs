@@ -22,32 +22,32 @@ namespace Center_Management.Repositories
         {
             ctx.GroupSchedules.Remove(schedule);
         }
-        public async Task<IEnumerable<Group>> GetGroupsWithAcademicYearAndSubjectAsync()
+        public async Task<IEnumerable<Group>> GetGroupsWithAcademicYearAndSubjectAsync(CancellationToken cancellationToken)
         {
             return await ctx.Groups
                 .Include(g => g.AcademicYear)
                     
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
-        public async Task<List<Group>> GetGroupsByIdsAsync(List<int> groupIds)
+        public async Task<List<Group>> GetGroupsByIdsAsync(List<int> groupIds, CancellationToken cancellationToken)
         {
             return await ctx.Groups
                 .Include(g => g.AcademicYear)
                     
                 .Where(g => groupIds.Contains(g.Id))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
-        public async Task<Group?> GetGroupWithAcademicYearAsync(int groupId)
+        public async Task<Group?> GetGroupWithAcademicYearAsync(int groupId, CancellationToken cancellationToken)
         {
             return await ctx.Groups
                 .Include(g => g.AcademicYear)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
         }
-        public async Task UpdateGroupAsync(CreateGroupVM vm)
+        public async Task UpdateGroupAsync(CreateGroupVM vm, CancellationToken cancellationToken)
         {
             var group = await ctx.Groups
     .Include(g => g.Schedules)
-    .FirstOrDefaultAsync(g => g.Id == vm.Id);
+    .FirstOrDefaultAsync(g => g.Id == vm.Id, cancellationToken);
 
             if (group == null)
             {
@@ -82,7 +82,7 @@ namespace Center_Management.Repositories
             {
                 ctx.GroupSchedules.Remove(item);
             }
-            await ctx.SaveChangesAsync();
+            await ctx.SaveChangesAsync(cancellationToken);
         }
 
     }

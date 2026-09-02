@@ -18,18 +18,19 @@ namespace Center_Management.Controllers
             this.acadimicYearsRepository = acadimicYearsRepository;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             var academicYears = await acadimicYearsRepository.GetAllAsync(
+                cancellationToken,
                 a => a.Groups
             );
             return View(academicYears);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
-            var academicYear = await acadimicYearsRepository.GetDetailsAsync(id);
+            var academicYear = await acadimicYearsRepository.GetDetailsAsync(id, cancellationToken);
 
             if (academicYear == null)
                 return NotFound();
@@ -52,21 +53,21 @@ namespace Center_Management.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(AcademicYear academicYear)
+        public async Task<IActionResult> Create(AcademicYear academicYear, CancellationToken cancellationToken)
         {
             if (ModelState.IsValid)
             {
                 acadimicYearsRepository.Add(academicYear);
-                await acadimicYearsRepository.SaveChangesAsync();
+                await acadimicYearsRepository.SaveChangesAsync(cancellationToken);
                 return RedirectToAction(nameof(Index));
             }
             return View(academicYear);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
-            var academicYear = await acadimicYearsRepository.GetByIdAsync(id);
+            var academicYear = await acadimicYearsRepository.GetByIdAsync(id, cancellationToken);
             if (academicYear == null)
             {
                 return NotFound();
@@ -75,7 +76,7 @@ namespace Center_Management.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, AcademicYear academicYear)
+        public async Task<IActionResult> Edit(int id, AcademicYear academicYear, CancellationToken cancellationToken)
         {
             if (id != academicYear.Id)
             {
@@ -84,20 +85,20 @@ namespace Center_Management.Controllers
             if (ModelState.IsValid)
             {
                 acadimicYearsRepository.Update(academicYear);
-                await acadimicYearsRepository.SaveChangesAsync();
+                await acadimicYearsRepository.SaveChangesAsync(cancellationToken);
                 return RedirectToAction(nameof(Index));
             }
             return View(academicYear);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            return View(await acadimicYearsRepository.GetByIdAsync(id));
+            return View(await acadimicYearsRepository.GetByIdAsync(id, cancellationToken));
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(int id, AcademicYear academicYear)
+        public async Task<IActionResult> Delete(int id, AcademicYear academicYear, CancellationToken cancellationToken)
         {
             if (id != academicYear.Id)
             {
@@ -105,7 +106,7 @@ namespace Center_Management.Controllers
             }
 
             acadimicYearsRepository.Delete(academicYear);
-            await acadimicYearsRepository.SaveChangesAsync();
+            await acadimicYearsRepository.SaveChangesAsync(cancellationToken);
             return RedirectToAction(nameof(Index));
         }
     }

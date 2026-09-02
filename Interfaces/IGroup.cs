@@ -9,9 +9,9 @@ namespace Center_Management.Interfaces
         void AddSchedule(GroupSchedule schedule);
 
         void RemoveSchedule(GroupSchedule schedule);
-        Task UpdateGroupAsync(CreateGroupVM vm);
-        Task<List<Group>> GetGroupsByIdsAsync(List<int> groupIds);
-        Task<IEnumerable<Group>> GetGroupsWithAcademicYearAndSubjectAsync();
-        Task<Group?> GetGroupWithAcademicYearAsync(int groupId);
+        Task UpdateGroupAsync(CreateGroupVM vm, CancellationToken cancellationToken);
+        Task<List<Group>> GetGroupsByIdsAsync(List<int> groupIds, CancellationToken cancellationToken);
+        Task<IEnumerable<Group>> GetGroupsWithAcademicYearAndSubjectAsync(CancellationToken cancellationToken);
+        Task<Group?> GetGroupWithAcademicYearAsync(int groupId, CancellationToken cancellationToken);
     }
 }

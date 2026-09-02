@@ -4,108 +4,109 @@
     var groupsByYear = Model.GroupBy(g => g.AcademicYear).OrderBy(g => g.Key?.Name);
 }
 
-<div class="vgp-banner vgp-banner--gold">
-    <div class="vgp-banner__icon"><i class="fas fa-file-alt"></i></div>
-    <div>
-        <h1 class="vgp-banner__title">الاختبارات</h1>
-        <p class="vgp-banner__sub">اختر المجموعة لإدارة اختباراتها</p>
-    </div>
-</div>
-
-<div class="vgp-search">
-    <i class="fas fa-search"></i>
-    <input type="text" id="groupSearch" placeholder="ابحث عن مجموعة..." onkeyup="filterGroups()" />
-</div>
-
-@if (!Model.Any())
-{
-    <div class="vgp-empty">
-        <div class="vgp-empty__icon"><i class="fas fa-layer-group"></i></div>
-        <h3>لا توجد مجموعات</h3>
-        <p>أنشئ سنوات دراسية ومجموعات أولاً</p>
-    </div>
-}
-else
-{
-    @foreach (var yearGroup in groupsByYear)
-    {
-        <div class="vgp-year-block" style="margin-bottom:2rem">
-            <div class="vgp-year-label vgp-year-label--gold">
-                <div class="vgp-year-label__dot vgp-year-label__dot--gold"><i class="fas fa-graduation-cap"></i></div>
-                <span class="vgp-year-label__name">@yearGroup.Key?.Name</span>
-                <span class="vgp-pill vgp-pill--gold" style="margin-inline-start:auto">@yearGroup.Count() مجموعة</span>
+<div class="exam-page-shell">
+    <header class="exam-page-heading exam-page-heading--feature">
+        <div class="exam-page-heading__content">
+            <span class="exam-page-heading__eyebrow">مساحة التقييمات</span>
+            <div class="exam-page-heading__title-row">
+                <span class="exam-page-heading__icon"><i class="fas fa-file-circle-check"></i></span>
+                <div>
+                    <h1 class="exam-page-heading__title">إدارة الاختبارات</h1>
+                    <p class="exam-page-heading__subtitle">اختر المجموعة التي تريد إنشاء اختبارات لها أو مراجعة محاولات طلابها.</p>
+                </div>
             </div>
-            <div class="vgp-grid">
-                @foreach (var group in yearGroup)
-                {
-                    int studentCount = group.StudentGroups?.Count(sg => sg.IsActive) ?? 0;
-                    string schedText = string.Join(" · ", group.Schedules?.Select(s => $"{s.Day} {s.StartTime:HH:mm}") ?? new List<string>());
-                    <a href="@Url.Action("Index","Exam",new{groupId=group.Id})"
-                       class="vgp-card vgp-card--gold" data-name="@group.Name.ToLower()">
-                        <div class="vgp-card__icon vgp-card__icon--gold"><i class="fas fa-users"></i></div>
-                        <div class="vgp-card__body">
-                            <div class="vgp-card__name">@group.Name</div>
-                            <div class="vgp-card__meta">
-                                @if (!string.IsNullOrEmpty(schedText))
-                                { <span><i class="fas fa-clock"></i> @schedText</span> }
-                                <span><i class="fas fa-user-graduate"></i> @studentCount طالب</span>
-                            </div>
-                            <div class="vgp-card__footer">
-                                <span></span>
-                                <span class="vgp-card__cta vgp-card__cta--gold">عرض الاختبارات <i class="fas fa-arrow-left"></i></span>
-                            </div>
-                        </div>
-                    </a>
-                }
+        </div>
+        <span class="exam-count-chip"><strong>@Model.Count()</strong> مجموعة</span>
+    </header>
+
+    <div class="exam-picker-toolbar">
+        <label class="exam-search-field" for="groupSearch">
+            <i class="fas fa-search"></i>
+            <input type="search" id="groupSearch" placeholder="ابحث باسم المجموعة..." onkeyup="filterGroups()" autocomplete="off" />
+            <span class="exam-search-field__hint">بحث فوري</span>
+        </label>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card exam-empty-card">
+            <div class="empty-state">
+                <div class="empty-state__icon"><i class="fas fa-layer-group"></i></div>
+                <h2 class="empty-state__title">لا توجد مجموعات</h2>
+                <p class="empty-state__text">أنشئ سنة دراسية ومجموعة أولاً، ثم عد لإدارة الاختبارات.</p>
             </div>
         </div>
     }
-}
+    else
+    {
+        <div id="groupPickerDirectory">
+            @foreach (var yearGroup in groupsByYear)
+            {
+                <section class="exam-year-section">
+                    <header class="exam-year-section__header">
+                        <span class="exam-year-section__icon"><i class="fas fa-graduation-cap"></i></span>
+                        <div>
+                            <h2>@yearGroup.Key?.Name</h2>
+                            <p>المجموعات المرتبطة بهذه السنة الدراسية</p>
+                        </div>
+                        <span class="badge badge-primary">@yearGroup.Count() مجموعة</span>
+                    </header>
+
+                    <div class="exam-group-picker-grid">
+                        @foreach (var group in yearGroup)
+                        {
+                            int studentCount = group.StudentGroups?.Count(sg => sg.IsActive) ?? 0;
+                            string schedText = string.Join(" · ", group.Schedules?.Select(s => $"{s.Day} {s.StartTime:HH:mm}") ?? new List<string>());
+                            <a href="@Url.Action("Index","Exam",new{groupId=group.Id})"
+                               class="card exam-group-picker-card"
+                               data-name="@group.Name.ToLower()">
+                                <span class="exam-group-picker-card__icon"><i class="fas fa-users"></i></span>
+                                <div class="exam-group-picker-card__content">
+                                    <h3>@group.Name</h3>
+                                    <div class="exam-group-picker-card__meta">
+                                        @if (!string.IsNullOrEmpty(schedText))
+                                        {
+                                            <span><i class="far fa-clock"></i> @schedText</span>
+                                        }
+                                        <span><i class="fas fa-user-graduate"></i> @studentCount طالب</span>
+                                    </div>
+                                </div>
+                                <span class="exam-group-picker-card__action">عرض الاختبارات <i class="fas fa-arrow-left"></i></span>
+                            </a>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+        <div class="card exam-no-search-results" id="groupSearchEmpty" hidden>
+            <div class="empty-state">
+                <div class="empty-state__icon"><i class="fas fa-search"></i></div>
+                <h2 class="empty-state__title">لا توجد مجموعة مطابقة</h2>
+                <p class="empty-state__text">جرّب كتابة جزء مختلف من اسم المجموعة.</p>
+            </div>
+        </div>
+    }
+</div>
 
 @section Scripts {
-<style>
-.vgp-banner { display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;border-radius:.85rem;color:#fff;margin-bottom:1.5rem; }
-.vgp-banner--gold { background:var(--gold); }
-.vgp-banner__icon { width:52px;height:52px;background:rgba(255,255,255,.18);border-radius:.65rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0; }
-.vgp-banner__title { font-size:1.3rem;font-weight:700;margin:0; }
-.vgp-banner__sub { font-size:.8125rem;opacity:.85;margin:.2rem 0 0; }
-.vgp-search { display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:var(--bg-card);border:1.5px solid var(--border-light);border-radius:2rem;margin-bottom:1.5rem;transition:.14s; }
-.vgp-search:focus-within { border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-50); }
-.vgp-search i { color:var(--text-muted);font-size:.85rem; }
-.vgp-search input { flex:1;border:none;outline:none;font-size:.875rem;background:transparent;color:var(--text-primary); }
-.vgp-year-label { display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.55rem;margin-bottom:.875rem; }
-.vgp-year-label--gold { border-inline-start:3px solid var(--gold); }
-.vgp-year-label__dot { width:32px;height:32px;border-radius:.4rem;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0; }
-.vgp-year-label__dot--gold { background:var(--gold-50);color:var(--gold); }
-.vgp-year-label__name { font-size:.9375rem;font-weight:700;color:var(--text-primary); }
-.vgp-pill { display:inline-flex;align-items:center;padding:.15em .6em;border-radius:2rem;font-size:.7rem;font-weight:700; }
-.vgp-pill--gold { background:var(--gold-50);color:var(--gold); }
-.vgp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.875rem; }
-.vgp-card { display:flex;align-items:flex-start;gap:.875rem;padding:1rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;text-decoration:none;color:inherit;transition:box-shadow .16s,transform .16s;position:relative;overflow:hidden; }
-.vgp-card::before { content:'';position:absolute;top:0;inset-inline-start:0;inset-inline-end:0;height:3px; }
-.vgp-card--gold::before { background:var(--gold); }
-.vgp-card:hover { box-shadow:0 4px 14px rgba(30,26,20,.09);transform:translateY(-3px); }
-.vgp-card__icon { width:44px;height:44px;border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;transition:.14s; }
-.vgp-card__icon--gold { background:var(--gold-50);color:var(--gold); }
-.vgp-card:hover .vgp-card__icon--gold { background:var(--gold);color:#fff; }
-.vgp-card__body { flex:1;min-width:0; }
-.vgp-card__name { font-size:.9375rem;font-weight:700;color:var(--text-primary);margin-bottom:.3rem; }
-.vgp-card__meta { display:flex;flex-direction:column;gap:2px;margin-bottom:.75rem; }
-.vgp-card__meta span { font-size:.75rem;color:var(--text-muted);display:flex;align-items:center;gap:.3rem; }
-.vgp-card__footer { display:flex;align-items:center;justify-content:space-between;padding-top:.5rem;border-top:1px solid var(--border-light);font-size:.75rem; }
-.vgp-card__cta { font-weight:700;display:flex;align-items:center;gap:.3rem; }
-.vgp-card__cta--gold { color:var(--gold); }
-.vgp-empty { text-align:center;padding:4rem 2rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem; }
-.vgp-empty__icon { font-size:3rem;color:var(--text-disabled);margin-bottom:1rem; }
-.vgp-empty h3 { font-size:1.1rem;font-weight:700;margin:0 0 .5rem; }
-.vgp-empty p { font-size:.875rem;color:var(--text-muted);margin:0; }
-</style>
 <script>
 function filterGroups() {
     const q = document.getElementById('groupSearch').value.toLowerCase().trim();
-    document.querySelectorAll('.vgp-card').forEach(card => {
-        card.style.display = (!q || (card.dataset.name||'').includes(q)) ? '' : 'none';
+    const cards = Array.from(document.querySelectorAll('.exam-group-picker-card'));
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const matches = !q || (card.dataset.name || '').includes(q);
+        card.hidden = !matches;
+        if (matches) visibleCount++;
     });
+
+    document.querySelectorAll('.exam-year-section').forEach(section => {
+        section.hidden = !Array.from(section.querySelectorAll('.exam-group-picker-card')).some(card => !card.hidden);
+    });
+
+    const empty = document.getElementById('groupSearchEmpty');
+    if (empty) empty.hidden = visibleCount !== 0;
 }
 </script>
 }

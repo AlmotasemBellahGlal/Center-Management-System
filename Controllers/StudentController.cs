@@ -19,9 +19,9 @@ namespace Center_Management.Controllers
             this.studentRepository = studentRepository;
             this.groupRepository = groupRepository;
         }
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
-            var students = await studentRepository.GetAllWithGroupsAsync();
+            var students = await studentRepository.GetAllWithGroupsAsync(cancellationToken);
 
             // Separate students with active groups and those without
             var studentsWithActiveGroup = students.Where(s => s.StudentGroups.Any(g => g.IsActive)).ToList();
@@ -55,19 +55,19 @@ namespace Center_Management.Controllers
 
             return View();
         }
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
-            var student = await studentRepository.GetDetailsAsync(id);
+            var student = await studentRepository.GetDetailsAsync(id, cancellationToken);
 
             if (student == null)
                 return NotFound();
 
             return View(student);
         }
-        private async Task LoadGroups(CreateStudentVM vm)
+        private async Task LoadGroups(CreateStudentVM vm, CancellationToken cancellationToken)
         {
             var groups = await groupRepository
-                .GetGroupsWithAcademicYearAndSubjectAsync();
+                .GetGroupsWithAcademicYearAndSubjectAsync(cancellationToken);
 
             vm.AcademicYears = groups
                 .GroupBy(g => g.AcademicYearId)
@@ -87,17 +87,17 @@ namespace Center_Management.Controllers
                 }).ToList();
         }
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
             CreateStudentVM vm = new();
 
-            await LoadGroups(vm);
+            await LoadGroups(vm, cancellationToken);
 
             return View(vm);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateStudentVM vm)
+        public async Task<IActionResult> Create(CreateStudentVM vm, CancellationToken cancellationToken)
         {
             // التحقق من اختيار مجموعة
             if (vm.SelectedGroupId <= 0)
@@ -107,7 +107,7 @@ namespace Center_Management.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LoadGroups(vm);
+                await LoadGroups(vm, cancellationToken);
                 return View(vm);
             }
 
@@ -128,14 +128,14 @@ namespace Center_Management.Controllers
             });
 
             studentRepository.Add(student);
-            await studentRepository.SaveChangesAsync();
+            await studentRepository.SaveChangesAsync(cancellationToken);
 
             return RedirectToAction(nameof(Index));
         }
         [HttpGet]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
-            var student = await studentRepository.GetForEditAsync(id);
+            var student = await studentRepository.GetForEditAsync(id, cancellationToken);
 
             if (student == null)
                 return NotFound();
@@ -148,7 +148,7 @@ namespace Center_Management.Controllers
                 ParentPhoneNumber = student.ParentPhoneNumber
             };
 
-            await LoadGroups(vm);
+            await LoadGroups(vm, cancellationToken);
 
             // تعيين المجموعة الحالية للطالب
             var currentGroup = student.StudentGroups.FirstOrDefault(sg => sg.IsActive);
@@ -162,7 +162,7 @@ namespace Center_Management.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(CreateStudentVM vm)
+        public async Task<IActionResult> Edit(CreateStudentVM vm, CancellationToken cancellationToken)
         {
             // التحقق من اختيار مجموعة
             if (vm.SelectedGroupId <= 0)
@@ -172,11 +172,11 @@ namespace Center_Management.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LoadGroups(vm);
+                await LoadGroups(vm, cancellationToken);
                 return View(vm);
             }
 
-            var student = await studentRepository.GetForEditAsync(vm.Id);
+            var student = await studentRepository.GetForEditAsync(vm.Id, cancellationToken);
             if (student == null)
                 return NotFound();
 
@@ -212,7 +212,7 @@ namespace Center_Management.Controllers
             }
 
             studentRepository.Update(student);
-            await studentRepository.SaveChangesAsync();
+            await studentRepository.SaveChangesAsync(cancellationToken);
 
             return RedirectToAction(nameof(Index));
         }

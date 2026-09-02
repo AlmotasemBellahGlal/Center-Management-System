@@ -11,13 +11,13 @@ namespace Center_Management.Repositories
         public AcadimicYearsRepository(CenterDBContext ctx) : base(ctx)
         {
         }
-        public async Task<AcademicYear?> GetDetailsAsync(int id)
+        public async Task<AcademicYear?> GetDetailsAsync(int id, CancellationToken cancellationToken)
         {
             return await ctx.AcademicYears
                 
                 .Include(a => a.Groups)
                 .ThenInclude(g => g.Schedules)
-                .FirstOrDefaultAsync(a => a.Id == id);
+                .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
         }
     }
 

@@ -20,7 +20,7 @@ namespace Center_Management.Controllers
 
         // GET: Exam/GroupPicker - للمعلم لاختيار المجموعة
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> GroupPicker()
+        public async Task<IActionResult> GroupPicker(CancellationToken cancellationToken)
         {
             var groups = await _context.Groups
                 .Include(g => g.AcademicYear)
@@ -28,18 +28,18 @@ namespace Center_Management.Controllers
                 .Include(g => g.StudentGroups)
                 .OrderBy(g => g.AcademicYear!.Name)
                 .ThenBy(g => g.Name)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return View(groups);
         }
 
         // GET: Exam/Index?groupId=5 - قائمة الاختبارات للمجموعة
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Index(int groupId)
+        public async Task<IActionResult> Index(int groupId, CancellationToken cancellationToken)
         {
             var group = await _context.Groups
                 .Include(g => g.AcademicYear)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
 
             if (group == null)
                 return NotFound();
@@ -49,7 +49,7 @@ namespace Center_Management.Controllers
                 .Include(e => e.Questions)
                 .Include(e => e.Attempts)
                 .OrderByDescending(e => e.StartDate)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             ViewBag.Group = group;
             return View(exams);
@@ -57,11 +57,11 @@ namespace Center_Management.Controllers
 
         // GET: Exam/Create?groupId=5
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Create(int groupId)
+        public async Task<IActionResult> Create(int groupId, CancellationToken cancellationToken)
         {
             var group = await _context.Groups
                 .Include(g => g.AcademicYear)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
 
             if (group == null)
                 return NotFound();
@@ -74,7 +74,7 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Create(int groupId, Exam exam)
+        public async Task<IActionResult> Create(int groupId, Exam exam, CancellationToken cancellationToken)
         {
             exam.GroupId = groupId;
 
@@ -87,13 +87,13 @@ namespace Center_Management.Controllers
             {
                 var group = await _context.Groups
                     .Include(g => g.AcademicYear)
-                    .FirstOrDefaultAsync(g => g.Id == groupId);
+                    .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
                 ViewBag.Group = group;
                 return View(exam);
             }
 
             _context.Exams.Add(exam);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = "تم إنشاء الاختبار بنجاح";
             return RedirectToAction(nameof(Details), new { id = exam.Id });
@@ -101,7 +101,7 @@ namespace Center_Management.Controllers
 
         // GET: Exam/Details/5
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Group)
@@ -109,7 +109,7 @@ namespace Center_Management.Controllers
                 .Include(e => e.Questions.OrderBy(q => q.Order))
                 .Include(e => e.Attempts)
                     .ThenInclude(a => a.Student)
-                .FirstOrDefaultAsync(e => e.Id == id);
+                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -119,13 +119,13 @@ namespace Center_Management.Controllers
 
         // GET: Exam/AddQuestion?examId=5
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> AddQuestion(int examId)
+        public async Task<IActionResult> AddQuestion(int examId, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Group)
                     .ThenInclude(g => g!.AcademicYear)
                 .Include(e => e.Questions)
-                .FirstOrDefaultAsync(e => e.Id == examId);
+                .FirstOrDefaultAsync(e => e.Id == examId, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -140,7 +140,7 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> AddQuestion(ExamQuestion question, IFormFile? QuestionImage)
+        public async Task<IActionResult> AddQuestion(ExamQuestion question, IFormFile? QuestionImage, CancellationToken cancellationToken)
         {
             // إزالة navigation properties من التحقق
             ModelState.Remove(nameof(question.Exam));
@@ -153,7 +153,7 @@ namespace Center_Management.Controllers
                     .Include(e => e.Group)
                         .ThenInclude(g => g!.AcademicYear)
                     .Include(e => e.Questions)
-                    .FirstOrDefaultAsync(e => e.Id == question.ExamId);
+                    .FirstOrDefaultAsync(e => e.Id == question.ExamId, cancellationToken);
                 ViewBag.Exam = examForView;
                 ViewBag.NextOrder = examForView!.Questions.Any() ? examForView.Questions.Max(q => q.Order) + 1 : 1;
                 return View(question);
@@ -169,7 +169,7 @@ namespace Center_Management.Controllers
                     var examForView = await _context.Exams
                         .Include(e => e.Group).ThenInclude(g => g!.AcademicYear)
                         .Include(e => e.Questions)
-                        .FirstOrDefaultAsync(e => e.Id == question.ExamId);
+                        .FirstOrDefaultAsync(e => e.Id == question.ExamId, cancellationToken);
                     ViewBag.Exam = examForView;
                     ViewBag.NextOrder = examForView!.Questions.Any() ? examForView.Questions.Max(q => q.Order) + 1 : 1;
                     return View(question);
@@ -183,13 +183,13 @@ namespace Center_Management.Controllers
                 var filePath = Path.Combine(uploadDir, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
-                    await QuestionImage.CopyToAsync(stream);
+                    await QuestionImage.CopyToAsync(stream, cancellationToken);
 
                 question.ImagePath = $"/uploads/questions/{fileName}";
             }
 
             _context.ExamQuestions.Add(question);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = "تم إضافة السؤال بنجاح";
             return RedirectToAction(nameof(Details), new { id = question.ExamId });
@@ -197,13 +197,13 @@ namespace Center_Management.Controllers
 
         // GET: Exam/Delete/5
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Group)
                     .ThenInclude(g => g!.AcademicYear)
                 .Include(e => e.Questions)
-                .FirstOrDefaultAsync(e => e.Id == id);
+                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -215,15 +215,15 @@ namespace Center_Management.Controllers
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
         {
-            var exam = await _context.Exams.FindAsync(id);
+            var exam = await _context.Exams.FindAsync(new object[] { id }, cancellationToken);
             if (exam == null)
                 return NotFound();
 
             var groupId = exam.GroupId;
             _context.Exams.Remove(exam);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = "تم حذف الاختبار بنجاح";
             return RedirectToAction(nameof(Index), new { groupId });
@@ -231,13 +231,13 @@ namespace Center_Management.Controllers
 
         // GET: Exam/Edit/5 - تعديل معلومات الامتحان (الوقت والتاريخ)
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Group)
                     .ThenInclude(g => g!.AcademicYear)
                 .Include(e => e.Questions)
-                .FirstOrDefaultAsync(e => e.Id == id);
+                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -249,12 +249,12 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Edit(int id, Exam updatedExam)
+        public async Task<IActionResult> Edit(int id, Exam updatedExam, CancellationToken cancellationToken)
         {
             if (id != updatedExam.Id)
                 return NotFound();
 
-            var exam = await _context.Exams.FindAsync(id);
+            var exam = await _context.Exams.FindAsync(new object[] { id }, cancellationToken);
             if (exam == null)
                 return NotFound();
 
@@ -269,7 +269,7 @@ namespace Center_Management.Controllers
                     .Include(e => e.Group)
                         .ThenInclude(g => g!.AcademicYear)
                     .Include(e => e.Questions)
-                    .FirstOrDefaultAsync(e => e.Id == id);
+                    .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
                 return View(examForView);
             }
 
@@ -281,7 +281,7 @@ namespace Center_Management.Controllers
             exam.EndDate = updatedExam.EndDate;
             exam.DurationMinutes = updatedExam.DurationMinutes;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = "تم تحديث الاختبار بنجاح";
             return RedirectToAction(nameof(Details), new { id });
@@ -291,11 +291,11 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> ResetStudent(int examId, int studentId)
+        public async Task<IActionResult> ResetStudent(int examId, int studentId, CancellationToken cancellationToken)
         {
             var attempt = await _context.StudentExamAttempts
                 .Include(a => a.Answers)
-                .FirstOrDefaultAsync(a => a.ExamId == examId && a.StudentId == studentId);
+                .FirstOrDefaultAsync(a => a.ExamId == examId && a.StudentId == studentId, cancellationToken);
 
             if (attempt == null)
             {
@@ -307,7 +307,7 @@ namespace Center_Management.Controllers
             _context.StudentAnswers.RemoveRange(attempt.Answers);
             // ثم حذف المحاولة
             _context.StudentExamAttempts.Remove(attempt);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = "تم إعادة تعيين الاختبار للطالب بنجاح";
             return RedirectToAction(nameof(Details), new { id = examId });
@@ -317,12 +317,12 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> ResetAll(int examId)
+        public async Task<IActionResult> ResetAll(int examId, CancellationToken cancellationToken)
         {
             var attempts = await _context.StudentExamAttempts
                 .Include(a => a.Answers)
                 .Where(a => a.ExamId == examId)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             if (!attempts.Any())
             {
@@ -338,7 +338,7 @@ namespace Center_Management.Controllers
             
             // حذف جميع المحاولات
             _context.StudentExamAttempts.RemoveRange(attempts);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = $"تم إعادة تعيين الاختبار لجميع الطلبة ({attempts.Count} محاولة)";
             return RedirectToAction(nameof(Details), new { id = examId });
@@ -350,9 +350,9 @@ namespace Center_Management.Controllers
 
         // GET: Exam/MyExams - الاختبارات المتاحة للطالب
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> MyExams()
+        public async Task<IActionResult> MyExams(CancellationToken cancellationToken)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name, cancellationToken);
             if (user?.StudentId == null)
             {
                 ViewBag.Error = "لا يوجد حساب طالب مرتبط بهذا المستخدم";
@@ -362,13 +362,13 @@ namespace Center_Management.Controllers
             var studentId = user.StudentId.Value;
 
             // Auto-submit any incomplete attempts that are past deadline
-            await AutoSubmitExpiredAttempts(studentId);
+            await AutoSubmitExpiredAttempts(studentId, cancellationToken);
 
             // الحصول على مجموعات الطالب النشطة
             var studentGroupIds = await _context.StudentGroups
                 .Where(sg => sg.StudentId == studentId && sg.IsActive)
                 .Select(sg => sg.GroupId)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // الحصول على الاختبارات المتاحة (نافذة الفتح)
             var now = DateTime.Now;
@@ -381,7 +381,7 @@ namespace Center_Management.Controllers
                 .Include(e => e.Questions)
                 .Include(e => e.Attempts.Where(a => a.StudentId == studentId))
                 .OrderBy(e => e.StartDate)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return View(exams);
         }
@@ -389,7 +389,7 @@ namespace Center_Management.Controllers
         /// <summary>
         /// Auto-submit any attempts that passed their deadline without being submitted
         /// </summary>
-        private async Task AutoSubmitExpiredAttempts(int studentId)
+        private async Task AutoSubmitExpiredAttempts(int studentId, CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
             
@@ -399,7 +399,7 @@ namespace Center_Management.Controllers
                     .ThenInclude(e => e!.Questions)
                 .Include(a => a.Answers)
                 .Where(a => a.StudentId == studentId && !a.IsSubmitted)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             foreach (var attempt in incompleteAttempts)
             {
@@ -429,7 +429,7 @@ namespace Center_Management.Controllers
                         var score = await _context.StudentAnswers
                             .Where(a => a.AttemptId == attempt.Id && a.IsCorrect == true)
                             .Include(a => a.Question)
-                            .SumAsync(a => a.Question!.Points);
+                            .SumAsync(a => a.Question!.Points, cancellationToken);
 
                         attempt.Score = score;
                     }
@@ -438,15 +438,15 @@ namespace Center_Management.Controllers
 
             if (incompleteAttempts.Any(a => a.IsSubmitted))
             {
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
             }
         }
 
         // GET: Exam/Take/5 - بدء الاختبار
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> Take(int id)
+        public async Task<IActionResult> Take(int id, CancellationToken cancellationToken)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name, cancellationToken);
             if (user?.StudentId == null)
             {
                 TempData["Error"] = "لا يوجد حساب طالب مرتبط بهذا المستخدم";
@@ -459,14 +459,14 @@ namespace Center_Management.Controllers
                 .Include(e => e.Group)
                     .ThenInclude(g => g!.AcademicYear)
                 .Include(e => e.Questions.OrderBy(q => q.Order))
-                .FirstOrDefaultAsync(e => e.Id == id);
+                .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
             if (exam == null)
                 return NotFound();
 
             // التحقق من أن الطالب في المجموعة
             var isInGroup = await _context.StudentGroups
-                .AnyAsync(sg => sg.StudentId == studentId && sg.GroupId == exam.GroupId && sg.IsActive);
+                .AnyAsync(sg => sg.StudentId == studentId && sg.GroupId == exam.GroupId && sg.IsActive, cancellationToken);
 
             if (!isInGroup)
             {
@@ -484,7 +484,7 @@ namespace Center_Management.Controllers
 
             // التحقق من عدم وجود محاولة سابقة
             var existingAttempt = await _context.StudentExamAttempts
-                .FirstOrDefaultAsync(a => a.StudentId == studentId && a.ExamId == id);
+                .FirstOrDefaultAsync(a => a.StudentId == studentId && a.ExamId == id, cancellationToken);
 
             if (existingAttempt != null)
             {
@@ -503,7 +503,7 @@ namespace Center_Management.Controllers
             };
 
             _context.StudentExamAttempts.Add(attempt);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             // حساب deadline الطالب = الأقل بين (وقت البدء + المدة) و (وقت نهاية الامتحان)
             DateTime deadlineTime;
@@ -525,12 +525,12 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> Submit(int attemptId, Dictionary<int, string> answers)
+        public async Task<IActionResult> Submit(int attemptId, Dictionary<int, string> answers, CancellationToken cancellationToken)
         {
             var attempt = await _context.StudentExamAttempts
                 .Include(a => a.Exam)
                     .ThenInclude(e => e!.Questions)
-                .FirstOrDefaultAsync(a => a.Id == attemptId);
+                .FirstOrDefaultAsync(a => a.Id == attemptId, cancellationToken);
 
             if (attempt == null)
                 return NotFound();
@@ -578,17 +578,17 @@ namespace Center_Management.Controllers
             // حساب الدرجة للـ MCQ
             if (attempt.Exam!.Type == ExamType.MCQ)
             {
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
 
                 var score = await _context.StudentAnswers
                     .Where(a => a.AttemptId == attemptId && a.IsCorrect == true)
                     .Include(a => a.Question)
-                    .SumAsync(a => a.Question!.Points);
+                    .SumAsync(a => a.Question!.Points, cancellationToken);
 
                 attempt.Score = score;
             }
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = "تم إرسال الاختبار بنجاح";
             return RedirectToAction(nameof(Result), new { id = attempt.ExamId });
@@ -596,9 +596,9 @@ namespace Center_Management.Controllers
 
         // GET: Exam/Result/5 - عرض نتيجة الاختبار
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> Result(int id)
+        public async Task<IActionResult> Result(int id, CancellationToken cancellationToken)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name, cancellationToken);
             if (user?.StudentId == null)
             {
                 TempData["Error"] = "لا يوجد حساب طالب مرتبط بهذا المستخدم";
@@ -612,7 +612,7 @@ namespace Center_Management.Controllers
                     .ThenInclude(e => e!.Questions.OrderBy(q => q.Order))
                 .Include(a => a.Answers)
                     .ThenInclude(a => a.Question)
-                .FirstOrDefaultAsync(a => a.StudentId == studentId && a.ExamId == id);
+                .FirstOrDefaultAsync(a => a.StudentId == studentId && a.ExamId == id, cancellationToken);
 
             if (attempt == null)
             {
@@ -625,13 +625,13 @@ namespace Center_Management.Controllers
 
         // GET: Exam/AddMultipleQuestions?examId=5
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> AddMultipleQuestions(int examId)
+        public async Task<IActionResult> AddMultipleQuestions(int examId, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Group)
                     .ThenInclude(g => g!.AcademicYear)
                 .Include(e => e.Questions)
-                .FirstOrDefaultAsync(e => e.Id == examId);
+                .FirstOrDefaultAsync(e => e.Id == examId, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -650,13 +650,13 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> GenerateQuestionsForm(Center_Management.View_Models.AddMultipleQuestionsVM vm)
+        public async Task<IActionResult> GenerateQuestionsForm(Center_Management.View_Models.AddMultipleQuestionsVM vm, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Group)
                     .ThenInclude(g => g!.AcademicYear)
                 .Include(e => e.Questions)
-                .FirstOrDefaultAsync(e => e.Id == vm.ExamId);
+                .FirstOrDefaultAsync(e => e.Id == vm.ExamId, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -681,11 +681,11 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> SaveMultipleQuestions(Center_Management.View_Models.AddMultipleQuestionsVM vm)
+        public async Task<IActionResult> SaveMultipleQuestions(Center_Management.View_Models.AddMultipleQuestionsVM vm, CancellationToken cancellationToken)
         {
             var exam = await _context.Exams
                 .Include(e => e.Questions)
-                .FirstOrDefaultAsync(e => e.Id == vm.ExamId);
+                .FirstOrDefaultAsync(e => e.Id == vm.ExamId, cancellationToken);
 
             if (exam == null)
                 return NotFound();
@@ -720,7 +720,7 @@ namespace Center_Management.Controllers
                         var filePath = Path.Combine(uploadDir, fileName);
 
                         using (var stream = new FileStream(filePath, FileMode.Create))
-                            await questionVM.QuestionImage.CopyToAsync(stream);
+                            await questionVM.QuestionImage.CopyToAsync(stream, cancellationToken);
 
                         question.ImagePath = $"/uploads/questions/{fileName}";
                     }
@@ -730,7 +730,7 @@ namespace Center_Management.Controllers
                 savedCount++;
             }
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             TempData["Success"] = $"تم إضافة {savedCount} سؤال بنجاح";
             return RedirectToAction(nameof(Details), new { id = vm.ExamId });

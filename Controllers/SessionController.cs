@@ -23,12 +23,12 @@ namespace Center_Management.Controllers
         // ─────────────────────────────────────────────────────────────────
         // GET: /Session/Index?groupId=5&date=2026-08-16&month=8&year=2026
         // ─────────────────────────────────────────────────────────────────
-        public async Task<IActionResult> Index(int groupId, DateTime? date, int? month, int? year)
+        public async Task<IActionResult> Index(int groupId, DateTime? date, int? month, int? year, CancellationToken cancellationToken)
         {
             var group = await _db.Groups
                 .Include(g => g.AcademicYear)
                      
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
 
             if (group == null) return NotFound();
 
@@ -42,17 +42,17 @@ namespace Center_Management.Controllers
                 .Include(sg => sg.Student)
                 .OrderBy(sg => sg.Student.FullName)
                 .Select(sg => sg.Student)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // Existing attendance records for this group + date
             var attendanceRecords = await _db.Attendences
                 .Where(a => a.GroupId == groupId && a.Date.Date == sessionDate.Date)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // Existing payment records for this group + month/year
             var paymentRecords = await _db.Payments
                 .Where(p => p.GroupId == groupId && p.Month == selectedMonth && p.Year == selectedYear)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             bool attendanceAlreadySaved = attendanceRecords.Count > 0;
 
@@ -93,7 +93,8 @@ namespace Center_Management.Controllers
         // ─────────────────────────────────────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> ToggleAttendance(
-            [FromBody] ToggleAttendanceRequest req)
+            [FromBody] ToggleAttendanceRequest req,
+            CancellationToken cancellationToken)
         {
             if (req == null)
                 return BadRequest(new { success = false, message = "طلب غير صالح" });
@@ -104,7 +105,7 @@ namespace Center_Management.Controllers
                 bool isActive = await _db.StudentGroups
                     .AnyAsync(sg => sg.StudentId == req.StudentId
                                  && sg.GroupId   == req.GroupId
-                                 && sg.IsActive);
+                                 && sg.IsActive, cancellationToken);
 
                 if (!isActive)
                     return BadRequest(new { success = false, message = "الطالب غير نشط في هذه المجموعة" });
@@ -112,7 +113,7 @@ namespace Center_Management.Controllers
                 var existing = await _db.Attendences
                     .FirstOrDefaultAsync(a => a.StudentId == req.StudentId
                                            && a.GroupId   == req.GroupId
-                                           && a.Date.Date == req.Date.Date);
+                                           && a.Date.Date == req.Date.Date, cancellationToken);
 
                 if (existing != null)
                 {
@@ -131,13 +132,13 @@ namespace Center_Management.Controllers
                     });
                 }
 
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
 
                 // Re-fetch to get the Id
                 var saved = await _db.Attendences
                     .FirstOrDefaultAsync(a => a.StudentId == req.StudentId
                                            && a.GroupId   == req.GroupId
-                                           && a.Date.Date == req.Date.Date);
+                                           && a.Date.Date == req.Date.Date, cancellationToken);
 
                 return Ok(new
                 {
@@ -146,7 +147,7 @@ namespace Center_Management.Controllers
                     isPresent    = req.IsPresent
                 });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
@@ -158,7 +159,8 @@ namespace Center_Management.Controllers
         // ─────────────────────────────────────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> TogglePayment(
-            [FromBody] TogglePaymentRequest req)
+            [FromBody] TogglePaymentRequest req,
+            CancellationToken cancellationToken)
         {
             if (req == null)
                 return BadRequest(new { success = false, message = "طلب غير صالح" });
@@ -169,7 +171,7 @@ namespace Center_Management.Controllers
                 bool isActive = await _db.StudentGroups
                     .AnyAsync(sg => sg.StudentId == req.StudentId
                                  && sg.GroupId   == req.GroupId
-                                 && sg.IsActive);
+                                 && sg.IsActive, cancellationToken);
 
                 if (!isActive)
                     return BadRequest(new { success = false, message = "الطالب غير نشط في هذه المجموعة" });
@@ -178,7 +180,7 @@ namespace Center_Management.Controllers
                     .FirstOrDefaultAsync(p => p.StudentId == req.StudentId
                                            && p.GroupId   == req.GroupId
                                            && p.Month     == req.Month
-                                           && p.Year      == req.Year);
+                                           && p.Year      == req.Year, cancellationToken);
 
                 if (req.MarkPaid)
                 {
@@ -187,7 +189,7 @@ namespace Center_Management.Controllers
                         // Fetch price from academic year
                         var group = await _db.Groups
                             .Include(g => g.AcademicYear)
-                            .FirstOrDefaultAsync(g => g.Id == req.GroupId);
+                            .FirstOrDefaultAsync(g => g.Id == req.GroupId, cancellationToken);
 
                         decimal price = group?.AcademicYear?.MonthlyPrice ?? 0;
 
@@ -215,7 +217,7 @@ namespace Center_Management.Controllers
                         _db.Payments.Remove(existing);
                 }
 
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
 
                 int? paymentId = null;
                 if (req.MarkPaid)
@@ -224,7 +226,7 @@ namespace Center_Management.Controllers
                         .FirstOrDefaultAsync(p => p.StudentId == req.StudentId
                                                && p.GroupId   == req.GroupId
                                                && p.Month     == req.Month
-                                               && p.Year      == req.Year);
+                                               && p.Year      == req.Year, cancellationToken);
                     paymentId = saved?.Id;
                 }
 
@@ -235,7 +237,7 @@ namespace Center_Management.Controllers
                     isPaid    = req.MarkPaid
                 });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
@@ -247,7 +249,8 @@ namespace Center_Management.Controllers
         // ─────────────────────────────────────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> SaveAllAttendance(
-            [FromBody] SaveAllAttendanceRequest req)
+            [FromBody] SaveAllAttendanceRequest req,
+            CancellationToken cancellationToken)
         {
             if (req == null || req.Records == null)
                 return BadRequest(new { success = false, message = "طلب غير صالح" });
@@ -259,7 +262,7 @@ namespace Center_Management.Controllers
                     var existing = await _db.Attendences
                         .FirstOrDefaultAsync(a => a.StudentId == record.StudentId
                                                && a.GroupId   == req.GroupId
-                                               && a.Date.Date == req.Date.Date);
+                                               && a.Date.Date == req.Date.Date, cancellationToken);
                     if (existing != null)
                     {
                         existing.IsPresent = record.IsPresent;
@@ -276,10 +279,10 @@ namespace Center_Management.Controllers
                     }
                 }
 
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
             }

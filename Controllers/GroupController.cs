@@ -25,16 +25,17 @@ namespace Center_Management.Controllers
             this.acadimicYearsRepository = acadimicYearsRepository;
         }
         // GET: GroupController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
-            return View(await grouprepo.GetAllAsync(g => g.AcademicYear, g => g.Schedules));
+            return View(await grouprepo.GetAllAsync(cancellationToken, g => g.AcademicYear, g => g.Schedules));
         }
 
         // GET: GroupController/Details/5
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
             var group = await grouprepo.GetByIdAsync(
                 id,
+                cancellationToken,
                 g => g.AcademicYear,
                 g => g.Schedules
             );
@@ -61,7 +62,7 @@ namespace Center_Management.Controllers
         // POST: GroupController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateGroupVM vm)
+        public async Task<IActionResult> Create(CreateGroupVM vm, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -95,7 +96,7 @@ namespace Center_Management.Controllers
             }
             grouprepo.Add(group);
 
-            await grouprepo.SaveChangesAsync();
+            await grouprepo.SaveChangesAsync(cancellationToken);
 
             return RedirectToAction(
                 "Details",
@@ -104,9 +105,9 @@ namespace Center_Management.Controllers
         }
 
         // GET: GroupController/Edit/5
-        public async Task<ActionResult> Edit(int id)
+        public async Task<ActionResult> Edit(int id, CancellationToken cancellationToken)
         {
-            var group = await grouprepo.GetByIdAsync(id, g => g.Schedules);
+            var group = await grouprepo.GetByIdAsync(id, cancellationToken, g => g.Schedules);
 
             if (group == null)
                 return NotFound();
@@ -134,7 +135,7 @@ namespace Center_Management.Controllers
 
         // POST: GroupController/Edit/5
         [HttpPost]
-        public async Task<IActionResult> Edit(CreateGroupVM vm)
+        public async Task<IActionResult> Edit(CreateGroupVM vm, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return View(vm);
@@ -153,7 +154,7 @@ namespace Center_Management.Controllers
 
                 return View(vm);
             }
-            await grouprepo.UpdateGroupAsync(vm);
+            await grouprepo.UpdateGroupAsync(vm, cancellationToken);
 
             return RedirectToAction(
                 "Details",
@@ -163,10 +164,11 @@ namespace Center_Management.Controllers
 
         // GET: GroupController/Delete/5
         [HttpGet]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             var group = await grouprepo.GetByIdAsync(
                 id,
+                cancellationToken,
                 g => g.AcademicYear,
                 g => g.Schedules
             );
@@ -183,9 +185,9 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ActionName("Delete")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
         {
-            var group = await grouprepo.GetByIdAsync(id);
+            var group = await grouprepo.GetByIdAsync(id, cancellationToken);
 
             if (group == null)
             {
@@ -196,7 +198,7 @@ namespace Center_Management.Controllers
 
             grouprepo.Delete(group);
 
-            await grouprepo.SaveChangesAsync();
+            await grouprepo.SaveChangesAsync(cancellationToken);
 
             return RedirectToAction(
                 "Details",

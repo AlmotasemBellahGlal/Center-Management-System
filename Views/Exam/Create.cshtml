@@ -4,107 +4,105 @@
     var group = ViewBag.Group as Center_Management.Models.Group;
 }
 
-<div class="vf-top">
-    <div>
-        <h1 class="vf-title">إنشاء اختبار جديد</h1>
-        <p class="vf-sub">@group?.Name · @group?.AcademicYear?.Name</p>
-    </div>
-    <a href="@Url.Action("Index",new{groupId=group?.Id})" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
-</div>
+<div class="exam-page-shell exam-form-page">
+    <header class="exam-page-heading exam-page-heading--compact">
+        <div class="exam-page-heading__content">
+            <span class="exam-page-heading__eyebrow">إعداد اختبار</span>
+            <div class="exam-page-heading__title-row">
+                <span class="exam-page-heading__icon"><i class="fas fa-file-circle-plus"></i></span>
+                <div>
+                    <h1 class="exam-page-heading__title">إنشاء اختبار جديد</h1>
+                    <p class="exam-page-heading__subtitle">@group?.Name · @group?.AcademicYear?.Name</p>
+                </div>
+            </div>
+        </div>
+        <a href="@Url.Action("Index",new{groupId=group?.Id})" class="btn btn-neutral"><i class="fas fa-arrow-right"></i> رجوع للاختبارات</a>
+    </header>
 
-<div class="vf-card">
-    <div class="vf-card__head">
-        <div class="vf-card__head-icon" style="background:var(--gold-50);color:var(--gold)"><i class="fas fa-file-alt"></i></div>
-        <h2 class="vf-card__title">معلومات الاختبار</h2>
-    </div>
-    <form method="post" asp-action="Create" asp-route-groupId="@group?.Id" class="vf-form">
+    <form method="post" asp-action="Create" asp-route-groupId="@group?.Id" class="exam-editor-form">
         @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="exam-validation-summary" role="alert"></div>
 
-        <div class="vf-field">
-            <label class="vf-label" asp-for="Title">عنوان الاختبار <span class="vf-req">*</span></label>
-            <input type="text" class="vf-input" asp-for="Title" placeholder="مثال: اختبار نصف الفصل الأول" required />
-            <span class="vf-err" asp-validation-for="Title"></span>
+        <div class="exam-form-layout">
+            <main class="exam-form-layout__main">
+                <section class="card exam-form-section">
+                    <header class="card-header">
+                        <span class="card-header-icon"><i class="fas fa-align-right"></i></span>
+                        <div><h2 class="card-title">المعلومات الأساسية</h2><p>عرّف الاختبار للطلاب بصورة واضحة ومختصرة.</p></div>
+                    </header>
+                    <div class="card-body exam-form-fields">
+                        <div class="exam-field exam-field--wide">
+                            <label asp-for="Title" class="exam-field__label">عنوان الاختبار <span>*</span></label>
+                            <input type="text" class="form-control" asp-for="Title" placeholder="مثال: اختبار نصف الفصل الأول" required />
+                            <span asp-validation-for="Title" class="exam-field__error"></span>
+                        </div>
+                        <div class="exam-field exam-field--wide">
+                            <label asp-for="Description" class="exam-field__label">الوصف <small>اختياري</small></label>
+                            <textarea class="form-control exam-textarea" asp-for="Description" rows="4" placeholder="أضف وصفاً مختصراً أو تعليمات تساعد الطلاب قبل البدء"></textarea>
+                            <span asp-validation-for="Description" class="exam-field__error"></span>
+                        </div>
+                        <div class="exam-field">
+                            <label asp-for="Type" class="exam-field__label">نوع الاختبار <span>*</span></label>
+                            <select class="form-select" asp-for="Type" required>
+                                <option value="">— اختر النوع —</option>
+                                <option value="@Center_Management.Models.ExamType.MCQ">اختيار من متعدد (MCQ)</option>
+                                <option value="@Center_Management.Models.ExamType.Written">أسئلة مقالية</option>
+                            </select>
+                            <span asp-validation-for="Type" class="exam-field__error"></span>
+                        </div>
+                        <div class="exam-field">
+                            <label asp-for="DurationMinutes" class="exam-field__label">المدة بالدقائق <small>اختياري</small></label>
+                            <div class="exam-input-with-icon"><i class="far fa-clock"></i><input type="number" class="form-control" name="DurationMinutes" id="DurationMinutes" value="@Model?.DurationMinutes" min="1" max="600" placeholder="مثال: 60" /></div>
+                            <small class="exam-field__hint">اتركها فارغة للسماح بالحل حتى موعد الإغلاق.</small>
+                            <span asp-validation-for="DurationMinutes" class="exam-field__error"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card exam-form-section">
+                    <header class="card-header">
+                        <span class="card-header-icon"><i class="far fa-calendar"></i></span>
+                        <div><h2 class="card-title">نافذة الإتاحة</h2><p>حدد متى يظهر الاختبار للطلاب ومتى يُغلق.</p></div>
+                    </header>
+                    <div class="card-body exam-form-fields">
+                        <div class="exam-field">
+                            <label asp-for="StartDate" class="exam-field__label">تاريخ البدء <span>*</span></label>
+                            <input type="datetime-local" class="form-control" name="StartDate" id="StartDate" value="@(Model?.StartDate.ToString("yyyy-MM-ddTHH:mm"))" required />
+                            <span asp-validation-for="StartDate" class="exam-field__error"></span>
+                        </div>
+                        <div class="exam-field">
+                            <label asp-for="EndDate" class="exam-field__label">تاريخ الانتهاء <span>*</span></label>
+                            <input type="datetime-local" class="form-control" name="EndDate" id="EndDate" value="@(Model?.EndDate.ToString("yyyy-MM-ddTHH:mm"))" required />
+                            <span asp-validation-for="EndDate" class="exam-field__error"></span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <aside class="exam-form-layout__aside">
+                <section class="card exam-context-card">
+                    <span class="exam-context-card__icon"><i class="fas fa-users"></i></span>
+                    <small>المجموعة المستهدفة</small>
+                    <strong>@group?.Name</strong>
+                    <span>@group?.AcademicYear?.Name</span>
+                </section>
+                <section class="card exam-tip-card">
+                    <i class="fas fa-lightbulb"></i>
+                    <div><strong>بعد الإنشاء</strong><p>ستنتقل إلى صفحة التفاصيل لتضيف سؤالاً واحداً أو عدة أسئلة دفعة واحدة.</p></div>
+                </section>
+            </aside>
         </div>
 
-        <div class="vf-field" style="margin-top:1rem">
-            <label class="vf-label" asp-for="Description">الوصف <span class="vf-opt">(اختياري)</span></label>
-            <textarea class="vf-textarea" asp-for="Description" rows="3" placeholder="وصف مختصر أو تعليمات للطلاب"></textarea>
-            <span class="vf-err" asp-validation-for="Description"></span>
-        </div>
-
-        <div class="vf-row" style="margin-top:1rem">
-            <div class="vf-field">
-                <label class="vf-label" asp-for="Type">نوع الاختبار <span class="vf-req">*</span></label>
-                <select class="vf-select" asp-for="Type" required>
-                    <option value="">— اختر النوع —</option>
-                    <option value="@Center_Management.Models.ExamType.MCQ">اختيار من متعدد (MCQ)</option>
-                    <option value="@Center_Management.Models.ExamType.Written">أسئلة مقالية</option>
-                </select>
-                <span class="vf-err" asp-validation-for="Type"></span>
+        <footer class="exam-form-actions">
+            <span><i class="fas fa-shield-alt"></i> لن يصبح الاختبار جاهزاً قبل إضافة الأسئلة.</span>
+            <div>
+                <a href="@Url.Action("Index",new{groupId=group?.Id})" class="btn btn-neutral"><i class="fas fa-times"></i> إلغاء</a>
+                <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-arrow-left"></i> إنشاء والمتابعة</button>
             </div>
-            <div class="vf-field">
-                <label class="vf-label" asp-for="DurationMinutes">
-                    المدة (بالدقائق) <span class="vf-opt">(اختياري)</span>
-                </label>
-                <input type="number" class="vf-input" name="DurationMinutes" id="DurationMinutes"
-                       value="@Model?.DurationMinutes" min="1" max="600" placeholder="مثال: 60" />
-                <span class="vf-hint">اتركه فارغاً للسماح بالوقت الكامل حتى نهاية الامتحان</span>
-                <span class="vf-err" asp-validation-for="DurationMinutes"></span>
-            </div>
-        </div>
-
-        <div class="vf-row" style="margin-top:1rem">
-            <div class="vf-field">
-                <label class="vf-label" asp-for="StartDate">تاريخ البدء <span class="vf-req">*</span></label>
-                <input type="datetime-local" class="vf-input" name="StartDate" id="StartDate"
-                       value="@(Model?.StartDate.ToString("yyyy-MM-ddTHH:mm"))" required />
-                <span class="vf-err" asp-validation-for="StartDate"></span>
-            </div>
-            <div class="vf-field">
-                <label class="vf-label" asp-for="EndDate">تاريخ الانتهاء <span class="vf-req">*</span></label>
-                <input type="datetime-local" class="vf-input" name="EndDate" id="EndDate"
-                       value="@(Model?.EndDate.ToString("yyyy-MM-ddTHH:mm"))" required />
-                <span class="vf-err" asp-validation-for="EndDate"></span>
-            </div>
-        </div>
-
-        <div class="vf-form__footer">
-            <a href="@Url.Action("Index",new{groupId=group?.Id})" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
-            <button type="submit" class="vf-submit vf-submit--gold"><i class="fas fa-check"></i> إنشاء الاختبار</button>
-        </div>
+        </footer>
     </form>
 </div>
 
 @section Scripts {
-@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-<style>
-.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
-.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
-.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
-.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
-.vf-back-btn:hover { background:var(--gray-150); }
-.vf-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
-.vf-card__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
-.vf-card__head-icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
-.vf-card__title { font-size:.9rem;font-weight:700;color:var(--text-primary);margin:0; }
-.vf-form { padding:1.5rem; }
-.vf-field { }
-.vf-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem; }
-.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
-.vf-req { color:var(--danger); }
-.vf-opt { font-size:.72rem;font-weight:600;background:var(--gold-50);color:var(--gold);padding:.1em .5em;border-radius:2rem;vertical-align:middle; }
-.vf-hint { display:block;font-size:.75rem;color:var(--text-muted);margin-top:.3rem; }
-.vf-input,.vf-select,.vf-textarea { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
-.vf-input:focus,.vf-select:focus,.vf-textarea:focus { outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-50); }
-.vf-select { appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23887f74' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:left .6rem center;background-size:13px;padding-inline-start:1.9rem; }
-.vf-textarea { resize:vertical; }
-.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
-.vf-form__footer { display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border-light); }
-.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
-.vf-cancel:hover { background:var(--gray-150); }
-.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
-.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px); }
-.vf-submit--gold { background:var(--gold); }
-.vf-submit--gold:hover { background:var(--gold-hover);box-shadow:0 4px 12px rgba(176,128,64,.3); }
-</style>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

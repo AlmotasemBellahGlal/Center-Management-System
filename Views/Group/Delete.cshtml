@@ -1,62 +1,56 @@
-﻿@model Center_Management.Models.Group
+@model Center_Management.Models.Group
 @{
     ViewData["Title"] = "حذف المجموعة";
 }
 
-<div class="vd-wrap">
-    <div class="vd-icon"><i class="fas fa-exclamation-triangle"></i></div>
-    <h1 class="vd-title">تأكيد حذف المجموعة</h1>
-    <p class="vd-text">هذه العملية لا يمكن التراجع عنها. سيتم حذف المجموعة وجميع البيانات المرتبطة بها.</p>
+<section class="card group-delete-page" aria-labelledby="groupDeleteTitle">
+    <div class="group-delete-page__header">
+        <span class="group-delete-page__icon"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
+        <span class="badge badge-danger">إجراء نهائي</span>
+        <h1 id="groupDeleteTitle">تأكيد حذف المجموعة</h1>
+        <p>راجع بيانات المجموعة جيدًا. لا يمكن التراجع عن الحذف بعد تأكيده.</p>
+    </div>
 
-    <div class="vd-info-box">
-        <div class="vd-info-row">
-            <span class="vd-info-label">اسم المجموعة</span>
-            <span class="vd-info-value">@Model.Name</span>
+    <div class="group-delete-page__summary">
+        <div class="group-delete-page__summary-row">
+            <span><i class="fas fa-user-group" aria-hidden="true"></i> اسم المجموعة</span>
+            <strong>@Model.Name</strong>
         </div>
-        <div class="vd-info-row">
-            <span class="vd-info-label">السنة الدراسية</span>
-            <span class="vd-info-value">@(Model.AcademicYear?.Name ?? "—")</span>
+        <div class="group-delete-page__summary-row">
+            <span><i class="fas fa-graduation-cap" aria-hidden="true"></i> السنة الدراسية</span>
+            <strong>@(Model.AcademicYear?.Name ?? "—")</strong>
         </div>
         @if (Model.Schedules != null && Model.Schedules.Any())
         {
-            <div class="vd-info-row">
-                <span class="vd-info-label">الجدول</span>
-                <span class="vd-info-value">
+            <div class="group-delete-page__summary-row group-delete-page__summary-row--schedule">
+                <span><i class="fas fa-calendar-week" aria-hidden="true"></i> الجدول</span>
+                <div class="group-schedule-chip-list">
                     @foreach (var s in Model.Schedules)
                     {
-                        <span class="vd-chip">@s.Day — @s.StartTime.ToString(@"hh\:mm")</span>
+                        <span class="group-schedule-chip">
+                            <strong>@s.Day</strong>
+                            <span><i class="fas fa-clock" aria-hidden="true"></i> <time dir="ltr">@s.StartTime.ToString(@"hh\:mm")</time></span>
+                        </span>
                     }
-                </span>
+                </div>
             </div>
         }
     </div>
 
-    <div class="vd-actions">
-        <a asp-controller="AcadimicYear" asp-action="Details" asp-route-id="@Model.AcademicYearId" class="vd-btn vd-btn--ghost">
-            <i class="fas fa-times"></i> إلغاء
+    <div class="group-delete-page__notice">
+        <i class="fas fa-circle-info" aria-hidden="true"></i>
+        <span>سيتم حذف المجموعة وجميع البيانات المرتبطة بها وفق قواعد النظام الحالية.</span>
+    </div>
+
+    <div class="group-delete-page__actions">
+        <a asp-controller="AcadimicYear" asp-action="Details" asp-route-id="@Model.AcademicYearId" class="btn btn-neutral">
+            <i class="fas fa-arrow-right" aria-hidden="true"></i> إلغاء والعودة
         </a>
-        <form asp-action="Delete" method="post" style="display:inline">
+        <form asp-action="Delete" method="post">
             <input type="hidden" asp-for="Id" />
-            <button type="submit" class="vd-btn vd-btn--danger"><i class="fas fa-trash"></i> نعم، احذف المجموعة</button>
+            <button type="submit" class="btn btn-danger btn-lg">
+                <i class="fas fa-trash-can" aria-hidden="true"></i> نعم، احذف المجموعة
+            </button>
         </form>
     </div>
-</div>
-
-@section Scripts {
-<style>
-.vd-wrap { max-width:480px;margin:2rem auto;text-align:center; }
-.vd-icon { font-size:3rem;color:var(--danger);margin-bottom:1rem; }
-.vd-title { font-size:1.3rem;font-weight:700;color:var(--text-primary);margin:0 0 .75rem; }
-.vd-text { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem;line-height:1.6; }
-.vd-info-box { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.75rem;margin-bottom:1.5rem;overflow:hidden;text-align:start; }
-.vd-info-row { display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;border-bottom:1px solid var(--border-light);gap:1rem; }
-.vd-info-row:last-child { border-bottom:none; }
-.vd-info-label { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);flex-shrink:0; }
-.vd-info-value { font-size:.875rem;font-weight:600;color:var(--text-primary);display:flex;flex-wrap:wrap;gap:.3rem;justify-content:flex-end; }
-.vd-chip { display:inline-flex;align-items:center;padding:.2em .55em;background:var(--info-50);color:var(--info);border-radius:2rem;font-size:.72rem;font-weight:600; }
-.vd-actions { display:flex;justify-content:center;gap:.75rem; }
-.vd-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;border-radius:.55rem;font-size:.875rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
-.vd-btn--ghost  { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vd-btn--ghost:hover  { background:var(--gray-150); }
-.vd-btn--danger { background:var(--danger);color:#fff; } .vd-btn--danger:hover { background:var(--danger-hover);box-shadow:0 4px 12px rgba(160,53,53,.3); }
-</style>
-}
+</section>

@@ -2,106 +2,129 @@
 @{
     ViewData["Title"] = "الاختبارات — " + ViewBag.Group?.Name;
     var group = ViewBag.Group as Center_Management.Models.Group;
+    var now = DateTime.Now;
+    var activeCount = Model.Count(exam => exam.StartDate <= now && exam.EndDate >= now);
+    var upcomingCount = Model.Count(exam => exam.StartDate > now);
+    var completedCount = Model.Count(exam => exam.EndDate < now);
 }
 
-<div class="vex-top">
-    <div>
-        <h1 class="vex-title"><i class="fas fa-file-alt" style="color:var(--gold)"></i> اختبارات @group?.Name</h1>
-        <p class="vex-sub">@group?.AcademicYear?.Name</p>
-    </div>
-    <div class="vex-actions">
-        <a href="@Url.Action("Create",new{groupId=group?.Id})" class="vex-btn vex-btn--gold"><i class="fas fa-plus"></i> إنشاء اختبار</a>
-        <a href="@Url.Action("GroupPicker")" class="vex-btn vex-btn--ghost"><i class="fas fa-arrow-right"></i> رجوع</a>
-    </div>
-</div>
-
-@if (!Model.Any())
-{
-    <div class="vex-empty">
-        <div class="vex-empty__icon"><i class="fas fa-file-alt"></i></div>
-        <h3>لا توجد اختبارات بعد</h3>
-        <p>ابدأ بإنشاء أول اختبار لهذه المجموعة</p>
-        <a href="@Url.Action("Create",new{groupId=group?.Id})" class="vex-btn vex-btn--gold"><i class="fas fa-plus"></i> إنشاء اختبار</a>
-    </div>
-}
-else
-{
-    <div class="vex-grid">
-        @foreach (var exam in Model)
-        {
-            int qCount = exam.Questions?.Count ?? 0;
-            int aCount = exam.Attempts?.Count ?? 0;
-            bool isActive = exam.StartDate <= DateTime.Now && exam.EndDate >= DateTime.Now;
-            bool isPast   = exam.EndDate < DateTime.Now;
-            bool isFuture = exam.StartDate > DateTime.Now;
-            <div class="vex-card">
-                <div class="vex-card__top">
-                    <span class="vex-type @(exam.Type == Center_Management.Models.ExamType.MCQ ? "vex-type--mcq" : "vex-type--written")">
-                        <i class="fas @(exam.Type == Center_Management.Models.ExamType.MCQ ? "fa-check-circle" : "fa-pen")"></i>
-                        @(exam.Type == Center_Management.Models.ExamType.MCQ ? "اختيار من متعدد" : "أسئلة مقالية")
-                    </span>
-                    @if (isActive)
-                    { <span class="vex-status vex-status--active"><i class="fas fa-circle"></i> نشط</span> }
-                    else if (isPast)
-                    { <span class="vex-status vex-status--past">منتهي</span> }
-                    else
-                    { <span class="vex-status vex-status--future">قادم</span> }
-                </div>
-                <h3 class="vex-card__title">@exam.Title</h3>
-                @if (!string.IsNullOrEmpty(exam.Description))
-                { <p class="vex-card__desc">@exam.Description</p> }
-                <div class="vex-meta">
-                    <span><i class="fas fa-calendar-alt"></i> @exam.StartDate.ToString("dd/MM")</span>
-                    <span><i class="fas fa-calendar-check"></i> @exam.EndDate.ToString("dd/MM")</span>
-                    <span><i class="fas fa-question-circle"></i> @qCount سؤال</span>
-                    <span><i class="fas fa-users"></i> @aCount محاولة</span>
-                    @if (exam.DurationMinutes.HasValue)
-                    { <span><i class="fas fa-stopwatch"></i> @exam.DurationMinutes دقيقة</span> }
-                </div>
-                <div class="vex-card__actions">
-                    <a href="@Url.Action("Details",new{id=exam.Id})" class="vex-btn vex-btn--slate vex-btn--sm"><i class="fas fa-eye"></i> تفاصيل</a>
-                    <a href="@Url.Action("Delete",new{id=exam.Id})" class="vex-btn vex-btn--red vex-btn--sm"><i class="fas fa-trash"></i> حذف</a>
+<div class="exam-page-shell">
+    <header class="exam-page-heading">
+        <div class="exam-page-heading__content">
+            <span class="exam-page-heading__eyebrow">إدارة التقييمات</span>
+            <div class="exam-page-heading__title-row">
+                <span class="exam-page-heading__icon"><i class="fas fa-file-alt"></i></span>
+                <div>
+                    <h1 class="exam-page-heading__title">اختبارات @group?.Name</h1>
+                    <p class="exam-page-heading__subtitle">@group?.AcademicYear?.Name · أنشئ الاختبارات وتابع جاهزيتها ومحاولات الطلاب من مكان واحد.</p>
                 </div>
             </div>
-        }
-    </div>
-}
+        </div>
+        <div class="exam-page-heading__actions">
+            <a href="@Url.Action("GroupPicker")" class="btn btn-neutral"><i class="fas fa-arrow-right"></i> المجموعات</a>
+            <a href="@Url.Action("Create",new{groupId=group?.Id})" class="btn btn-primary"><i class="fas fa-plus"></i> إنشاء اختبار</a>
+        </div>
+    </header>
 
-@section Scripts {
-<style>
-.vex-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem; }
-.vex-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:.6rem; }
-.vex-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
-.vex-actions { display:flex;gap:.5rem;flex-wrap:wrap; }
-.vex-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
-.vex-btn--gold  { background:var(--gold);color:#fff; }   .vex-btn--gold:hover  { background:var(--gold-hover);box-shadow:0 4px 12px rgba(176,128,64,.3); }
-.vex-btn--ghost { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vex-btn--ghost:hover { background:var(--gray-150); }
-.vex-btn--slate { background:var(--info-50);color:var(--info); } .vex-btn--slate:hover { background:var(--info);color:#fff; }
-.vex-btn--red   { background:var(--danger-50);color:var(--danger); } .vex-btn--red:hover { background:var(--danger);color:#fff; }
-.vex-btn--sm { padding:.3rem .65rem;font-size:.75rem; }
-.vex-empty { text-align:center;padding:4rem 2rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem; }
-.vex-empty__icon { font-size:3rem;color:var(--text-disabled);margin-bottom:1rem; }
-.vex-empty h3 { font-size:1.1rem;font-weight:700;margin:0 0 .5rem; }
-.vex-empty p { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem; }
-.vex-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem; }
-.vex-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;padding:1.25rem;position:relative;overflow:hidden;transition:box-shadow .18s,transform .18s; }
-.vex-card::before { content:'';position:absolute;top:0;inset-inline-start:0;inset-inline-end:0;height:3px;background:var(--gold); }
-.vex-card:hover { box-shadow:0 4px 14px rgba(30,26,20,.09);transform:translateY(-2px); }
-.vex-card__top { display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem; }
-.vex-type { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .65em;border-radius:2rem;font-size:.75rem;font-weight:700; }
-.vex-type--mcq     { background:var(--primary-50);color:var(--primary); }
-.vex-type--written { background:var(--warning-50);color:var(--warning); }
-.vex-status { display:inline-flex;align-items:center;gap:.3rem;padding:.2em .65em;border-radius:2rem;font-size:.72rem;font-weight:700; }
-.vex-status--active { background:var(--success-50);color:var(--success); }
-.vex-status--past   { background:var(--danger-50);color:var(--danger); }
-.vex-status--future { background:var(--info-50);color:var(--info); }
-.vex-status--active i { font-size:.5rem;animation:pulse 1.5s infinite; }
-@@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-.vex-card__title { font-size:1rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem; }
-.vex-card__desc { font-size:.8125rem;color:var(--text-muted);margin:0 0 .875rem;line-height:1.5; }
-.vex-meta { display:grid;grid-template-columns:repeat(2,1fr);gap:.3rem;padding:.75rem;background:var(--bg-subtle);border-radius:.55rem;margin-bottom:.875rem; }
-.vex-meta span { font-size:.75rem;color:var(--text-secondary);display:flex;align-items:center;gap:.3rem; }
-.vex-meta i { color:var(--gold); }
-.vex-card__actions { display:flex;gap:.4rem; }
-</style>
-}
+    <section class="exam-summary-grid" aria-label="ملخص الاختبارات">
+        <article class="exam-summary-card exam-summary-card--primary">
+            <span class="exam-summary-card__icon"><i class="fas fa-file-alt"></i></span>
+            <div><strong>@Model.Count()</strong><span>إجمالي الاختبارات</span></div>
+        </article>
+        <article class="exam-summary-card exam-summary-card--success">
+            <span class="exam-summary-card__icon"><i class="fas fa-circle-play"></i></span>
+            <div><strong>@activeCount</strong><span>متاح الآن</span></div>
+        </article>
+        <article class="exam-summary-card exam-summary-card--info">
+            <span class="exam-summary-card__icon"><i class="fas fa-calendar-plus"></i></span>
+            <div><strong>@upcomingCount</strong><span>قادم</span></div>
+        </article>
+        <article class="exam-summary-card exam-summary-card--neutral">
+            <span class="exam-summary-card__icon"><i class="fas fa-check-double"></i></span>
+            <div><strong>@completedCount</strong><span>منتهي</span></div>
+        </article>
+    </section>
+
+    @if (!Model.Any())
+    {
+        <div class="card exam-empty-card">
+            <div class="empty-state">
+                <div class="empty-state__icon"><i class="fas fa-clipboard-list"></i></div>
+                <h2 class="empty-state__title">لا توجد اختبارات بعد</h2>
+                <p class="empty-state__text">ابدأ بإنشاء أول اختبار لهذه المجموعة، ثم أضف الأسئلة وراجع الإعدادات قبل موعد الإتاحة.</p>
+                <a href="@Url.Action("Create",new{groupId=group?.Id})" class="btn btn-primary"><i class="fas fa-plus"></i> إنشاء أول اختبار</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="exam-directory-grid">
+            @foreach (var exam in Model)
+            {
+                int qCount = exam.Questions?.Count ?? 0;
+                int aCount = exam.Attempts?.Count ?? 0;
+                bool isActive = exam.StartDate <= DateTime.Now && exam.EndDate >= DateTime.Now;
+                bool isPast = exam.EndDate < DateTime.Now;
+                bool isFuture = exam.StartDate > DateTime.Now;
+
+                <article class="card exam-directory-card">
+                    <div class="exam-directory-card__topline"></div>
+                    <div class="exam-directory-card__header">
+                        <span class="badge @(exam.Type == Center_Management.Models.ExamType.MCQ ? "badge-primary" : "badge-info")">
+                            <i class="fas @(exam.Type == Center_Management.Models.ExamType.MCQ ? "fa-list-check" : "fa-pen")"></i>
+                            @(exam.Type == Center_Management.Models.ExamType.MCQ ? "اختيار من متعدد" : "أسئلة مقالية")
+                        </span>
+                        @if (isActive)
+                        {
+                            <span class="badge badge-success"><i class="fas fa-circle exam-live-dot"></i> نشط</span>
+                        }
+                        else if (isPast)
+                        {
+                            <span class="badge badge-neutral"><i class="fas fa-check"></i> منتهي</span>
+                        }
+                        else if (isFuture)
+                        {
+                            <span class="badge badge-info"><i class="fas fa-clock"></i> قادم</span>
+                        }
+                    </div>
+
+                    <div class="exam-directory-card__body">
+                        <h2 class="exam-directory-card__title">@exam.Title</h2>
+                        @if (!string.IsNullOrEmpty(exam.Description))
+                        {
+                            <p class="exam-directory-card__description">@exam.Description</p>
+                        }
+                        else
+                        {
+                            <p class="exam-directory-card__description exam-directory-card__description--muted">لا يوجد وصف مضاف لهذا الاختبار.</p>
+                        }
+
+                        <div class="exam-date-window">
+                            <div><span>يفتح</span><strong><i class="far fa-calendar"></i> @exam.StartDate.ToString("dd/MM/yyyy")</strong><small>@exam.StartDate.ToString("HH:mm")</small></div>
+                            <i class="fas fa-arrow-left exam-date-window__arrow"></i>
+                            <div><span>يغلق</span><strong><i class="far fa-calendar-check"></i> @exam.EndDate.ToString("dd/MM/yyyy")</strong><small>@exam.EndDate.ToString("HH:mm")</small></div>
+                        </div>
+
+                        <div class="exam-directory-card__metrics">
+                            <span><i class="fas fa-circle-question"></i><strong>@qCount</strong> سؤال</span>
+                            <span><i class="fas fa-users"></i><strong>@aCount</strong> محاولة</span>
+                            @if (exam.DurationMinutes.HasValue)
+                            {
+                                <span><i class="fas fa-stopwatch"></i><strong>@exam.DurationMinutes</strong> دقيقة</span>
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-infinity"></i> حتى الإغلاق</span>
+                            }
+                        </div>
+                    </div>
+
+                    <footer class="exam-directory-card__footer">
+                        <a href="@Url.Action("Details",new{id=exam.Id})" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i> إدارة الاختبار</a>
+                        <a href="@Url.Action("Delete",new{id=exam.Id})" class="btn btn-ghost btn-sm exam-delete-link"><i class="far fa-trash-can"></i> حذف</a>
+                    </footer>
+                </article>
+            }
+        </div>
+    }
+</div>

@@ -8,17 +8,19 @@ namespace Center_Management.Interfaces
         void Update(T entity);
         void Delete(T entity);
 
-        Task<T?> GetByIdAsync(int id);
+        Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken);
 
-        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken);
 
         Task<IEnumerable<T>> GetAllAsync(
+            CancellationToken cancellationToken,
             params Expression<Func<T, object>>[] includes);
 
         Task<T?> GetByIdAsync(
             int id,
+            CancellationToken cancellationToken,
             params Expression<Func<T, object>>[] includes);
 
-        Task<int> SaveChangesAsync();
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
 }

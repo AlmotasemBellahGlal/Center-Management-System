@@ -4,10 +4,10 @@ namespace Center_Management.Interfaces
 {
     public interface IMatrialRepository : IGenericRepository<Matrial>
     {
-        Task<IEnumerable<Matrial>> GetAllWithDetailsAsync();
-        Task<Matrial?> GetByIdWithDetailsAsync(int id);
-        Task<bool> IsStudentEnrolledAsync(int studentId, int academicYearId);
-        Task<AppUser?> GetCurrentUserWithStudentAsync(System.Security.Claims.ClaimsPrincipal user);
-        Task<List<int>> GetStudentAcademicYearIdsAsync(int studentId);
+        Task<IEnumerable<Matrial>> GetAllWithDetailsAsync(CancellationToken cancellationToken);
+        Task<Matrial?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken);
+        Task<bool> IsStudentEnrolledAsync(int studentId, int academicYearId, CancellationToken cancellationToken);
+        Task<AppUser?> GetCurrentUserWithStudentAsync(System.Security.Claims.ClaimsPrincipal user, CancellationToken cancellationToken);
+        Task<List<int>> GetStudentAcademicYearIdsAsync(int studentId, CancellationToken cancellationToken);
     }
 }

@@ -28,10 +28,10 @@ namespace Center_Management.Controllers
         }
 
         // GET: StudentReport/Index?id=5
-        public async Task<IActionResult> Index(int id)
+        public async Task<IActionResult> Index(int id, CancellationToken cancellationToken)
         {
             // جلب بيانات الطالب الأساسية
-            var student = await _studentRepo.GetByIdAsync(id);
+            var student = await _studentRepo.GetByIdAsync(id, cancellationToken);
             
             if (student == null)
             {
@@ -43,7 +43,7 @@ namespace Center_Management.Controllers
                 .Where(sg => sg.StudentId == id)
                 .Include(sg => sg.Group)
                     .ThenInclude(g => g.AcademicYear)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // بناء قائمة المجموعات
             var groups = studentGroups.Select(sg => new StudentGroupInfoVM
@@ -57,7 +57,7 @@ namespace Center_Management.Controllers
             // جلب جميع سجلات الحضور للطالب عبر جميع المجموعات
             var attendances = await _context.Attendences
                 .Where(a => a.StudentId == id)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // حساب ملخص الحضور
             int totalAttendances = attendances.Count;
@@ -68,7 +68,7 @@ namespace Center_Management.Controllers
                 : (int)Math.Round((double)presentCount / totalAttendances * 100);
 
             // جلب جميع المدفوعات للطالب
-            var payments = await _paymentRepo.GetStudentPaymentsAsync(id);
+            var payments = await _paymentRepo.GetStudentPaymentsAsync(id, cancellationToken);
             var paymentRecords = payments.Select(p => new PaymentRecordVM
             {
                 GroupName = p.Group?.Name ?? "غير محدد",

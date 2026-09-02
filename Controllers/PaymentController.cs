@@ -17,7 +17,7 @@ namespace Center_Management.Controllers
         }
 
         // GET: Payment/Groups — group picker page
-        public async Task<IActionResult> Groups()
+        public async Task<IActionResult> Groups(CancellationToken cancellationToken)
         {
             var groups = await _context.Groups
                 .Include(g => g.AcademicYear)
@@ -26,13 +26,13 @@ namespace Center_Management.Controllers
                 .Include(g => g.StudentGroups)
                 .OrderBy(g => g.AcademicYear!.Name)
                 .ThenBy(g => g.Name)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return View(groups);
         }
 
         // GET: Payment/Index?groupId=5&month=6&year=2025
-        public async Task<IActionResult> Index(int groupId, int? month = null, int? year = null)
+        public async Task<IActionResult> Index(int groupId, int? month = null, int? year = null, CancellationToken cancellationToken = default)
         {
             var selectedMonth = month ?? DateTime.Now.Month;
             var selectedYear = year ?? DateTime.Now.Year;
@@ -41,7 +41,7 @@ namespace Center_Management.Controllers
             var group = await _context.Groups
                 .Include(g => g.AcademicYear)
                      
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
 
             if (group == null)
                 return NotFound();
@@ -52,12 +52,12 @@ namespace Center_Management.Controllers
                 .Include(sg => sg.Student)
                 .Select(sg => sg.Student!)
                 .OrderBy(s => s.FullName)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // جلب المدفوعات الموجودة
             var payments = await _context.Payments
                 .Where(p => p.GroupId == groupId && p.Month == selectedMonth && p.Year == selectedYear)
-                .ToDictionaryAsync(p => p.StudentId, p => p.IsPaid);
+                .ToDictionaryAsync(p => p.StudentId, p => p.IsPaid, cancellationToken);
 
             var monthlyPrice = group.AcademicYear?.MonthlyPrice ?? 0;
 
@@ -84,12 +84,12 @@ namespace Center_Management.Controllers
 
         // POST: Payment/TogglePayment - AJAX
         [HttpPost]
-        public async Task<IActionResult> TogglePayment([FromBody] PaymentToggleRequest req)
+        public async Task<IActionResult> TogglePayment([FromBody] PaymentToggleRequest req, CancellationToken cancellationToken)
         {
             try
             {
                 var isActive = await _context.StudentGroups
-                    .AnyAsync(sg => sg.StudentId == req.StudentId && sg.GroupId == req.GroupId && sg.IsActive);
+                    .AnyAsync(sg => sg.StudentId == req.StudentId && sg.GroupId == req.GroupId && sg.IsActive, cancellationToken);
 
                 if (!isActive)
                     return Ok(new { success = false, message = "الطالب غير نشط في هذه المجموعة" });
@@ -98,7 +98,7 @@ namespace Center_Management.Controllers
                     .FirstOrDefaultAsync(p => p.StudentId == req.StudentId
                                            && p.GroupId == req.GroupId
                                            && p.Month == req.Month
-                                           && p.Year == req.Year);
+                                           && p.Year == req.Year, cancellationToken);
 
                 if (existing != null)
                 {
@@ -119,10 +119,10 @@ namespace Center_Management.Controllers
                     });
                 }
 
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return Ok(new { success = false, message = "حدث خطأ: " + ex.Message });
             }
@@ -130,14 +130,14 @@ namespace Center_Management.Controllers
 
         // POST: Payment/BulkPayment - AJAX
         [HttpPost]
-        public async Task<IActionResult> BulkPayment([FromBody] BulkPaymentRequest req)
+        public async Task<IActionResult> BulkPayment([FromBody] BulkPaymentRequest req, CancellationToken cancellationToken)
         {
             try
             {
                 var activeStudentIds = await _context.StudentGroups
                     .Where(sg => sg.GroupId == req.GroupId && sg.IsActive)
                     .Select(sg => sg.StudentId)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 foreach (var studentId in activeStudentIds)
                 {
@@ -145,7 +145,7 @@ namespace Center_Management.Controllers
                         .FirstOrDefaultAsync(p => p.StudentId == studentId
                                                && p.GroupId == req.GroupId
                                                && p.Month == req.Month
-                                               && p.Year == req.Year);
+                                               && p.Year == req.Year, cancellationToken);
 
                     if (existing != null)
                     {
@@ -167,10 +167,10 @@ namespace Center_Management.Controllers
                     }
                 }
 
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 return Ok(new { success = false, message = "حدث خطأ: " + ex.Message });
             }

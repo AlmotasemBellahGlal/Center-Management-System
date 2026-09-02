@@ -27,10 +27,10 @@ namespace Center_Management.Controllers
 
         // GET: Material/Index
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             // جلب جميع المواد مع التفاصيل مرتبة حسب AcademicYear
-            var materials = await _matrialRepo.GetAllWithDetailsAsync();
+            var materials = await _matrialRepo.GetAllWithDetailsAsync(cancellationToken);
 
             // تجميع المواد حسب AcademicYear فقط (بدون Subject)
             var groupedMaterials = materials
@@ -54,11 +54,11 @@ namespace Center_Management.Controllers
 
         // GET: Material/Create
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
             var vm = new CreateMaterialVM
             {
-                AcademicYears = (await _academicYearRepo.GetAllAsync()).ToList()
+                AcademicYears = (await _academicYearRepo.GetAllAsync(cancellationToken)).ToList()
             };
 
             return View(vm);
@@ -68,7 +68,7 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Create(CreateMaterialVM vm)
+        public async Task<IActionResult> Create(CreateMaterialVM vm, CancellationToken cancellationToken)
         {
             // Custom validation for file upload
             if (vm.IsLocalFile)
@@ -109,7 +109,7 @@ namespace Center_Management.Controllers
 
             if (!ModelState.IsValid)
             {
-                return await ReloadCreateViewModel(vm);
+                return await ReloadCreateViewModel(vm, cancellationToken);
             }
 
             try
@@ -118,7 +118,7 @@ namespace Center_Management.Controllers
                 if (vm.Type != MaterialType.PDF && vm.Type != MaterialType.Video)
                 {
                     ModelState.AddModelError("Type", "النوع المحدد غير مدعوم، يرجى اختيار PDF أو Video");
-                    return await ReloadCreateViewModel(vm);
+                    return await ReloadCreateViewModel(vm, cancellationToken);
                 }
 
                 string fileUrl = vm.FileUrl;
@@ -142,16 +142,16 @@ namespace Center_Management.Controllers
                         // Save the file
                         using (var stream = new FileStream(filePath, FileMode.Create))
                         {
-                            await vm.LocalFile.CopyToAsync(stream);
+                            await vm.LocalFile.CopyToAsync(stream, cancellationToken);
                         }
 
                         // Set the file URL to the uploaded file path
                         fileUrl = $"/uploads/materials/{fileName}";
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
                     {
                         ModelState.AddModelError("LocalFile", "حدث خطأ أثناء رفع الملف: " + ex.Message);
-                        return await ReloadCreateViewModel(vm);
+                        return await ReloadCreateViewModel(vm, cancellationToken);
                     }
                 }
 
@@ -166,23 +166,23 @@ namespace Center_Management.Controllers
 
                 // حفظ المادة
                 _matrialRepo.Add(material);
-                await _matrialRepo.SaveChangesAsync();
+                await _matrialRepo.SaveChangesAsync(cancellationToken);
 
                 TempData["SuccessMessage"] = "تم إضافة المادة التعليمية بنجاح";
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 ModelState.AddModelError("", "حدث خطأ أثناء حفظ البيانات: " + ex.Message);
-                return await ReloadCreateViewModel(vm);
+                return await ReloadCreateViewModel(vm, cancellationToken);
             }
         }
 
         // GET: Material/Delete?id=3
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var material = await _matrialRepo.GetByIdWithDetailsAsync(id);
+            var material = await _matrialRepo.GetByIdWithDetailsAsync(id, cancellationToken);
             
             if (material == null)
             {
@@ -196,9 +196,9 @@ namespace Center_Management.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Teacher,Admin")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
         {
-            var material = await _matrialRepo.GetByIdAsync(id);
+            var material = await _matrialRepo.GetByIdAsync(id, cancellationToken);
             
             if (material == null)
             {
@@ -208,12 +208,12 @@ namespace Center_Management.Controllers
             try
             {
                 _matrialRepo.Delete(material);
-                await _matrialRepo.SaveChangesAsync();
+                await _matrialRepo.SaveChangesAsync(cancellationToken);
 
                 TempData["SuccessMessage"] = "تم حذف المادة التعليمية بنجاح";
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 TempData["ErrorMessage"] = "حدث خطأ أثناء حذف المادة: " + ex.Message;
                 return RedirectToAction(nameof(Index));
@@ -222,10 +222,10 @@ namespace Center_Management.Controllers
 
         // GET: Material/StudentView - للطلاب فقط
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> StudentView()
+        public async Task<IActionResult> StudentView(CancellationToken cancellationToken)
         {
             // الحصول على معرّف الطالب من المستخدم الحالي
-            var user = await _matrialRepo.GetCurrentUserWithStudentAsync(User);
+            var user = await _matrialRepo.GetCurrentUserWithStudentAsync(User, cancellationToken);
             if (user?.StudentId == null)
             {
                 return RedirectToAction("AccessDenied", "Account");
@@ -234,7 +234,7 @@ namespace Center_Management.Controllers
             int studentId = user.StudentId.Value;
 
             // جلب السنوات الدراسية للطالب (من مجموعاته النشطة)
-            var academicYearIds = await _matrialRepo.GetStudentAcademicYearIdsAsync(studentId);
+            var academicYearIds = await _matrialRepo.GetStudentAcademicYearIdsAsync(studentId, cancellationToken);
 
             if (!academicYearIds.Any())
             {
@@ -243,7 +243,7 @@ namespace Center_Management.Controllers
             }
 
             // جلب جميع المواد للسنوات الدراسية الخاصة بالطالب
-            var allMaterials = await _matrialRepo.GetAllWithDetailsAsync();
+            var allMaterials = await _matrialRepo.GetAllWithDetailsAsync(cancellationToken);
             var materials = allMaterials
                 .Where(m => academicYearIds.Contains(m.AcademicYearId))
                 .ToList();
@@ -261,9 +261,9 @@ namespace Center_Management.Controllers
             return View(groupedMaterials);
         }
 
-        private async Task<IActionResult> ReloadCreateViewModel(CreateMaterialVM vm)
+        private async Task<IActionResult> ReloadCreateViewModel(CreateMaterialVM vm, CancellationToken cancellationToken)
         {
-            vm.AcademicYears = (await _academicYearRepo.GetAllAsync()).ToList();
+            vm.AcademicYears = (await _academicYearRepo.GetAllAsync(cancellationToken)).ToList();
             return View(vm);
         }
     }

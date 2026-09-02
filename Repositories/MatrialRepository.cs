@@ -20,22 +20,22 @@ namespace Center_Management.Repositories
         /// Retrieves all materials with their related AcademicYear details,
         /// ordered by AcademicYear.Name.
         /// </summary>
-        public async Task<IEnumerable<Matrial>> GetAllWithDetailsAsync()
+        public async Task<IEnumerable<Matrial>> GetAllWithDetailsAsync(CancellationToken cancellationToken)
         {
             return await ctx.Matrials
                 .Include(m => m.AcademicYear)
                 .OrderBy(m => m.AcademicYear!.Name)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
         /// <summary>
         /// Retrieves a single material by ID with its related AcademicYear details.
         /// </summary>
-        public async Task<Matrial?> GetByIdWithDetailsAsync(int id)
+        public async Task<Matrial?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken)
         {
             return await ctx.Matrials
                 .Include(m => m.AcademicYear)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
         }
 
         /// <summary>
@@ -43,37 +43,37 @@ namespace Center_Management.Repositories
         /// A student is considered enrolled if they have a StudentGroup record with IsActive = true
         /// in any group belonging to the specified AcademicYear.
         /// </summary>
-        public async Task<bool> IsStudentEnrolledAsync(int studentId, int academicYearId)
+        public async Task<bool> IsStudentEnrolledAsync(int studentId, int academicYearId, CancellationToken cancellationToken)
         {
             return await ctx.StudentGroups
                 .Include(sg => sg.Group)
                 .AnyAsync(sg => sg.StudentId == studentId
                              && sg.Group.AcademicYearId == academicYearId
-                             && sg.IsActive);
+                             && sg.IsActive, cancellationToken);
         }
 
         /// <summary>
         /// Gets the current user with their Student relationship loaded.
         /// </summary>
-        public async Task<AppUser?> GetCurrentUserWithStudentAsync(ClaimsPrincipal user)
+        public async Task<AppUser?> GetCurrentUserWithStudentAsync(ClaimsPrincipal user, CancellationToken cancellationToken)
         {
             return await _userManager.Users
                 .Include(u => u.Student)
-                .FirstOrDefaultAsync(u => u.UserName == user.Identity!.Name);
+                .FirstOrDefaultAsync(u => u.UserName == user.Identity!.Name, cancellationToken);
         }
 
         /// <summary>
         /// Gets all AcademicYear IDs for a student's active groups.
         /// Used to filter materials for student view.
         /// </summary>
-        public async Task<List<int>> GetStudentAcademicYearIdsAsync(int studentId)
+        public async Task<List<int>> GetStudentAcademicYearIdsAsync(int studentId, CancellationToken cancellationToken)
         {
             return await ctx.StudentGroups
                 .Where(sg => sg.StudentId == studentId && sg.IsActive)
                 .Include(sg => sg.Group)
                 .Select(sg => sg.Group.AcademicYearId)
                 .Distinct()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
     }
 }

@@ -4,43 +4,26 @@
     int qCount = Model.Questions?.Count ?? 0;
 }
 
-<div class="vd-wrap">
-    <div class="vd-icon"><i class="fas fa-exclamation-triangle"></i></div>
-    <h1 class="vd-title">تأكيد حذف الاختبار</h1>
-    <p class="vd-text">هذه العملية لا يمكن التراجع عنها. سيتم حذف الاختبار وجميع أسئلته ومحاولات الطلاب نهائياً.</p>
+<div class="exam-page-shell exam-delete-page">
+    <section class="card exam-delete-card">
+        <div class="exam-delete-card__warning-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <span class="exam-delete-card__eyebrow">إجراء نهائي</span>
+        <h1>تأكيد حذف الاختبار</h1>
+        <p>هذه العملية لا يمكن التراجع عنها. سيتم حذف الاختبار وجميع أسئلته ومحاولات الطلاب نهائياً.</p>
 
-    <div class="vd-info-box">
-        <div class="vd-info-row"><span class="vd-info-label">العنوان</span><span class="vd-info-value">@Model.Title</span></div>
-        <div class="vd-info-row"><span class="vd-info-label">المجموعة</span><span class="vd-info-value">@Model.Group?.Name</span></div>
-        <div class="vd-info-row"><span class="vd-info-label">النوع</span>
-            <span class="vd-info-value">@(Model.Type == Center_Management.Models.ExamType.MCQ ? "اختيار من متعدد" : "مقالي")</span>
+        <div class="exam-delete-summary">
+            <div><span>العنوان</span><strong>@Model.Title</strong></div>
+            <div><span>المجموعة</span><strong>@Model.Group?.Name</strong></div>
+            <div><span>النوع</span><strong>@(Model.Type == Center_Management.Models.ExamType.MCQ ? "اختيار من متعدد" : "مقالي")</strong></div>
+            <div><span>عدد الأسئلة</span><strong>@qCount سؤال</strong></div>
         </div>
-        <div class="vd-info-row"><span class="vd-info-label">عدد الأسئلة</span><span class="vd-info-value">@qCount سؤال</span></div>
-    </div>
 
-    <div class="vd-actions">
-        <a href="@Url.Action("Index",new{groupId=Model.GroupId})" class="vd-btn vd-btn--ghost"><i class="fas fa-times"></i> إلغاء</a>
-        <form method="post" asp-action="Delete" asp-route-id="@Model.Id" style="display:inline">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="vd-btn vd-btn--danger"><i class="fas fa-trash"></i> نعم، احذف الاختبار</button>
-        </form>
-    </div>
+        <div class="exam-delete-card__actions">
+            <a href="@Url.Action("Index",new{groupId=Model.GroupId})" class="btn btn-neutral"><i class="fas fa-arrow-right"></i> إلغاء والرجوع</a>
+            <form method="post" asp-action="Delete" asp-route-id="@Model.Id">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger"><i class="far fa-trash-can"></i> نعم، احذف الاختبار</button>
+            </form>
+        </div>
+    </section>
 </div>
-
-@section Scripts {
-<style>
-.vd-wrap { max-width:480px;margin:2rem auto;text-align:center; }
-.vd-icon { font-size:3rem;color:var(--danger);margin-bottom:1rem; }
-.vd-title { font-size:1.3rem;font-weight:700;color:var(--text-primary);margin:0 0 .75rem; }
-.vd-text { font-size:.875rem;color:var(--text-muted);margin:0 0 1.5rem;line-height:1.6; }
-.vd-info-box { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.75rem;margin-bottom:1.5rem;overflow:hidden;text-align:start; }
-.vd-info-row { display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;border-bottom:1px solid var(--border-light);gap:1rem; }
-.vd-info-row:last-child { border-bottom:none; }
-.vd-info-label { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);flex-shrink:0; }
-.vd-info-value { font-size:.875rem;font-weight:600;color:var(--text-primary); }
-.vd-actions { display:flex;justify-content:center;gap:.75rem; }
-.vd-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;border-radius:.55rem;font-size:.875rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.14s; }
-.vd-btn--ghost  { background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border); } .vd-btn--ghost:hover  { background:var(--gray-150); }
-.vd-btn--danger { background:var(--danger);color:#fff; } .vd-btn--danger:hover { background:var(--danger-hover);box-shadow:0 4px 12px rgba(160,53,53,.3); }
-</style>
-}

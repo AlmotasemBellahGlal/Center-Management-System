@@ -28,14 +28,14 @@ namespace Center_Management.Controllers
         }
 
         // GET: Admin/Users
-        public async Task<IActionResult> Users()
+        public async Task<IActionResult> Users(CancellationToken cancellationToken)
         {
             try
             {
                 var users = await _userManager.Users
                     .Include(u => u.Student)
                     .OrderBy(u => u.FullName)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 var userViewModels = new List<UserManagementVM>();
 
@@ -55,7 +55,7 @@ namespace Center_Management.Controllers
 
                 return View(userViewModels);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 TempData["Error"] = $"حدث خطأ: {ex.Message}";
                 return View(new List<UserManagementVM>());
@@ -71,7 +71,7 @@ namespace Center_Management.Controllers
         // POST: Admin/CreateTeacher
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateTeacher(CreateTeacherVM vm)
+        public async Task<IActionResult> CreateTeacher(CreateTeacherVM vm, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return View(vm);
@@ -120,7 +120,7 @@ namespace Center_Management.Controllers
         }
 
         // GET: Admin/DeleteUser?id=xxx
-        public async Task<IActionResult> DeleteUser(string id)
+        public async Task<IActionResult> DeleteUser(string id, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
@@ -152,7 +152,7 @@ namespace Center_Management.Controllers
         // POST: Admin/DeleteUserConfirmed
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteUserConfirmed(string id)
+        public async Task<IActionResult> DeleteUserConfirmed(string id, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)

@@ -17,7 +17,7 @@ namespace Center_Management.Controllers
         }
 
         // GET: Dashboard/Index
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
             var currentMonth = now.Month;
@@ -28,7 +28,7 @@ namespace Center_Management.Controllers
                 .Where(sg => sg.IsActive)
                 .Select(sg => sg.StudentId)
                 .Distinct()
-                .CountAsync();
+                .CountAsync(cancellationToken);
 
             // 2. عدد الطلاب غير المدفوعين للشهر الحالي
             // جلب IDs الطلاب المدفوعين
@@ -36,22 +36,22 @@ namespace Center_Management.Controllers
                 .Where(p => p.Month == currentMonth && p.Year == currentYear && p.IsPaid)
                 .Select(p => p.StudentId)
                 .Distinct()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // حساب الطلاب النشطين غير المدفوعين
             int unpaidCount = await _context.StudentGroups
                 .Where(sg => sg.IsActive && !paidStudentIds.Contains(sg.StudentId))
                 .Select(sg => sg.StudentId)
                 .Distinct()
-                .CountAsync();
+                .CountAsync(cancellationToken);
 
             // 3. إيراد الشهر الحالي
             decimal monthlyRevenue = await _context.Payments
                 .Where(p => p.Month == currentMonth && p.Year == currentYear && p.IsPaid)
-                .SumAsync(p => p.Amount);
+                .SumAsync(p => p.Amount, cancellationToken);
 
             // 4. بيانات آخر 12 شهر للرسم البياني
-            var monthlyEnrollments = await GenerateMonthlyEnrollments();
+            var monthlyEnrollments = await GenerateMonthlyEnrollments(cancellationToken);
 
             // 5. حساب نسبة النمو
             var currentMonthEnrollments = monthlyEnrollments
@@ -79,7 +79,7 @@ namespace Center_Management.Controllers
         /// <summary>
         /// توليد بيانات التسجيلات الشهرية لآخر 12 شهر
         /// </summary>
-        private async Task<List<MonthlyEnrollmentData>> GenerateMonthlyEnrollments()
+        private async Task<List<MonthlyEnrollmentData>> GenerateMonthlyEnrollments(CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
             var monthlyData = new List<MonthlyEnrollmentData>();
@@ -94,7 +94,7 @@ namespace Center_Management.Controllers
                 // حساب عدد التسجيلات الجديدة في هذا الشهر
                 var count = await _context.StudentGroups
                     .Where(sg => sg.EnrollmentDate.Year == year && sg.EnrollmentDate.Month == month)
-                    .CountAsync();
+                    .CountAsync(cancellationToken);
 
                 monthlyData.Add(new MonthlyEnrollmentData
                 {

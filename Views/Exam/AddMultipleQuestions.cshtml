@@ -4,73 +4,75 @@
     ViewData["Title"] = "إضافة أسئلة متعددة";
 }
 
-<div class="vf-top">
-    <div>
-        <h1 class="vf-title">إضافة أسئلة متعددة</h1>
-        <p class="vf-sub">@exam?.Title</p>
+<div class="exam-page-shell exam-form-page">
+    <header class="exam-page-heading exam-page-heading--compact">
+        <div class="exam-page-heading__content">
+            <span class="exam-page-heading__eyebrow">بناء بنك الأسئلة</span>
+            <div class="exam-page-heading__title-row">
+                <span class="exam-page-heading__icon"><i class="fas fa-layer-group"></i></span>
+                <div>
+                    <h1 class="exam-page-heading__title">إضافة أسئلة متعددة</h1>
+                    <p class="exam-page-heading__subtitle">@exam?.Title</p>
+                </div>
+            </div>
+        </div>
+        <a asp-action="Details" asp-route-id="@Model.ExamId" class="btn btn-neutral"><i class="fas fa-arrow-right"></i> رجوع للتفاصيل</a>
+    </header>
+
+    <nav class="exam-stepper" aria-label="خطوات إضافة الأسئلة">
+        <div class="exam-stepper__item exam-stepper__item--active"><span>1</span><div><strong>تحديد العدد</strong><small>اختر عدد الأسئلة</small></div></div>
+        <i class="fas fa-arrow-left"></i>
+        <div class="exam-stepper__item"><span>2</span><div><strong>إدخال المحتوى</strong><small>النص والاختيارات</small></div></div>
+        <i class="fas fa-arrow-left"></i>
+        <div class="exam-stepper__item"><span>3</span><div><strong>الحفظ</strong><small>إضافة للاختبار</small></div></div>
+    </nav>
+
+    <div class="exam-form-layout exam-form-layout--narrow">
+        <main class="exam-form-layout__main">
+            <section class="card exam-form-section exam-count-form-card">
+                <header class="card-header">
+                    <span class="card-header-icon"><i class="fas fa-list-ol"></i></span>
+                    <div><h2 class="card-title">كم سؤالاً تريد إضافته؟</h2><p>سيتم إنشاء نموذج مستقل وواضح لكل سؤال.</p></div>
+                </header>
+                <form asp-action="GenerateQuestionsForm" method="post" class="card-body exam-count-form">
+                    <input type="hidden" asp-for="ExamId" />
+                    <div asp-validation-summary="ModelOnly" class="exam-validation-summary" role="alert"></div>
+
+                    <div class="exam-count-picker">
+                        <label asp-for="QuestionCount" class="exam-field__label">عدد الأسئلة <span>*</span></label>
+                        <div class="exam-count-picker__control">
+                            <i class="fas fa-circle-question"></i>
+                            <input asp-for="QuestionCount" class="form-control" type="number" min="1" max="50" placeholder="مثال: 10" />
+                            <span>سؤال</span>
+                        </div>
+                        <span asp-validation-for="QuestionCount" class="exam-field__error"></span>
+                        <small class="exam-field__hint">يمكنك إضافة من 1 إلى 50 سؤالاً في المرة الواحدة.</small>
+                    </div>
+
+                    <footer class="exam-count-form__actions">
+                        <a asp-action="Details" asp-route-id="@Model.ExamId" class="btn btn-neutral"><i class="fas fa-times"></i> إلغاء</a>
+                        <button type="submit" class="btn btn-primary btn-lg"><span>التالي: إدخال الأسئلة</span><i class="fas fa-arrow-left"></i></button>
+                    </footer>
+                </form>
+            </section>
+        </main>
+
+        <aside class="exam-form-layout__aside">
+            <section class="card exam-context-card exam-context-card--details">
+                <span class="exam-context-card__icon"><i class="fas fa-file-alt"></i></span>
+                <small>الاختبار</small>
+                <strong>@exam?.Title</strong>
+                <span>@exam?.Group?.Name</span>
+                <div class="exam-context-card__stat"><span>الأسئلة الحالية</span><strong>@exam?.Questions?.Count</strong></div>
+            </section>
+            <section class="card exam-tip-card">
+                <i class="fas fa-circle-info"></i>
+                <div><strong>نصيحة تنظيمية</strong><p>ابدأ بعدد مناسب لتسهيل المراجعة، ويمكنك إضافة دفعات أخرى لاحقاً.</p></div>
+            </section>
+        </aside>
     </div>
-    <a asp-action="Details" asp-route-id="@Model.ExamId" class="vf-back-btn"><i class="fas fa-arrow-right"></i> رجوع</a>
-</div>
-
-<div class="vf-card">
-    <div class="vf-card__head">
-        <div class="vf-card__head-icon" style="background:var(--gold-50);color:var(--gold)"><i class="fas fa-layer-group"></i></div>
-        <h2 class="vf-card__title">كم سؤالاً تريد إضافته؟</h2>
-    </div>
-    <form asp-action="GenerateQuestionsForm" method="post" class="vf-form">
-        <input type="hidden" asp-for="ExamId" />
-        <div asp-validation-summary="ModelOnly" class="vf-errors"></div>
-
-        <div class="vf-field" style="max-width:320px">
-            <label asp-for="QuestionCount" class="vf-label">عدد الأسئلة <span class="vf-req">*</span></label>
-            <input asp-for="QuestionCount" class="vf-input" type="number" min="1" max="50" placeholder="مثال: 10" />
-            <span asp-validation-for="QuestionCount" class="vf-err"></span>
-            <span class="vf-hint">يمكنك إضافة من 1 إلى 50 سؤال في المرة الواحدة</span>
-        </div>
-
-        <div class="vf-exam-info">
-            <div class="vf-exam-info__item"><span>الاختبار</span> <strong>@exam?.Title</strong></div>
-            <div class="vf-exam-info__item"><span>المجموعة</span> <strong>@exam?.Group?.Name</strong></div>
-            <div class="vf-exam-info__item"><span>الأسئلة الحالية</span> <strong>@exam?.Questions?.Count</strong></div>
-        </div>
-
-        <div class="vf-form__footer">
-            <a asp-action="Details" asp-route-id="@Model.ExamId" class="vf-cancel"><i class="fas fa-times"></i> إلغاء</a>
-            <button type="submit" class="vf-submit vf-submit--gold"><i class="fas fa-arrow-left"></i> التالي — إدخال الأسئلة</button>
-        </div>
-    </form>
 </div>
 
 @section Scripts {
-<partial name="_ValidationScriptsPartial" />
-<style>
-.vf-top { display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap; }
-.vf-title { font-size:1.4rem;font-weight:700;color:var(--text-primary);margin:0; }
-.vf-sub { font-size:.8rem;color:var(--text-muted);margin:.25rem 0 0; }
-.vf-back-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
-.vf-back-btn:hover { background:var(--gray-150); }
-.vf-errors { background:var(--danger-50);border:1px solid var(--danger-100);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.8125rem;color:var(--danger); }
-.vf-card { background:var(--bg-card);border:1px solid var(--border-light);border-radius:.85rem;overflow:hidden; }
-.vf-card__head { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border-light);background:var(--bg-subtle); }
-.vf-card__head-icon { width:36px;height:36px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0; }
-.vf-card__title { font-size:.9rem;font-weight:700;color:var(--text-primary);margin:0; }
-.vf-form { padding:1.5rem; }
-.vf-field { }
-.vf-label { display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.4rem; }
-.vf-req { color:var(--danger); }
-.vf-hint { display:block;font-size:.75rem;color:var(--text-muted);margin-top:.3rem; }
-.vf-input { display:block;width:100%;padding:.5rem .75rem;font-size:.875rem;font-family:inherit;color:var(--text-primary);background:var(--bg-card);border:1.5px solid var(--border);border-radius:.55rem;transition:border-color .14s,box-shadow .14s; }
-.vf-input:focus { outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-50); }
-.vf-err { display:block;font-size:.75rem;color:var(--danger);margin-top:.3rem; }
-.vf-exam-info { display:flex;gap:1.5rem;flex-wrap:wrap;padding:1rem 1.25rem;background:var(--bg-subtle);border:1px solid var(--border-light);border-radius:.65rem;margin-top:1.25rem; }
-.vf-exam-info__item { display:flex;align-items:center;gap:.4rem;font-size:.8125rem;color:var(--text-secondary); }
-.vf-exam-info__item strong { color:var(--text-primary); }
-.vf-form__footer { display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border-light); }
-.vf-cancel { display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:var(--gray-100);color:var(--text-secondary);border:1px solid var(--border);border-radius:.55rem;font-size:.8125rem;font-weight:600;cursor:pointer;text-decoration:none; }
-.vf-cancel:hover { background:var(--gray-150); }
-.vf-submit { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--success);color:#fff;border:none;border-radius:.55rem;font-size:.875rem;font-weight:700;cursor:pointer;transition:.14s; }
-.vf-submit:hover { background:var(--success-hover);transform:translateY(-1px); }
-.vf-submit--gold { background:var(--gold); }
-.vf-submit--gold:hover { background:var(--gold-hover);box-shadow:0 4px 12px rgba(176,128,64,.3); }
-</style>
+    <partial name="_ValidationScriptsPartial" />
 }

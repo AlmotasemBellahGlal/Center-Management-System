@@ -34,46 +34,62 @@
 
     // nav label helper
     var sectionMap = new Dictionary<string, (string Label, string Url)> {
-        {"Dashboard",   ("لوحة التحكم",      Url.Action("Index",  "Dashboard"))},
-        {"Student",     ("الطلاب",          Url.Action("Index",  "Student"))},
-        {"StudentReport",("الطلاب",         Url.Action("Index",  "Student"))},
-        {"Group",       ("المجموعات",       Url.Action("Index",  "Group"))},
-        {"AcadimicYear",("السنوات الدراسية",Url.Action("Index",  "AcadimicYear"))},
-        {"Attendance",  ("الحضور",          Url.Action("Groups", "Attendance"))},
-        {"Payment",     ("المدفوعات",       Url.Action("Groups", "Payment"))},
-        {"Session",     ("الجلسات",         Url.Action("Groups", "Attendance"))},
-        {"Material",    ("المواد التعليمية",Url.Action("Index",  "Material"))},
-        {"Exam",        ("الاختبارات",      Url.Action("GroupPicker","Exam"))},
-        {"Admin",       ("المستخدمين",      Url.Action("Users",  "Admin"))},
+        {"Dashboard",   ("لوحة التحكم",      Url.Action("Index",  "Dashboard")!)},
+        {"Student",     ("الطلاب",          Url.Action("Index",  "Student")!)},
+        {"StudentReport",("الطلاب",         Url.Action("Index",  "Student")!)},
+        {"Group",       ("المجموعات",       Url.Action("Index",  "Group")!)},
+        {"AcadimicYear",("السنوات الدراسية",Url.Action("Index",  "AcadimicYear")!)},
+        {"Attendance",  ("الحضور",          Url.Action("Groups", "Attendance")!)},
+        {"Payment",     ("المدفوعات",       Url.Action("Groups", "Payment")!)},
+        {"Session",     ("الجلسات",         Url.Action("Groups", "Attendance")!)},
+        {"Material",    ("المواد التعليمية",Url.Action("Index",  "Material")!)},
+        {"Exam",        ("الاختبارات",      Url.Action("GroupPicker","Exam")!)},
+        {"Admin",       ("المستخدمين",      Url.Action("Users",  "Admin")!)},
     };
     var pageTitle = ViewData["Title"]?.ToString() ?? "";
     var hasSection = ctrl != null && sectionMap.ContainsKey(ctrl);
-    var sectionInfo = hasSection ? sectionMap[ctrl] : (Label:"", Url:"");
+    var sectionInfo = hasSection ? sectionMap[ctrl!] : (Label:"", Url:"");
 }
+
+<a class="skip-link" href="#mainContent">تجاوز القائمة والانتقال إلى المحتوى</a>
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar" role="navigation" aria-label="القائمة الرئيسية">
     <div class="sb-header">
-        <a href="@Url.Action("Index","Dashboard")" class="sb-brand">
-            <div class="sb-brand-icon"><i class="fas fa-graduation-cap"></i></div>
-            <div>
-                <span class="sb-logo-text">@(User.IsInRole("Student") ? "منصة الطالب" : "إدارة المركز")</span>
-            </div>
-        </a>
+        <div class="sb-header__row">
+            <a href="@Url.Action("Index","Dashboard")" class="sb-brand" aria-label="الانتقال إلى لوحة التحكم">
+                <div class="sb-brand-icon"><i class="fas fa-graduation-cap" aria-hidden="true"></i></div>
+                <div class="min-w-0">
+                    <span class="sb-logo-text">@(User.IsInRole("Student") ? "منصة الطالب" : "إدارة المركز")</span>
+                    <span class="sb-logo-sub">نظام المركز التعليمي</span>
+                </div>
+            </a>
+            <button type="button" class="sb-close" id="sidebarClose" aria-label="إغلاق القائمة">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
     </div>
 
     <nav class="sb-nav">
         @if (User.IsInRole("Student"))
         {
             <span class="sb-section-label">القائمة</span>
+            <a href="@Url.Action("Index","Dashboard")"
+               class="sb-link @(ctrl=="Dashboard" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Dashboard" ? "page" : null)">
+                <i class="sb-icon fas fa-th-large" aria-hidden="true"></i>
+                <span class="sb-text">الرئيسية</span>
+            </a>
             <a href="@Url.Action("MyExams","Exam")"
-               class="sb-link @(ctrl=="Exam" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-file-alt"></i>
+               class="sb-link @(ctrl=="Exam" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Exam" ? "page" : null)">
+                <i class="sb-icon fas fa-file-alt" aria-hidden="true"></i>
                 <span class="sb-text">اختباراتي</span>
             </a>
             <a href="@Url.Action("StudentView","Material")"
-               class="sb-link @(ctrl=="Material" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-folder-open"></i>
+               class="sb-link @(ctrl=="Material" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Material" ? "page" : null)">
+                <i class="sb-icon fas fa-folder-open" aria-hidden="true"></i>
                 <span class="sb-text">المواد التعليمية</span>
             </a>
         }
@@ -81,47 +97,55 @@
         {
             <span class="sb-section-label">الرئيسية</span>
             <a href="@Url.Action("Index","Dashboard")"
-               class="sb-link @(ctrl=="Dashboard" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-th-large"></i>
+               class="sb-link @(ctrl=="Dashboard" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Dashboard" ? "page" : null)">
+                <i class="sb-icon fas fa-th-large" aria-hidden="true"></i>
                 <span class="sb-text">لوحة التحكم</span>
             </a>
 
             <span class="sb-section-label">الأكاديمي</span>
             <a href="@Url.Action("Index","Student")"
-               class="sb-link @(ctrl=="Student"||ctrl=="StudentReport" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-users"></i>
+               class="sb-link @(ctrl=="Student"||ctrl=="StudentReport" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Student"||ctrl=="StudentReport" ? "page" : null)">
+                <i class="sb-icon fas fa-users" aria-hidden="true"></i>
                 <span class="sb-text">الطلاب</span>
             </a>
             <a href="@Url.Action("Index","Group")"
-               class="sb-link @(ctrl=="Group" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-layer-group"></i>
+               class="sb-link @(ctrl=="Group" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Group" ? "page" : null)">
+                <i class="sb-icon fas fa-layer-group" aria-hidden="true"></i>
                 <span class="sb-text">المجموعات</span>
             </a>
             <a href="@Url.Action("Index","AcadimicYear")"
-               class="sb-link @(ctrl=="AcadimicYear" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-graduation-cap"></i>
+               class="sb-link @(ctrl=="AcadimicYear" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="AcadimicYear" ? "page" : null)">
+                <i class="sb-icon fas fa-graduation-cap" aria-hidden="true"></i>
                 <span class="sb-text">السنوات الدراسية</span>
             </a>
 
             <span class="sb-section-label">العمليات</span>
             <a href="@Url.Action("Groups","Attendance")"
-               class="sb-link @(ctrl=="Attendance"||ctrl=="Session" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-clipboard-check"></i>
+               class="sb-link @(ctrl=="Attendance"||ctrl=="Session" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Attendance"||ctrl=="Session" ? "page" : null)">
+                <i class="sb-icon fas fa-clipboard-check" aria-hidden="true"></i>
                 <span class="sb-text">الحضور</span>
             </a>
             <a href="@Url.Action("Groups","Payment")"
-               class="sb-link @(ctrl=="Payment" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-money-bill-wave"></i>
+               class="sb-link @(ctrl=="Payment" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Payment" ? "page" : null)">
+                <i class="sb-icon fas fa-money-bill-wave" aria-hidden="true"></i>
                 <span class="sb-text">المدفوعات</span>
             </a>
             <a href="@Url.Action("Index","Material")"
-               class="sb-link @(ctrl=="Material" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-folder-open"></i>
+               class="sb-link @(ctrl=="Material" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Material" ? "page" : null)">
+                <i class="sb-icon fas fa-folder-open" aria-hidden="true"></i>
                 <span class="sb-text">المواد التعليمية</span>
             </a>
             <a href="@Url.Action("GroupPicker","Exam")"
-               class="sb-link @(ctrl=="Exam" ? "sb-link--active" : "")">
-                <i class="sb-icon fas fa-file-alt"></i>
+               class="sb-link @(ctrl=="Exam" ? "sb-link--active" : "")"
+               aria-current="@(ctrl=="Exam" ? "page" : null)">
+                <i class="sb-icon fas fa-file-alt" aria-hidden="true"></i>
                 <span class="sb-text">الاختبارات</span>
             </a>
 
@@ -129,8 +153,9 @@
             {
                 <span class="sb-section-label">الإدارة</span>
                 <a href="@Url.Action("Users","Admin")"
-                   class="sb-link @(ctrl=="Admin" ? "sb-link--active" : "")">
-                    <i class="sb-icon fas fa-users-cog"></i>
+                   class="sb-link @(ctrl=="Admin" ? "sb-link--active" : "")"
+                   aria-current="@(ctrl=="Admin" ? "page" : null)">
+                    <i class="sb-icon fas fa-users-cog" aria-hidden="true"></i>
                     <span class="sb-text">المستخدمون</span>
                 </a>
             }
@@ -143,8 +168,8 @@
 
 <!-- ═══ NAVBAR ═══ -->
 <header class="navbar" role="banner">
-    <button class="navbar__toggle" id="sidebarToggle" aria-label="تبديل القائمة" aria-expanded="false">
-        <i class="fas fa-bars"></i>
+    <button type="button" class="navbar__toggle" id="sidebarToggle" aria-label="فتح القائمة الرئيسية" aria-controls="sidebar" aria-expanded="false">
+        <i class="fas fa-bars" aria-hidden="true"></i>
     </button>
 
     <!-- Breadcrumb -->
@@ -152,11 +177,11 @@
         @if (hasSection)
         {
             <a href="@Url.Action("Index","Dashboard")">الرئيسية</a>
-            <span class="sep"><i class="fas fa-chevron-left"></i></span>
+            <span class="sep" aria-hidden="true"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
             @if (pageTitle != sectionInfo.Label)
             {
                 <a href="@sectionInfo.Url">@sectionInfo.Label</a>
-                <span class="sep"><i class="fas fa-chevron-left"></i></span>
+                <span class="sep" aria-hidden="true"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
                 <span class="current">@pageTitle</span>
             }
             else
@@ -171,17 +196,17 @@
         {
             <div class="user-pill">
                 <div class="user-pill__avatar">
-                    <i class="fas @avatarIcon" style="font-size:0.85rem"></i>
+                    <i class="fas @avatarIcon" aria-hidden="true"></i>
                 </div>
                 <div class="user-pill__info hide-mobile">
                     <span class="user-pill__name">@displayName</span>
                     <span class="user-pill__role">@userRole</span>
                 </div>
             </div>
-            <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0">
+            <form asp-controller="Account" asp-action="Logout" method="post" class="navbar__logout-form">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="logout-btn" title="تسجيل الخروج">
-                    <i class="fas fa-sign-out-alt"></i>
+                <button type="submit" class="logout-btn" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                     <span>خروج</span>
                 </button>
             </form>
@@ -190,39 +215,39 @@
 </header>
 
 <!-- ═══ MAIN ═══ -->
-<main class="main-content" id="mainContent">
+<main class="main-content" id="mainContent" tabindex="-1">
     <div class="main-content__inner">
 
         @* TempData toast *@
         @if (TempData["SuccessMessage"] != null || TempData["Success"] != null)
         {
             var msg = (TempData["SuccessMessage"] ?? TempData["Success"])?.ToString();
-            <div id="tempDataToast" style="position:fixed;top:calc(var(--navbar-h) + var(--sp-4));inset-inline-end:var(--sp-4);z-index:var(--z-toast);">
-                <div class="toast toast--success" style="pointer-events:auto">
-                    <div class="toast__icon"><i class="fas fa-check-circle"></i></div>
+            <div class="tempdata-toast" role="status" aria-live="polite">
+                <div class="toast toast--success">
+                    <div class="toast__icon"><i class="fas fa-check-circle" aria-hidden="true"></i></div>
                     <div class="toast__content"><p class="toast__message">@msg</p></div>
-                    <button class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+                    <button type="button" class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق التنبيه"><i class="fas fa-times" aria-hidden="true"></i></button>
                 </div>
             </div>
         }
         @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
         {
             var msg = (TempData["ErrorMessage"] ?? TempData["Error"])?.ToString();
-            <div id="tempDataToast" style="position:fixed;top:calc(var(--navbar-h) + var(--sp-4));inset-inline-end:var(--sp-4);z-index:var(--z-toast);">
-                <div class="toast toast--error" style="pointer-events:auto">
-                    <div class="toast__icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="tempdata-toast" role="alert" aria-live="assertive">
+                <div class="toast toast--error">
+                    <div class="toast__icon"><i class="fas fa-exclamation-circle" aria-hidden="true"></i></div>
                     <div class="toast__content"><p class="toast__message">@msg</p></div>
-                    <button class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+                    <button type="button" class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق التنبيه"><i class="fas fa-times" aria-hidden="true"></i></button>
                 </div>
             </div>
         }
         @if (TempData["Info"] != null)
         {
-            <div id="tempDataToast" style="position:fixed;top:calc(var(--navbar-h) + var(--sp-4));inset-inline-end:var(--sp-4);z-index:var(--z-toast);">
-                <div class="toast toast--info" style="pointer-events:auto">
-                    <div class="toast__icon"><i class="fas fa-info-circle"></i></div>
+            <div class="tempdata-toast" role="status" aria-live="polite">
+                <div class="toast toast--info">
+                    <div class="toast__icon"><i class="fas fa-info-circle" aria-hidden="true"></i></div>
                     <div class="toast__content"><p class="toast__message">@TempData["Info"]</p></div>
-                    <button class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+                    <button type="button" class="toast__close" onclick="this.closest('.toast').parentElement.remove()" aria-label="إغلاق التنبيه"><i class="fas fa-times" aria-hidden="true"></i></button>
                 </div>
             </div>
         }

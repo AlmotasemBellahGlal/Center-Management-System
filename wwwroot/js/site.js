@@ -8,27 +8,51 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── Sidebar ────────────────────────────────
   const sidebar  = document.getElementById('sidebar');
   const toggle   = document.getElementById('sidebarToggle');
-  const mainContent = document.getElementById('mainContent');
+  const closeButton = document.getElementById('sidebarClose');
   const backdrop = document.getElementById('sidebarBackdrop');
+  let lastFocusedElement = null;
 
   function isMobile() { return window.innerWidth < 992; }
+
+  function syncSidebarState() {
+    if (!sidebar || !toggle) return;
+    const isOpen = sidebar.classList.contains('sidebar--open');
+    const isCollapsed = sidebar.classList.contains('sidebar--collapsed');
+    const expanded = isMobile() ? isOpen : !isCollapsed;
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-label', isMobile()
+      ? (isOpen ? 'إغلاق القائمة الرئيسية' : 'فتح القائمة الرئيسية')
+      : (isCollapsed ? 'توسيع القائمة الرئيسية' : 'تصغير القائمة الرئيسية'));
+    sidebar.setAttribute('aria-hidden', isMobile() && !isOpen ? 'true' : 'false');
+  }
 
   function collapseSidebarDesktop() {
     sidebar.classList.toggle('sidebar--collapsed');
     const isCollapsed = sidebar.classList.contains('sidebar--collapsed');
     try { localStorage.setItem('sb', isCollapsed ? '1' : '0'); } catch(e){}
+    syncSidebarState();
   }
 
   function openMobileSidebar() {
+    lastFocusedElement = document.activeElement;
     sidebar.classList.add('sidebar--open');
     backdrop && backdrop.classList.add('sidebar-backdrop--visible');
     document.body.style.overflow = 'hidden';
+    syncSidebarState();
+    window.requestAnimationFrame(function () {
+      const firstTarget = closeButton || sidebar.querySelector('.sb-link');
+      firstTarget && firstTarget.focus();
+    });
   }
 
-  function closeMobileSidebar() {
+  function closeMobileSidebar(restoreFocus) {
     sidebar.classList.remove('sidebar--open');
     backdrop && backdrop.classList.remove('sidebar-backdrop--visible');
     document.body.style.overflow = '';
+    syncSidebarState();
+    if (restoreFocus !== false && lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+      lastFocusedElement.focus();
+    }
   }
 
   if (sidebar && toggle) {
@@ -38,27 +62,29 @@ document.addEventListener('DOMContentLoaded', function () {
         sidebar.classList.add('sidebar--collapsed');
       }
     } catch(e){}
+    syncSidebarState();
 
     toggle.addEventListener('click', function (e) {
       e.stopPropagation();
       if (isMobile()) {
-        sidebar.classList.contains('sidebar--open') ? closeMobileSidebar() : openMobileSidebar();
+        sidebar.classList.contains('sidebar--open') ? closeMobileSidebar(true) : openMobileSidebar();
       } else {
         collapseSidebarDesktop();
       }
     });
 
-    backdrop && backdrop.addEventListener('click', closeMobileSidebar);
+    backdrop && backdrop.addEventListener('click', function () { closeMobileSidebar(true); });
+    closeButton && closeButton.addEventListener('click', function () { closeMobileSidebar(true); });
 
     sidebar.querySelectorAll('.sb-link').forEach(function (link) {
       link.addEventListener('click', function () {
-        if (isMobile()) closeMobileSidebar();
+        if (isMobile()) closeMobileSidebar(false);
       });
     });
 
     window.addEventListener('resize', debounce(function () {
       if (!isMobile()) {
-        closeMobileSidebar();
+        closeMobileSidebar(false);
         try {
           if (localStorage.getItem('sb') === '1') {
             sidebar.classList.add('sidebar--collapsed');
@@ -69,25 +95,39 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         sidebar.classList.remove('sidebar--collapsed');
       }
+      syncSidebarState();
     }, 200));
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('sidebar--open')) {
-        closeMobileSidebar();
+        closeMobileSidebar(true);
+      }
+
+      if (e.key === 'Tab' && isMobile() && sidebar.classList.contains('sidebar--open')) {
+        const focusable = Array.from(sidebar.querySelectorAll('a[href], button:not([disabled])'));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     });
   }
 
   // ── Toast ───────────────────────────────────
   // Auto-dismiss tempdata toast
-  const tempToast = document.getElementById('tempDataToast');
-  if (tempToast) {
+  document.querySelectorAll('.tempdata-toast').forEach(function (tempToast) {
     setTimeout(function () {
       tempToast.style.transition = 'opacity 0.3s';
       tempToast.style.opacity = '0';
       setTimeout(function () { tempToast.remove(); }, 300);
     }, 4500);
-  }
+  });
 });
 
 // ── Utilities ──────────────────────────────────
@@ -109,12 +149,34 @@ function showToast(message, type, duration) {
 
   const el = document.createElement('div');
   el.className = 'toast toast--' + type;
-  el.innerHTML =
-    '<div class="toast__icon"><i class="fas ' + icon + '"></i></div>' +
-    '<div class="toast__content"><p class="toast__message">' + message + '</p></div>' +
-    '<button class="toast__close" aria-label="إغلاق"><i class="fas fa-times"></i></button>';
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
-  el.querySelector('.toast__close').addEventListener('click', function () { removeToast(el); });
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'toast__icon';
+  iconWrap.setAttribute('aria-hidden', 'true');
+  const iconElement = document.createElement('i');
+  iconElement.className = 'fas ' + icon;
+  iconWrap.appendChild(iconElement);
+
+  const content = document.createElement('div');
+  content.className = 'toast__content';
+  const text = document.createElement('p');
+  text.className = 'toast__message';
+  text.textContent = message;
+  content.appendChild(text);
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'toast__close';
+  close.setAttribute('aria-label', 'إغلاق التنبيه');
+  const closeIcon = document.createElement('i');
+  closeIcon.className = 'fas fa-times';
+  closeIcon.setAttribute('aria-hidden', 'true');
+  close.appendChild(closeIcon);
+
+  el.append(iconWrap, content, close);
+
+  close.addEventListener('click', function () { removeToast(el); });
   container.appendChild(el);
   setTimeout(function () { removeToast(el); }, duration);
 }
